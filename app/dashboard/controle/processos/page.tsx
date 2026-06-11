@@ -2,83 +2,79 @@
 
 import { useEffect, useState, useCallback } from "react";
 import {
-  getProcessos, createProcesso, updateProcesso, deleteProcesso,
-  ANDAMENTOS_PROCESSO, RESPONSAVEIS, fmtData, badgeAndamento,
+  getProcessos, createProcesso, updateProcesso, deleteProcesso, marcarOk,
+  ANDAMENTOS_PROCESSO, RESPONSAVEIS, fmtData, badgeAndamento, gcalUrl,
   type Processo,
 } from "@/lib/controle";
 
-const FILTROS_PERIODO = ["Todos","Hoje","Próximos 3 dias","Próximos 7 dias","Este mês"];
+type Aba = "ativos" | "audiencias" | "standby" | "finalizados" | "novo";
 
-function Input({ ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+function Sel({ children, ...p }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <input {...props} className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-      style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }} />
-  );
-}
-function SelectField({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <select {...props} className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+    <select {...p} className="px-3 py-2 rounded-lg text-sm outline-none"
       style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
       {children}
     </select>
   );
 }
-function Label({ children }: { children: React.ReactNode }) {
+function Inp({ ...p }: React.InputHTMLAttributes<HTMLInputElement>) {
+  return <input {...p} className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+    style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }} />;
+}
+function Lbl({ children }: { children: React.ReactNode }) {
   return <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>{children}</span>;
 }
 
-// ── Formulário ────────────────────────────────────────────────────────────────
 function ProcessoForm({ initial, onSave, onCancel }: {
-  initial?: Partial<Processo>; onSave: (data: Omit<Processo, "id" | "criado_em">) => Promise<void>; onCancel: () => void;
+  initial?: Partial<Processo>;
+  onSave: (d: Omit<Processo, "id" | "criado_em">) => Promise<void>;
+  onCancel: () => void;
 }) {
   const blank = { autor:"",reu:"",objeto:"",numero_processo:"",data:"",hora:"",andamento:"",responsavel:"",observacoes:"",atencao:false,finalizado:false };
   const [form, setForm] = useState({ ...blank, ...(initial || {}) });
   const [saving, setSaving] = useState(false);
-
   const set = (k: string, v: string | boolean) => setForm(prev => ({ ...prev, [k]: v }));
-
   const submit = async () => {
     if (!form.autor.trim()) return;
     setSaving(true);
     try { await onSave(form as Omit<Processo,"id"|"criado_em">); } finally { setSaving(false); }
   };
-
   return (
     <div className="rounded-xl p-5 space-y-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div><Label>Autor *</Label><Input value={form.autor} onChange={e => set("autor",e.target.value)} /></div>
-        <div><Label>Réu</Label><Input value={form.reu} onChange={e => set("reu",e.target.value)} /></div>
-        <div><Label>Objeto</Label><Input value={form.objeto} onChange={e => set("objeto",e.target.value)} /></div>
-        <div><Label>Nº Processo</Label><Input value={form.numero_processo} onChange={e => set("numero_processo",e.target.value)} /></div>
-        <div><Label>Data (YYYY-MM-DD)</Label><Input type="date" value={form.data} onChange={e => set("data",e.target.value)} /></div>
-        <div><Label>Hora</Label><Input value={form.hora} placeholder="HH:MM" onChange={e => set("hora",e.target.value)} /></div>
+        <div><Lbl>Autor *</Lbl><Inp value={form.autor} onChange={e => set("autor",e.target.value)} /></div>
+        <div><Lbl>Réu</Lbl><Inp value={form.reu} onChange={e => set("reu",e.target.value)} /></div>
+        <div><Lbl>Objeto</Lbl><Inp value={form.objeto} onChange={e => set("objeto",e.target.value)} /></div>
+        <div><Lbl>Nº Processo</Lbl><Inp value={form.numero_processo} onChange={e => set("numero_processo",e.target.value)} /></div>
+        <div><Lbl>Data</Lbl><Inp type="date" value={form.data} onChange={e => set("data",e.target.value)} /></div>
+        <div><Lbl>Hora</Lbl><Inp value={form.hora} placeholder="HH:MM" onChange={e => set("hora",e.target.value)} /></div>
         <div>
-          <Label>Andamento</Label>
-          <SelectField value={form.andamento} onChange={e => set("andamento",e.target.value)}>
+          <Lbl>Andamento</Lbl>
+          <Sel value={form.andamento} onChange={e => set("andamento",e.target.value)} style={{ width:"100%" }}>
             <option value="">Selecionar</option>
             {ANDAMENTOS_PROCESSO.map(a => <option key={a} value={a}>{a}</option>)}
-          </SelectField>
+          </Sel>
         </div>
         <div>
-          <Label>Responsável</Label>
-          <SelectField value={form.responsavel} onChange={e => set("responsavel",e.target.value)}>
+          <Lbl>Responsável</Lbl>
+          <Sel value={form.responsavel} onChange={e => set("responsavel",e.target.value)} style={{ width:"100%" }}>
             {RESPONSAVEIS.map(r => <option key={r} value={r}>{r || "—"}</option>)}
-          </SelectField>
+          </Sel>
         </div>
       </div>
       <div>
-        <Label>Observações</Label>
+        <Lbl>Observações</Lbl>
         <textarea rows={2} value={form.observacoes} onChange={e => set("observacoes",e.target.value)}
           className="w-full px-3 py-2 rounded-lg text-sm resize-none"
           style={{ background:"var(--surface2)", border:"1px solid var(--border)", color:"var(--text)" }} />
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-5">
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={!!form.atencao} onChange={e => set("atencao",e.target.checked)} className="accent-red-500" />
-          <span className="text-sm" style={{ color:"var(--text2)" }}>🚨 Atenção</span>
+          <span className="text-sm" style={{ color:"var(--text2)" }}>🚨 Atenção/Risco</span>
         </label>
         <label className="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" checked={!!form.finalizado} onChange={e => set("finalizado",e.target.checked)} className="accent-gray-500" />
+          <input type="checkbox" checked={!!form.finalizado} onChange={e => set("finalizado",e.target.checked)} />
           <span className="text-sm" style={{ color:"var(--text2)" }}>Finalizado</span>
         </label>
       </div>
@@ -88,7 +84,7 @@ function ProcessoForm({ initial, onSave, onCancel }: {
           style={{ background:"var(--gold)", color:"#000" }}>
           {saving ? "Salvando..." : "Salvar"}
         </button>
-        <button onClick={onCancel} className="px-5 py-2 rounded-lg text-sm"
+        <button onClick={onCancel} className="px-4 py-2 rounded-lg text-sm"
           style={{ background:"var(--surface2)", color:"var(--text2)", border:"1px solid var(--border)" }}>
           Cancelar
         </button>
@@ -97,31 +93,67 @@ function ProcessoForm({ initial, onSave, onCancel }: {
   );
 }
 
-// ── Linha da tabela ───────────────────────────────────────────────────────────
-function ProcessoRow({ p, onEdit, onDelete }: {
-  p: Processo; onEdit: (p: Processo) => void; onDelete: (id: string) => void;
+function ProcessoRow({ p, onEdit, onDelete, onOk, onToggleAtencao }: {
+  p: Processo;
+  onEdit: (p: Processo) => void;
+  onDelete: (id: string) => void;
+  onOk: (id: string) => void;
+  onToggleAtencao: (id: string, val: boolean) => void;
 }) {
   const [confirming, setConfirming] = useState(false);
+  const url = gcalUrl(p);
+  const hoje = new Date().toISOString().split("T")[0];
+  const d = p.data?.slice(0, 10);
+  const diasAte = d ? Math.floor((new Date(d).getTime() - new Date(hoje).getTime()) / 86400000) : null;
+  const alertaCor = diasAte !== null ? (diasAte <= 0 ? "#ef4444" : diasAte <= 3 ? "#f97316" : undefined) : undefined;
+
   return (
     <tr style={{ borderBottom: "1px solid var(--border)" }}
       className={p.atencao ? "bg-red-500/5" : ""}>
-      <td className="py-2 pr-3 text-sm font-medium max-w-40 truncate" style={{ color:"var(--text)" }}>
-        {p.atencao && <span className="mr-1 text-red-400">🚨</span>}{p.autor}
+      <td className="py-2 pr-3 text-sm font-medium" style={{ color: p.atencao ? "#ef4444" : "var(--text)", maxWidth: 160 }}>
+        <div className="truncate">
+          {p.atencao && <span className="mr-1">🚨</span>}
+          {p.autor}
+        </div>
+        {p.responsavel && <div className="text-xs" style={{ color:"var(--text3)" }}>{p.responsavel}</div>}
+        {p.numero_processo && (
+          <div className="text-xs font-mono truncate" style={{ color:"var(--text3)" }}
+            title={p.numero_processo}>{p.numero_processo}</div>
+        )}
       </td>
       <td className="py-2 pr-3 text-sm" style={{ color:"var(--text2)" }}>{p.reu}</td>
       <td className="py-2 pr-3 text-xs max-w-32 truncate" style={{ color:"var(--text3)" }}>{p.objeto}</td>
-      <td className="py-2 pr-3 text-xs font-mono" style={{ color:"var(--text3)" }}>{p.numero_processo}</td>
-      <td className="py-2 pr-3 text-xs tabular-nums whitespace-nowrap" style={{ color:"var(--text2)" }}>
+      <td className="py-2 pr-3 text-xs" style={{ color:"var(--text3)", maxWidth:160 }}>
+        <div className="truncate">{p.observacoes}</div>
+      </td>
+      <td className="py-2 pr-3 text-xs tabular-nums whitespace-nowrap"
+        style={{ color: alertaCor || "var(--text2)" }}>
         {fmtData(p.data)}{p.hora && ` ${p.hora}`}
+        {diasAte !== null && diasAte <= 0 && <span className="ml-1">🔴</span>}
+        {diasAte !== null && diasAte > 0 && diasAte <= 3 && <span className="ml-1">⚠️</span>}
       </td>
       <td className="py-2 pr-3">
         {p.andamento && (
-          <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${badgeAndamento(p.andamento)}`}>{p.andamento}</span>
+          <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${badgeAndamento(p.andamento)}`}>
+            {p.andamento}
+          </span>
+        )}
+        {url && (
+          <a href={url} target="_blank" rel="noopener noreferrer"
+            className="mt-1 flex items-center gap-1 text-xs"
+            style={{ color:"#60a5fa" }}>📅 Calendar</a>
         )}
       </td>
-      <td className="py-2 pr-3 text-xs" style={{ color:"var(--text3)" }}>{p.responsavel}</td>
       <td className="py-2">
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1">
+          <button onClick={() => onOk(p.id)} title="Marcar OK"
+            className="text-xs px-2 py-1 rounded"
+            style={{ background:"rgba(34,197,94,0.12)", color:"#4ade80" }}>✅</button>
+          <button onClick={() => onToggleAtencao(p.id, !p.atencao)} title="Toggle atenção"
+            className="text-xs px-2 py-1 rounded"
+            style={{ background: p.atencao ? "rgba(239,68,68,0.15)" : "var(--surface2)", color: p.atencao ? "#f87171" : "var(--text3)", border:"1px solid var(--border)" }}>
+            🚨
+          </button>
           <button onClick={() => onEdit(p)} className="text-xs px-2 py-1 rounded"
             style={{ background:"var(--surface2)", color:"var(--text2)", border:"1px solid var(--border)" }}>✏️</button>
           {confirming
@@ -136,26 +168,28 @@ function ProcessoRow({ p, onEdit, onDelete }: {
   );
 }
 
-// ── página ────────────────────────────────────────────────────────────────────
 export default function ProcessosPage() {
   const [processos, setProcessos] = useState<Processo[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
   const [filtroAnd, setFiltroAnd] = useState("Todos");
-  const [filtroPer, setFiltroPer] = useState("Todos");
-  const [abaAtiva, setAbaAtiva] = useState<"ativos"|"finalizados"|"novo">("ativos");
+  const [filtroResp, setFiltroResp] = useState("Todos");
+  const [aba, setAba] = useState<Aba>("ativos");
   const [editando, setEditando] = useState<Processo | null>(null);
   const [soAtencao, setSoAtencao] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
-    try {
-      const all = await getProcessos();
-      setProcessos(all);
-    } finally { setLoading(false); }
+    try { setProcessos(await getProcessos()); } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const isFin = (p: Processo) => {
+    if (p.finalizado) return true;
+    const a = (p.andamento || "").toUpperCase();
+    return a === "ACORDO" || a === "ARQUIVADO" || a === "DESISTÊNCIA" || a === "DESISTENCIA";
+  };
 
   const filtrar = useCallback((lista: Processo[]) => {
     let r = lista;
@@ -165,72 +199,103 @@ export default function ProcessosPage() {
         || (p.numero_processo||"").toLowerCase().includes(b) || (p.objeto||"").toLowerCase().includes(b));
     }
     if (filtroAnd !== "Todos") r = r.filter(p => (p.andamento||"").toUpperCase().includes(filtroAnd.toUpperCase()));
+    if (filtroResp !== "Todos") r = r.filter(p => (p.responsavel||"") === filtroResp);
     if (soAtencao) r = r.filter(p => p.atencao);
-    if (filtroPer !== "Todos") {
-      const hoje = new Date().toISOString().split("T")[0];
-      const em3  = new Date(Date.now() + 3*86400000).toISOString().split("T")[0];
-      const em7  = new Date(Date.now() + 7*86400000).toISOString().split("T")[0];
-      const mes  = hoje.slice(0,7);
-      if (filtroPer === "Hoje") r = r.filter(p => p.data?.slice(0,10) === hoje);
-      else if (filtroPer === "Próximos 3 dias") r = r.filter(p => p.data >= hoje && p.data <= em3);
-      else if (filtroPer === "Próximos 7 dias") r = r.filter(p => p.data >= hoje && p.data <= em7);
-      else if (filtroPer === "Este mês") r = r.filter(p => p.data?.startsWith(mes));
-    }
-    return r;
-  }, [busca, filtroAnd, filtroPer, soAtencao]);
+    return r.sort((a, b) => {
+      if (a.atencao && !b.atencao) return -1;
+      if (!a.atencao && b.atencao) return 1;
+      return (a.data || "9999").localeCompare(b.data || "9999");
+    });
+  }, [busca, filtroAnd, filtroResp, soAtencao]);
 
-  const ativos = filtrar(processos.filter(p => !p.finalizado));
-  const finalizados = filtrar(processos.filter(p => p.finalizado));
+  const hoje = new Date().toISOString().split("T")[0];
+  const ativos = filtrar(processos.filter(p => !isFin(p)));
+  const finalizados = filtrar(processos.filter(p => isFin(p)));
+  const audiencias = filtrar(processos.filter(p => {
+    const a = (p.andamento||"").toUpperCase();
+    return (a.includes("AIJ") || a.startsWith("AC")) && p.data >= hoje && !isFin(p);
+  }));
+  const standby = filtrar(processos.filter(p => !p.data && !isFin(p)));
 
   const handleSave = async (form: Omit<Processo,"id"|"criado_em">) => {
-    if (editando) {
-      await updateProcesso(editando.id, form);
-      setEditando(null);
-    } else {
-      await createProcesso(form);
-      setAbaAtiva("ativos");
-    }
+    if (editando) { await updateProcesso(editando.id, form); setEditando(null); }
+    else { await createProcesso(form); setAba("ativos"); }
+    load();
+  };
+  const handleDelete = async (id: string) => { await deleteProcesso(id); load(); };
+  const handleOk = async (id: string) => { await marcarOk(id); load(); };
+  const handleToggleAtencao = async (id: string, val: boolean) => {
+    await updateProcesso(id, { atencao: val });
     load();
   };
 
-  const handleDelete = async (id: string) => {
-    await deleteProcesso(id);
-    load();
-  };
+  const ABAS: { id: Aba; label: string; count?: number }[] = [
+    { id:"ativos", label:`📋 Ativos (${processos.filter(p => !isFin(p)).length})` },
+    { id:"audiencias", label:`🔴 Audiências (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); return (a.includes("AIJ")||a.startsWith("AC"))&&p.data>=hoje&&!isFin(p); }).length})` },
+    { id:"standby", label:`⏸️ Standby (${processos.filter(p => !p.data && !isFin(p)).length})` },
+    { id:"finalizados", label:`✅ Finalizados (${processos.filter(p => isFin(p)).length})` },
+    { id:"novo", label:"➕ Novo" },
+  ];
 
-  const tabStyle = (tab: string) => ({
-    background: abaAtiva === tab ? "var(--gold)" : "var(--surface2)",
-    color: abaAtiva === tab ? "#000" : "var(--text2)",
+  const tabStyle = (id: Aba) => ({
+    background: aba === id ? "var(--gold)" : "var(--surface2)",
+    color: aba === id ? "#000" : "var(--text2)",
     border: "1px solid var(--border)",
   });
 
-  const renderTable = (lista: Processo[]) => (
-    lista.length === 0
+  const renderTable = (lista: Processo[]) => {
+    const nAtencao = lista.filter(p => p.atencao).length;
+    return lista.length === 0
       ? <p className="py-6 text-center text-sm" style={{ color:"var(--text3)" }}>Nenhum processo encontrado.</p>
       : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr style={{ borderBottom:"2px solid var(--border)" }}>
-                {["Autor","Réu","Objeto","Processo","Data/Hora","Andamento","Resp.",""].map(h => (
-                  <th key={h} className="pb-2 pt-1 text-left pr-3 text-xs uppercase tracking-wider font-medium"
-                    style={{ color:"var(--text3)" }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {lista.sort((a,b) => (a.data||"9").localeCompare(b.data||"9")).map(p => (
-                editando?.id === p.id
-                  ? <tr key={p.id}><td colSpan={8} className="py-2">
-                      <ProcessoForm initial={editando} onSave={handleSave} onCancel={() => setEditando(null)} />
-                    </td></tr>
-                  : <ProcessoRow key={p.id} p={p} onEdit={setEditando} onDelete={handleDelete} />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )
-  );
+        <>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm" style={{ color:"var(--text2)" }}>
+              <strong style={{ color:"var(--text)" }}>{lista.length}</strong> processo{lista.length !== 1 ? "s" : ""}
+              {nAtencao > 0 && <span className="ml-2 text-red-400 font-semibold">🚨 {nAtencao} em atenção</span>}
+            </p>
+            <button onClick={() => exportCSV(lista)} className="text-xs px-3 py-1 rounded-lg"
+              style={{ background:"var(--surface2)", color:"var(--text2)", border:"1px solid var(--border)" }}>
+              ⬇️ Exportar CSV
+            </button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ borderBottom:"2px solid var(--border)" }}>
+                  {["Autor / Processo","Réu","Objeto","Observações","Data/Hora","Andamento","Ações"].map(h => (
+                    <th key={h} className="pb-2 pt-1 text-left pr-3 text-xs uppercase tracking-wider"
+                      style={{ color:"var(--text3)", fontWeight:500 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {lista.map(p =>
+                  editando?.id === p.id
+                    ? <tr key={p.id}><td colSpan={7} className="py-2">
+                        <ProcessoForm initial={editando} onSave={handleSave} onCancel={() => setEditando(null)} />
+                      </td></tr>
+                    : <ProcessoRow key={p.id} p={p} onEdit={setEditando} onDelete={handleDelete}
+                        onOk={handleOk} onToggleAtencao={handleToggleAtencao} />
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      );
+  };
+
+  const exportCSV = (lista: Processo[]) => {
+    const headers = ["Autor","Réu","Objeto","Processo","Data","Hora","Andamento","Responsável","Observações"];
+    const rows = lista.map(p => [p.autor,p.reu,p.objeto,p.numero_processo,p.data,p.hora,p.andamento,p.responsavel,p.observacoes].map(v => `"${(v||"").replace(/"/g,'""')}"`));
+    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["﻿"+csv], { type:"text/csv;charset=utf-8" }));
+    a.download = "processos.csv";
+    a.click();
+  };
+
+  const listaAtual = aba === "ativos" ? ativos : aba === "finalizados" ? finalizados : aba === "audiencias" ? audiencias : standby;
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-5">
@@ -241,31 +306,31 @@ export default function ProcessosPage() {
 
       {/* Abas */}
       <div className="flex gap-2 flex-wrap">
-        {(["ativos","finalizados","novo"] as const).map(tab => (
-          <button key={tab} onClick={() => setAbaAtiva(tab)}
+        {ABAS.map(t => (
+          <button key={t.id} onClick={() => setAba(t.id)}
             className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
-            style={tabStyle(tab)}>
-            {tab === "ativos" ? `📋 Ativos (${processos.filter(p => !p.finalizado).length})`
-              : tab === "finalizados" ? `✅ Finalizados (${processos.filter(p => p.finalizado).length})`
-              : "➕ Novo"}
+            style={tabStyle(t.id)}>
+            {t.label}
           </button>
         ))}
       </div>
 
       {/* Filtros */}
-      {abaAtiva !== "novo" && (
+      {aba !== "novo" && (
         <div className="flex flex-wrap gap-3 items-center">
           <input value={busca} onChange={e => setBusca(e.target.value)}
             placeholder="🔍 Buscar por nome, processo, réu..."
             className="px-3 py-2 rounded-lg text-sm flex-1 min-w-48"
             style={{ background:"var(--surface2)", border:"1px solid var(--border)", color:"var(--text)" }} />
-          <SelectField value={filtroAnd} onChange={e => setFiltroAnd(e.target.value)} style={{ width:"auto" }}>
+          <Sel value={filtroAnd} onChange={e => setFiltroAnd(e.target.value)}>
             <option value="Todos">Andamento: Todos</option>
             {ANDAMENTOS_PROCESSO.map(a => <option key={a} value={a}>{a}</option>)}
-          </SelectField>
-          <SelectField value={filtroPer} onChange={e => setFiltroPer(e.target.value)} style={{ width:"auto" }}>
-            {FILTROS_PERIODO.map(f => <option key={f} value={f}>{f}</option>)}
-          </SelectField>
+          </Sel>
+          <Sel value={filtroResp} onChange={e => setFiltroResp(e.target.value)}>
+            <option value="Todos">Responsável: Todos</option>
+            <option value="Adriely">Adriely</option>
+            <option value="Eduarda">Eduarda</option>
+          </Sel>
           <label className="flex items-center gap-2 cursor-pointer whitespace-nowrap">
             <input type="checkbox" checked={soAtencao} onChange={e => setSoAtencao(e.target.checked)} className="accent-red-500" />
             <span className="text-sm" style={{ color:"var(--text2)" }}>🚨 Só Atenção</span>
@@ -275,18 +340,10 @@ export default function ProcessosPage() {
 
       {/* Conteúdo */}
       <div className="rounded-xl p-5" style={{ background:"var(--surface)", border:"1px solid var(--border)" }}>
-        {abaAtiva === "novo" && (
-          <ProcessoForm
-            onSave={handleSave}
-            onCancel={() => setAbaAtiva("ativos")} />
-        )}
-        {abaAtiva === "ativos" && (loading
+        {aba === "novo" && <ProcessoForm onSave={handleSave} onCancel={() => setAba("ativos")} />}
+        {aba !== "novo" && (loading
           ? <div className="py-8 text-center" style={{ color:"var(--text3)" }}>Carregando...</div>
-          : renderTable(ativos)
-        )}
-        {abaAtiva === "finalizados" && (loading
-          ? <div className="py-8 text-center" style={{ color:"var(--text3)" }}>Carregando...</div>
-          : renderTable(finalizados)
+          : renderTable(listaAtual)
         )}
       </div>
     </div>

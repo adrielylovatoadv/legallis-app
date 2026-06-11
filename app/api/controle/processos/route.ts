@@ -1,0 +1,68 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getData, saveData, newId, isFinalizado } from "@/lib/controle-data";
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const busca = searchParams.get("busca") || "";
+  const andamento = searchParams.get("andamento") || "";
+  const responsavel = searchParams.get("responsavel") || "";
+  const tipo = searchParams.get("tipo") || ""; // "ativos" | "finalizados" | "audiencias" | "standby"
+
+  const data = getData();
+  let lista = data.processos;
+
+  if (busca) {
+    const b = busca.toLowerCase();
+    lista = lista.filter(p =>
+      (p.autor || "").toLowerCase().includes(b) ||
+      (p.reu || "").toLowerCase().includes(b) ||
+      (p.numero_processo || "").toLowerCase().includes(b) ||
+      (p.objeto || "").toLowerCase().includes(b)
+    );
+  }
+  if (andamento) lista = lista.filter(p => (p.andamento || "").toUpperCase().includes(andamento.toUpperCase()));
+  if (responsavel) lista = lista.filter(p => (p.responsavel || "").toLowerCase() === responsavel.toLowerCase());
+
+  if (tipo === "ativos") lista = lista.filter(p => !isFinalizado(p));
+  else if (tipo === "finalizados") lista = lista.filter(p => isFinalizado(p));
+  else if (tipo === "audiencias") {
+    const hoje = new Date().toISOString().split("T")[0];
+    lista = lista.filter(p => {
+      const a = (p.andamento || "").toUpperCase();
+      return (a.includes("AIJ") || a.startsWith("AC")) && p.data >= hoje && !isFinalizado(p);
+    });
+  } else if (tipo === "standby") {
+    lista = lista.filter(p => !p.data && !isFinalizado(p));
+  }
+
+  lista = lista.sort((a, b) => {
+    if (a.atencao && !b.atencao) return -1;
+    if (!a.atencao && b.atencao) return 1;
+    return (a.data || "9999").localeCompare(b.data || "9999");
+  });
+
+  return NextResponse.json(lista);
+}
+
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const data = getData();
+  const novo = {
+    id: newId(),
+    autor: body.autor || "",
+    reu: body.reu || "",
+    objeto: body.objeto || "",
+    numero_processo: body.numero_processo || "",
+    data: body.data || "",
+    hora: body.hora || "",
+    andamento: body.andamento || "",
+    responsavel: body.responsavel || "",
+    observacoes: body.observacoes || "",
+    atencao: !!body.atencao,
+    finalizado: !!body.finalizado,
+    criado_em: new Date().toISOString(),
+  };
+  data.processos.push(novo);
+  saveData(data);
+  return NextResponse.json(novo, { status: 201 });
+}

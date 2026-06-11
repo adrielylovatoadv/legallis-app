@@ -1,4 +1,12 @@
-import { fetchAPI } from "./api";
+async function fetchAPI(path: string, options?: RequestInit) {
+  const base = typeof window === "undefined" ? (process.env.NEXTAUTH_URL || "http://localhost:3001") : "";
+  const res = await fetch(`${base}/api${path}`, options);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || "Erro na API");
+  }
+  return res.json();
+}
 
 export const ANDAMENTOS_PROCESSO = [
   "AC - AUDIÊNCIA DE CONCILIAÇÃO","ACORDO","AGUARDAR LIMINAR","AGUARDAR SENTENÇA",
@@ -42,40 +50,37 @@ export interface DashboardData {
 
 // ── API calls ────────────────────────────────────────────────────────────────
 
+const J = { headers: { "Content-Type": "application/json" } };
+const q = (p?: Record<string, string>) => p ? "?" + new URLSearchParams(p).toString() : "";
+
 export const getDashboard = () => fetchAPI("/controle/dashboard") as Promise<DashboardData>;
 
-export const getProcessos = (params?: Record<string, string>) => {
-  const q = params ? "?" + new URLSearchParams(params).toString() : "";
-  return fetchAPI(`/controle/processos${q}`) as Promise<Processo[]>;
-};
+export const getProcessos = (params?: Record<string, string>) =>
+  fetchAPI(`/controle/processos${q(params)}`) as Promise<Processo[]>;
 export const createProcesso = (p: Omit<Processo, "id" | "criado_em">) =>
-  fetchAPI("/controle/processos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(p) });
+  fetchAPI("/controle/processos", { method: "POST", ...J, body: JSON.stringify(p) });
 export const updateProcesso = (id: string, p: Partial<Processo>) =>
-  fetchAPI(`/controle/processos/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(p) });
+  fetchAPI(`/controle/processos/${id}`, { method: "PUT", ...J, body: JSON.stringify(p) });
 export const deleteProcesso = (id: string) =>
   fetchAPI(`/controle/processos/${id}`, { method: "DELETE" });
 export const marcarOk = (id: string) =>
   fetchAPI(`/controle/processos/${id}/ok`, { method: "POST" });
 
-export const getClientes = (busca?: string) => {
-  const q = busca ? `?busca=${encodeURIComponent(busca)}` : "";
-  return fetchAPI(`/controle/clientes${q}`) as Promise<Cliente[]>;
-};
+export const getClientes = (params?: Record<string, string>) =>
+  fetchAPI(`/controle/clientes${q(params)}`) as Promise<(Cliente & { _ativos?: Processo[]; _finalizados?: Processo[]; _iniciais?: Inicial[] })[]>;
 export const createCliente = (c: Omit<Cliente, "id" | "criado_em">) =>
-  fetchAPI("/controle/clientes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(c) });
+  fetchAPI("/controle/clientes", { method: "POST", ...J, body: JSON.stringify(c) });
 export const updateCliente = (id: string, c: Partial<Cliente>) =>
-  fetchAPI(`/controle/clientes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(c) });
+  fetchAPI(`/controle/clientes/${id}`, { method: "PUT", ...J, body: JSON.stringify(c) });
 export const deleteCliente = (id: string) =>
   fetchAPI(`/controle/clientes/${id}`, { method: "DELETE" });
 
-export const getIniciais = (params?: Record<string, string>) => {
-  const q = params ? "?" + new URLSearchParams(params).toString() : "";
-  return fetchAPI(`/controle/iniciais${q}`) as Promise<Inicial[]>;
-};
+export const getIniciais = (params?: Record<string, string>) =>
+  fetchAPI(`/controle/iniciais${q(params)}`) as Promise<Inicial[]>;
 export const createInicial = (i: Omit<Inicial, "id" | "criado_em">) =>
-  fetchAPI("/controle/iniciais", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(i) });
+  fetchAPI("/controle/iniciais", { method: "POST", ...J, body: JSON.stringify(i) });
 export const updateInicial = (id: string, i: Partial<Inicial>) =>
-  fetchAPI(`/controle/iniciais/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(i) });
+  fetchAPI(`/controle/iniciais/${id}`, { method: "PUT", ...J, body: JSON.stringify(i) });
 export const deleteInicial = (id: string) =>
   fetchAPI(`/controle/iniciais/${id}`, { method: "DELETE" });
 
