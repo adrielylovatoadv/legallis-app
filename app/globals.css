@@ -15,6 +15,18 @@
   --sidebar-collapsed: 64px;
 }
 
+html.light {
+  --bg: #F5F3EF;
+  --surface: #FFFFFF;
+  --surface2: #F0EDE8;
+  --border: #DDD9D0;
+  --gold: #B8973B;
+  --gold-dark: #A8872B;
+  --text: #1A1714;
+  --text2: #4A4540;
+  --text3: #8A857E;
+}
+
 @theme inline {
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-serif: 'Cormorant Garamond', Georgia, serif;

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useSidebar } from "./SidebarContext";
+import { useTheme } from "./ThemeContext";
 
 const NAV = [
   {
@@ -39,6 +40,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { collapsed, toggle } = useSidebar();
   const { data: session } = useSession();
+  const { theme, toggle: toggleTheme } = useTheme();
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
@@ -164,6 +166,36 @@ export default function Sidebar() {
             </Link>
           );
         })()}
+        {/* Tema */}
+        <button
+          onClick={toggleTheme}
+          title={collapsed ? (theme === "dark" ? "Modo claro" : "Modo escuro") : undefined}
+          className="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg transition-colors group relative hover:bg-white/5"
+          style={{ color: "var(--text3)" }}
+        >
+          {theme === "dark" ? (
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          )}
+          {!collapsed && (
+            <span className="text-sm font-medium">
+              {theme === "dark" ? "Modo claro" : "Modo escuro"}
+            </span>
+          )}
+          {collapsed && (
+            <span className="absolute left-full ml-3 px-2.5 py-1.5 bg-[#2A2A2A] border border-[#3A3A3A] text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
+              {theme === "dark" ? "Modo claro" : "Modo escuro"}
+            </span>
+          )}
+        </button>
+
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
           title={collapsed ? "Sair" : undefined}
