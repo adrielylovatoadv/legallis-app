@@ -11,7 +11,7 @@ const PLANS = [
     period: "/mês",
     description: "Para advogados autônomos",
     features: ["Controle Processual", "Calculadora Jurídica", "Export PDF", "1 usuário"],
-    paymentLink: "https://buy.stripe.com/test_6oU4gA6FE7Gt3Eg24NeEo00",
+    paymentLink: "https://buy.stripe.com/test_5kQ9AUfca1i52Ac8tbeEo03",
     color: "var(--text3)",
   },
   {
@@ -21,7 +21,7 @@ const PLANS = [
     period: "/mês",
     description: "Para pequenos escritórios",
     features: ["Tudo do Básico", "Financeiro", "Export PDF/Word/Excel", "Até 5 usuários"],
-    paymentLink: "https://buy.stripe.com/test_8x200k8NMaSF1w87p7eEo02",
+    paymentLink: "https://buy.stripe.com/test_4gM9AU4xw6Cp5Mo24NeEo04",
     color: "var(--gold)",
     destaque: true,
   },
@@ -32,7 +32,7 @@ const PLANS = [
     period: "/mês",
     description: "Para escritórios em crescimento",
     features: ["Tudo do Pro", "Usuários ilimitados", "Painel admin", "Suporte prioritário"],
-    paymentLink: "https://buy.stripe.com/test_3cIaEYbZY5yl0s46l3eEo01",
+    paymentLink: "https://buy.stripe.com/test_eVq6oI8NMf8V5Mo5gZeEo05",
     color: "#818cf8",
   },
 ];
