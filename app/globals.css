@@ -1,0 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+:root {
+  --bg: #0F0F0F;
+  --surface: #1A1A1A;
+  --surface2: #222222;
+  --border: #2A2A2A;
+  --gold: #C9A84C;
+  --gold-dark: #B8973B;
+  --text: #F0EDE8;
+  --text2: #A0A0A0;
+  --text3: #666666;
+  --sidebar-width: 240px;
+  --sidebar-collapsed: 64px;
+}
+
+@theme inline {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  margin: 0;
+}
+
+html { scroll-behavior: smooth; }
+
+.font-serif { font-family: var(--font-serif); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
