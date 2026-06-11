@@ -3,8 +3,8 @@
 import { useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { fetchAPI, fmtBRL, fmtPct, fmtFator } from "@/lib/api";
-import { canExport } from "@/lib/users";
-import type { Plan } from "@/lib/users";
+import { canExport } from "@/lib/plans";
+import type { Plan } from "@/lib/plans";
 
 // ── tipos ─────────────────────────────────────────────────────
 interface Lancamento { id: number; data: string; valor: string; }

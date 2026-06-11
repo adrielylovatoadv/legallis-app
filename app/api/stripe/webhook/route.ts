@@ -64,7 +64,3 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ received: true });
 }
 
-// Stripe exige que o body não seja parseado como JSON
-export const config = {
-  api: { bodyParser: false },
-};

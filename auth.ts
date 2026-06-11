@@ -1,25 +1,9 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { getUserByEmail } from "@/lib/users";
-
-declare module "next-auth" {
-  interface User {
-    role?: string;
-    plan?: string;
-  }
-  interface Session {
-    user: {
-      id: string;
-      name?: string | null;
-      email?: string | null;
-      role: string;
-      plan: string;
-    };
-  }
-}
-
+import { authConfig } from "./auth.config";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   providers: [
     Credentials({
       credentials: {
@@ -27,6 +11,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: "Senha", type: "password" },
       },
       async authorize(credentials) {
+        const { getUserByEmail } = await import("@/lib/users");
         const user = getUserByEmail(credentials.email as string);
         if (!user || user.password !== credentials.password) return null;
         return {
@@ -39,30 +24,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
-  pages: { signIn: "/login" },
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.role = user.role;
-        token.plan = user.plan;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub!;
-        session.user.role = (token.role as string) ?? "user";
-        session.user.plan = (token.plan as string) ?? "basic";
-      }
-      return session;
-    },
-    authorized({ auth, request }) {
-      const isLoggedIn = !!auth?.user;
-      const pub = ["/login", "/esqueci-senha", "/redefinir-senha", "/cadastro", "/bem-vindo"];
-      const isPublic = pub.some(p => request.nextUrl.pathname.startsWith(p));
-      if (isPublic) return true;
-      return isLoggedIn;
-    },
-  },
-  session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
 });

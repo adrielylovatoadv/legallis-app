@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { PLAN_FEATURES } from "@/lib/users";
-import type { Plan } from "@/lib/users";
+import { PLAN_FEATURES } from "@/lib/plans";
+import type { Plan } from "@/lib/plans";
 
 export default function ContaPage() {
   const { data: session, update } = useSession();

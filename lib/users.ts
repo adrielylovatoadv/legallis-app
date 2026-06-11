@@ -1,9 +1,9 @@
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
-
-export type Plan = "admin" | "pro" | "basic";
-export type Role = "admin" | "user";
+export type { Plan, Role } from "./plans";
+export { PLAN_FEATURES, canAccess, canExport } from "./plans";
+import type { Plan, Role } from "./plans";
 
 export interface User {
   id: string;
@@ -107,42 +107,3 @@ export function consumeResetToken(token: string): string | null {
   return t.email;
 }
 
-// Plan feature gates
-export const PLAN_FEATURES: Record<Plan, {
-  label: string;
-  modules: string[];
-  exports: string[];
-  canAssignTasks: boolean;
-  maxUsers: number;
-}> = {
-  admin: {
-    label: "Administrador",
-    modules: ["controle", "financeiro", "calculadora", "admin"],
-    exports: ["pdf", "word", "excel"],
-    canAssignTasks: true,
-    maxUsers: Infinity,
-  },
-  pro: {
-    label: "Pro",
-    modules: ["controle", "financeiro", "calculadora"],
-    exports: ["pdf", "word", "excel"],
-    canAssignTasks: true,
-    maxUsers: 10,
-  },
-  basic: {
-    label: "Básico",
-    modules: ["controle", "calculadora"],
-    exports: ["pdf"],
-    canAssignTasks: false,
-    maxUsers: 1,
-  },
-};
-
-export function canAccess(plan: Plan, module: string): boolean {
-  const f = PLAN_FEATURES[plan];
-  return f.modules.includes("all") || f.modules.includes(module);
-}
-
-export function canExport(plan: Plan, format: string): boolean {
-  return PLAN_FEATURES[plan].exports.includes(format);
-}

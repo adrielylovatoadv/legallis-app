@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { PLAN_FEATURES } from "@/lib/users";
-import type { Plan, Role } from "@/lib/users";
+import { PLAN_FEATURES } from "@/lib/plans";
+import type { Plan, Role } from "@/lib/plans";
 
 type SafeUser = {
   id: string;
