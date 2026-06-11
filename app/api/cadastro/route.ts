@@ -28,8 +28,10 @@ export async function POST(req: NextRequest) {
     email,
     password: senha,
     role: planConfig.role,
-    plan: "basic", // começa como basic, webhook atualiza após pagamento
+    plan: "basic",
     avatar: "",
+    subscriptionStatus: "pending",
+    isActive: true,
   });
 
   return NextResponse.json({ userId: user.id }, { status: 201 });

@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   if (!name || !email || !password) {
     return NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 });
   }
-  const user = createUser({ name, email, password, role: role ?? "user", plan: plan ?? "basic", avatar: "" });
+  const user = createUser({ name, email, password, role: role ?? "user", plan: plan ?? "basic", avatar: "", subscriptionStatus: "active", isActive: true });
   const { password: _, ...safe } = user;
   return NextResponse.json(safe, { status: 201 });
 }

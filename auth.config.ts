@@ -1,9 +1,14 @@
 import type { NextAuthConfig } from "next-auth";
+import type { SubscriptionStatus } from "./lib/users";
 
 declare module "next-auth" {
   interface User {
     role?: string;
     plan?: string;
+    subscriptionStatus?: SubscriptionStatus;
+    trialEndsAt?: string;
+    theme?: string;
+    isActive?: boolean;
   }
   interface Session {
     user: {
@@ -12,24 +17,68 @@ declare module "next-auth" {
       email?: string | null;
       role: string;
       plan: string;
+      subscriptionStatus: SubscriptionStatus;
+      trialEndsAt?: string;
+      theme?: string;
     };
   }
 }
+
+const PUBLIC_PATHS = [
+  "/login",
+  "/esqueci-senha",
+  "/redefinir-senha",
+  "/cadastro",
+  "/bem-vindo",
+  "/assinar",
+];
 
 export const authConfig = {
   pages: { signIn: "/login" },
   callbacks: {
     authorized({ auth, request }) {
       const isLoggedIn = !!auth?.user;
-      const pub = ["/login", "/esqueci-senha", "/redefinir-senha", "/cadastro", "/bem-vindo"];
-      const isPublic = pub.some(p => request.nextUrl.pathname.startsWith(p));
+      const pathname = request.nextUrl.pathname;
+      const isPublic = PUBLIC_PATHS.some(p => pathname.startsWith(p));
+
       if (isPublic) return true;
-      return isLoggedIn;
+      if (!isLoggedIn) return false;
+
+      // Check trial expiry (using info in JWT)
+      const status = (auth?.user as { subscriptionStatus?: string })?.subscriptionStatus;
+      const trialEndsAt = (auth?.user as { trialEndsAt?: string })?.trialEndsAt;
+
+      if (status === "trial" && trialEndsAt) {
+        const expired = new Date(trialEndsAt) < new Date();
+        if (expired && !pathname.startsWith("/assinar") && !pathname.startsWith("/api")) {
+          return Response.redirect(new URL("/assinar", request.url));
+        }
+      }
+
+      if (status === "expired" || status === "cancelled") {
+        if (!pathname.startsWith("/assinar") && !pathname.startsWith("/api")) {
+          return Response.redirect(new URL("/assinar", request.url));
+        }
+      }
+
+      // Master panel only for plan=admin
+      if (pathname.startsWith("/master")) {
+        const plan = (auth?.user as { plan?: string })?.plan;
+        if (plan !== "admin") {
+          return Response.redirect(new URL("/dashboard", request.url));
+        }
+      }
+
+      return true;
     },
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role;
         token.plan = user.plan;
+        token.subscriptionStatus = user.subscriptionStatus;
+        token.trialEndsAt = user.trialEndsAt;
+        token.theme = user.theme;
+        token.isActive = user.isActive;
       }
       return token;
     },
@@ -38,6 +87,9 @@ export const authConfig = {
         session.user.id = token.sub!;
         session.user.role = (token.role as string) ?? "user";
         session.user.plan = (token.plan as string) ?? "basic";
+        session.user.subscriptionStatus = (token.subscriptionStatus as SubscriptionStatus) ?? "active";
+        session.user.trialEndsAt = token.trialEndsAt as string | undefined;
+        session.user.theme = token.theme as string | undefined;
       }
       return session;
     },

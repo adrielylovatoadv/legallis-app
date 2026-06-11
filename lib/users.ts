@@ -5,6 +5,19 @@ export type { Plan, Role } from "./plans";
 export { PLAN_FEATURES, canAccess, canExport } from "./plans";
 import type { Plan, Role } from "./plans";
 
+export type SubscriptionStatus = "trial" | "active" | "expired" | "cancelled" | "pending";
+
+export interface OABEntry {
+  state: string;
+  number: string;
+}
+
+export interface Company {
+  name?: string;
+  cnpj?: string;
+  address?: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -14,6 +27,17 @@ export interface User {
   plan: Plan;
   avatar: string;
   createdAt: string;
+  // Extended fields
+  phone?: string;
+  oab?: OABEntry[];
+  company?: Company;
+  subscriptionStatus: SubscriptionStatus;
+  trialEndsAt?: string;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  theme?: "dark" | "light" | "auto";
+  permissions?: string[];
+  isActive: boolean;
 }
 
 export interface ResetToken {
@@ -27,7 +51,13 @@ const TOKENS_FILE = path.join(process.cwd(), "data", "reset_tokens.json");
 
 export function getUsers(): User[] {
   try {
-    return JSON.parse(fs.readFileSync(USERS_FILE, "utf-8"));
+    const raw = JSON.parse(fs.readFileSync(USERS_FILE, "utf-8"));
+    // Migrate legacy users that don't have new fields
+    return raw.map((u: Partial<User> & { id: string }) => ({
+      subscriptionStatus: "active" as SubscriptionStatus,
+      isActive: true,
+      ...u,
+    }));
   } catch {
     return [];
   }
@@ -75,6 +105,18 @@ export function deleteUser(id: string): boolean {
   return true;
 }
 
+export function isTrialExpired(user: User): boolean {
+  if (user.subscriptionStatus !== "trial") return false;
+  if (!user.trialEndsAt) return true;
+  return new Date(user.trialEndsAt) < new Date();
+}
+
+export function getTrialDaysRemaining(user: User): number {
+  if (!user.trialEndsAt) return 0;
+  const diff = new Date(user.trialEndsAt).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+}
+
 // Reset tokens
 function getTokens(): ResetToken[] {
   try {
@@ -91,8 +133,8 @@ function saveTokens(tokens: ResetToken[]): void {
 
 export function createResetToken(email: string): string {
   const token = crypto.randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString(); // 1h
-  const tokens = getTokens().filter(t => t.email !== email); // remove old
+  const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString();
+  const tokens = getTokens().filter(t => t.email !== email);
   tokens.push({ token, email, expiresAt });
   saveTokens(tokens);
   return token;
@@ -106,4 +148,3 @@ export function consumeResetToken(token: string): string | null {
   saveTokens(tokens.filter(x => x.token !== token));
   return t.email;
 }
-

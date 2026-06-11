@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { fetchAPI, fmtBRL, fmtPct, fmtFator } from "@/lib/api";
 import { canExport } from "@/lib/plans";
@@ -91,10 +91,22 @@ const MODOS = [
 
 let _id = 1;
 
+interface UserProfile { name?: string; oab?: Array<{ state: string; number: string }>; company?: { name?: string } }
+
 export default function CalculadoraPage() {
   const { data: session } = useSession();
   const plan = (session?.user.plan ?? "basic") as Plan;
   const today = new Date().toISOString().split("T")[0];
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetch(`/api/usuarios/${session.user.id}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => d && setUserProfile(d))
+        .catch(() => {});
+    }
+  }, [session?.user?.id]);
 
   // ── modos principais ──
   const [tribunal, setTribunal] = useState("TJMG");
@@ -435,6 +447,27 @@ export default function CalculadoraPage() {
       {/* ── Resultados Execução / Inicial ──────────────────────── */}
       {rows.length > 0 && summary && (
         <div className="space-y-5">
+          {/* Cabeçalho do PDF — visível apenas na impressão */}
+          <div className="hidden print:block mb-6 pb-4 border-b border-gray-300">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-lg font-bold">LEGALLIS — Demonstrativo de Débito</p>
+                {userProfile?.company?.name && (
+                  <p className="text-sm">{userProfile.company.name}</p>
+                )}
+                {userProfile?.oab && userProfile.oab.length > 0 && (
+                  <p className="text-sm">
+                    OAB: {userProfile.oab.map(o => `${o.state} ${o.number}`).join(" | ")}
+                  </p>
+                )}
+              </div>
+              <div className="text-right text-sm">
+                <p>Emitido por: {session?.user?.name ?? ""}</p>
+                <p>Data: {new Date().toLocaleDateString("pt-BR")}</p>
+                <p>Tribunal: {tribunal}</p>
+              </div>
+            </div>
+          </div>
           <Card>
             <SectionTitle>Demonstrativo de débito</SectionTitle>
             <div className="overflow-x-auto">

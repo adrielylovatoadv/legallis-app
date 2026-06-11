@@ -20,11 +20,13 @@ const PLANS: Plan[] = ["basic", "pro", "admin"];
 function PlanBadge({ plan }: { plan: Plan }) {
   const colors: Record<Plan, string> = {
     admin: "rgba(201,168,76,0.2)",
+    profissional: "rgba(52,211,153,0.2)",
     pro: "rgba(99,102,241,0.2)",
     basic: "rgba(107,114,128,0.2)",
   };
   const text: Record<Plan, string> = {
     admin: "var(--gold)",
+    profissional: "#34d399",
     pro: "#818cf8",
     basic: "var(--text3)",
   };

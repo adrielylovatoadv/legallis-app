@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const trialCreated = searchParams.get("cadastro") === "trial";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
@@ -52,6 +54,13 @@ export default function LoginPage() {
         <div className="flex justify-center mb-8">
           <Image src="/logo.png" alt="Legallis" width={180} height={54} priority />
         </div>
+
+        {trialCreated && (
+          <div className="mb-4 px-4 py-3 rounded-xl text-sm"
+            style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", color: "#4ade80" }}>
+            Conta criada com sucesso! Faça login para iniciar seu teste gratuito de 4 dias.
+          </div>
+        )}
 
         <div className="rounded-2xl px-8 py-8 space-y-6"
           style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
@@ -157,10 +166,30 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-xs mt-6" style={{ color: "var(--text3)" }}>
+        <div className="flex items-center justify-center gap-3 mt-4 text-xs">
+          <Link href="/cadastro/gratis" className="hover:opacity-80" style={{ color: "var(--gold)" }}>
+            Começar grátis (4 dias)
+          </Link>
+          <span style={{ color: "var(--text3)" }}>·</span>
+          <Link href="/cadastro" className="hover:opacity-80" style={{ color: "var(--gold)" }}>
+            Ver planos
+          </Link>
+        </div>
+
+        <p className="text-center text-xs mt-4" style={{ color: "var(--text3)" }}>
           LEGALLIS · GESTÃO JURÍDICA & FINANCEIRA
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg)" }} />
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

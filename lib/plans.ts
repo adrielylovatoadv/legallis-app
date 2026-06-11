@@ -1,4 +1,4 @@
-export type Plan = "admin" | "pro" | "basic";
+export type Plan = "admin" | "profissional" | "pro" | "basic";
 export type Role = "admin" | "user";
 
 export const PLAN_FEATURES: Record<Plan, {
@@ -8,6 +8,13 @@ export const PLAN_FEATURES: Record<Plan, {
   canAssignTasks: boolean;
   maxUsers: number;
 }> = {
+  profissional: {
+    label: "Profissional",
+    modules: ["controle", "financeiro", "calculadora"],
+    exports: ["pdf", "word", "excel"],
+    canAssignTasks: true,
+    maxUsers: Infinity,
+  },
   admin: {
     label: "Administrador",
     modules: ["controle", "financeiro", "calculadora", "admin"],
