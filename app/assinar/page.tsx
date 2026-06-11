@@ -7,33 +7,66 @@ const PLANS = [
   {
     id: "basic",
     name: "Básico",
-    price: "R$ 49",
+    price: "R$ 97",
     period: "/mês",
-    description: "Para advogados autônomos",
-    features: ["Controle Processual", "Calculadora Jurídica", "Export PDF", "1 usuário"],
-    paymentLink: "https://buy.stripe.com/test_5kQ9AUfca1i52Ac8tbeEo03",
+    description: "cobrado mensalmente",
+    trial: "4 dias grátis · sem cartão de crédito",
+    features: [
+      { text: "1 admin + até 2 usuários", ok: true },
+      { text: "Até 80 processos cadastrados", ok: true },
+      { text: "Controle Processual completo", ok: true },
+      { text: "Calculadora Jurídica (TJMG/TJSP)", ok: true },
+      { text: "Export em PDF", ok: true },
+      { text: "Financeiro do escritório", ok: false },
+      { text: "Export Word e Excel", ok: false },
+    ],
+    paymentLink: "https://buy.stripe.com/test_bJecN61lkgcZ7UwdNveEo06",
     color: "var(--text3)",
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price: "R$ 99",
-    period: "/mês",
-    description: "Para pequenos escritórios",
-    features: ["Tudo do Básico", "Financeiro", "Export PDF/Word/Excel", "Até 5 usuários"],
-    paymentLink: "https://buy.stripe.com/test_4gM9AU4xw6Cp5Mo24NeEo04",
-    color: "var(--gold)",
-    destaque: true,
+    btnLabel: "Testar grátis por 4 dias",
+    btnStyle: "outline",
   },
   {
     id: "profissional",
     name: "Profissional",
-    price: "R$ 199",
+    price: "R$ 197",
     period: "/mês",
-    description: "Para escritórios em crescimento",
-    features: ["Tudo do Pro", "Usuários ilimitados", "Painel admin", "Suporte prioritário"],
-    paymentLink: "https://buy.stripe.com/test_eVq6oI8NMf8V5Mo5gZeEo05",
+    description: "cobrado mensalmente",
+    trial: null,
+    features: [
+      { text: "1 admin + até 4 usuários", ok: true },
+      { text: "Até 200 processos cadastrados", ok: true },
+      { text: "Todos os módulos", ok: true },
+      { text: "Calculadora Jurídica (TJMG/TJSP)", ok: true },
+      { text: "Financeiro completo", ok: true },
+      { text: "Export PDF, Word e Excel", ok: true },
+      { text: "Suporte por e-mail", ok: true },
+    ],
+    paymentLink: "https://buy.stripe.com/test_7sYdRa2poe4R0s45gZeEo07",
+    color: "var(--gold)",
+    destaque: true,
+    btnLabel: "Assinar agora",
+    btnStyle: "gold",
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    price: "R$ 347",
+    period: "/mês",
+    description: "cobrado mensalmente",
+    trial: null,
+    features: [
+      { text: "1 admin + usuários ilimitados", ok: true },
+      { text: "Até 5.000 processos cadastrados", ok: true },
+      { text: "Todos os módulos", ok: true },
+      { text: "Calculadora Jurídica (TJMG/TJSP)", ok: true },
+      { text: "Export PDF, Word e Excel", ok: true },
+      { text: "Suporte prioritário", ok: true },
+      { text: "Onboarding incluso", ok: true },
+    ],
+    paymentLink: "https://buy.stripe.com/test_4gMaEYbZYd0N1w8dNveEo08",
     color: "#818cf8",
+    btnLabel: "Assinar agora",
+    btnStyle: "outline",
   },
 ];
 
@@ -96,29 +129,33 @@ export default function AssinarPage() {
                 <h3 className="font-semibold text-lg" style={{ color: plan.color }}>{plan.name}</h3>
                 <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>{plan.description}</p>
               </div>
-              <div className="flex items-baseline gap-1 mb-5">
-                <span className="text-3xl font-bold" style={{ color: "var(--text)" }}>{plan.price}</span>
+              <div className="flex items-baseline gap-1 mb-0.5">
+                <span className="text-4xl font-bold" style={{ color: "var(--text)" }}>{plan.price}</span>
                 <span className="text-sm" style={{ color: "var(--text3)" }}>{plan.period}</span>
               </div>
+              <p className="text-xs mb-1" style={{ color: "var(--text3)" }}>{plan.description}</p>
+              {plan.trial
+                ? <p className="text-xs mb-5" style={{ color: "var(--gold)" }}>✦ {plan.trial}</p>
+                : <p className="text-xs mb-5" style={{ color: "var(--text3)" }}>Sem período de teste · cobrança imediata</p>
+              }
               <ul className="space-y-2 mb-6">
                 {plan.features.map(f => (
-                  <li key={f} className="flex items-center gap-2 text-sm" style={{ color: "var(--text2)" }}>
-                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: plan.color }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    {f}
+                  <li key={f.text} className="flex items-center gap-2 text-sm"
+                    style={{ color: f.ok ? "var(--text2)" : "var(--text3)", textDecoration: f.ok ? "none" : "line-through", opacity: f.ok ? 1 : 0.5 }}>
+                    <span className="w-3.5 h-3.5 flex-shrink-0 text-xs">{f.ok ? "●" : "●"}</span>
+                    {f.text}
                   </li>
                 ))}
               </ul>
               <a
                 href={`${plan.paymentLink}?prefilled_email=${encodeURIComponent(session?.user?.email ?? "")}&client_reference_id=${session?.user?.id ?? ""}`}
-                className="block w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all"
+                className="block w-full py-3 rounded-xl text-sm font-semibold text-center transition-all"
                 style={{
-                  background: plan.destaque ? "var(--gold)" : "var(--surface2)",
-                  color: plan.destaque ? "#000" : "var(--text)",
-                  border: plan.destaque ? "none" : `1px solid ${plan.color}`,
+                  background: plan.btnStyle === "gold" ? "var(--gold)" : "transparent",
+                  color: plan.btnStyle === "gold" ? "#000" : plan.color,
+                  border: `1px solid ${plan.btnStyle === "gold" ? "var(--gold)" : plan.color}`,
                 }}>
-                Assinar {plan.name}
+                {plan.btnLabel}
               </a>
             </div>
           ))}
