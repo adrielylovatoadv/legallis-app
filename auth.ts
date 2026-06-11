@@ -58,7 +58,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     authorized({ auth, request }) {
       const isLoggedIn = !!auth?.user;
-      const pub = ["/login", "/esqueci-senha", "/redefinir-senha"];
+      const pub = ["/login", "/esqueci-senha", "/redefinir-senha", "/cadastro", "/bem-vindo"];
       const isPublic = pub.some(p => request.nextUrl.pathname.startsWith(p));
       if (isPublic) return true;
       return isLoggedIn;
