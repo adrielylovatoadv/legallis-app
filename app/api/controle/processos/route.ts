@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getData, saveData, newId, isFinalizado } from "@/lib/controle-data";
+import { auth } from "@/auth";
+import { getDataAsync as getData, saveDataAsync as saveData, newId, isFinalizado } from "@/lib/controle-data";
 
 export async function GET(req: NextRequest) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  const tid = session.user.tenantId;
   const { searchParams } = new URL(req.url);
   const busca = searchParams.get("busca") || "";
   const andamento = searchParams.get("andamento") || "";
   const responsavel = searchParams.get("responsavel") || "";
-  const tipo = searchParams.get("tipo") || ""; // "ativos" | "finalizados" | "audiencias" | "standby"
+  const tipo = searchParams.get("tipo") || "";
 
-  const data = getData();
+  const data = await getData(tid);
   let lista = data.processos;
 
   if (busca) {
@@ -45,8 +49,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  const tid = session.user.tenantId;
   const body = await req.json();
-  const data = getData();
+  const data = await getData(tid);
   const novo = {
     id: newId(),
     autor: body.autor || "",
@@ -63,6 +70,6 @@ export async function POST(req: NextRequest) {
     criado_em: new Date().toISOString(),
   };
   data.processos.push(novo);
-  saveData(data);
+  await saveData(data, tid);
   return NextResponse.json(novo, { status: 201 });
 }

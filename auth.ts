@@ -25,6 +25,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           trialEndsAt: user.trialEndsAt,
           theme: user.theme,
           isActive: user.isActive ?? true,
+          tenantId: user.tenantId ?? `t_${user.id}`,
         };
       },
     }),

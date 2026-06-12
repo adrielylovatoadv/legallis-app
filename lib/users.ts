@@ -38,6 +38,7 @@ export interface User {
   theme?: "dark" | "light" | "auto";
   permissions?: string[];
   isActive: boolean;
+  tenantId?: string;
 }
 
 export interface ResetToken {

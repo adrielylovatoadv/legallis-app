@@ -5,6 +5,8 @@ import { useSession } from "next-auth/react";
 import { fetchAPI, fmtBRL, fmtPct, fmtFator } from "@/lib/api";
 import { canExport } from "@/lib/plans";
 import type { Plan } from "@/lib/plans";
+import { exportarExcel, exportarPDF } from "@/lib/export-calc";
+import type { ExportDoc } from "@/lib/export-calc";
 
 // ── tipos ─────────────────────────────────────────────────────
 interface Lancamento { id: number; data: string; valor: string; }
@@ -81,17 +83,198 @@ function SummaryRow({ label, value, highlight }: { label: string; value: string;
   );
 }
 
+// ── Botões de exportação ──────────────────────────────────────────────────────
+function BotoesExport({ doc, nome }: { doc: ExportDoc; nome: string }) {
+  const [exporting, setExporting] = useState<"pdf" | "excel" | null>(null);
+
+  const handlePDF = async () => {
+    setExporting("pdf");
+    try { await exportarPDF(doc, nome); } finally { setExporting(null); }
+  };
+  const handleExcel = async () => {
+    setExporting("excel");
+    try { await exportarExcel(doc, nome); } finally { setExporting(null); }
+  };
+
+  return (
+    <div className="flex gap-2 justify-end mt-4">
+      <button onClick={handleExcel} disabled={!!exporting}
+        className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-opacity"
+        style={{ background: "rgba(34,197,94,0.1)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.3)", opacity: exporting ? 0.6 : 1 }}>
+        {exporting === "excel" ? "⏳" : "📊"} Excel
+      </button>
+      <button onClick={handlePDF} disabled={!!exporting}
+        className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-opacity"
+        style={{ background: "rgba(239,68,68,0.1)", color: "#f87171", border: "1px solid rgba(239,68,68,0.3)", opacity: exporting ? 0.6 : 1 }}>
+        {exporting === "pdf" ? "⏳" : "📄"} PDF
+      </button>
+    </div>
+  );
+}
+
+// ── ordem correta: Petição Inicial ANTES de Cumprimento de Sentença ──
 const MODOS = [
-  { value: "execucao", label: "Cumprimento de sentença" },
-  { value: "inicial", label: "Petição inicial" },
-  { value: "honorario", label: "Execução de honorário" },
-  { value: "revisional_veiculo", label: "Revisional de veículo" },
-  { value: "revisional_emprestimo", label: "Empréstimo não consignado" },
+  { value: "inicial", label: "Petição Inicial" },
+  { value: "execucao", label: "Cumprimento de Sentença" },
+  { value: "honorario", label: "Execução de Honorário" },
+  { value: "revisional_veiculo", label: "Revisional de Veículo" },
+  { value: "revisional_emprestimo", label: "Revisional de Contratos Bancários" },
+];
+
+// ── tipos de irregularidade para Revisional de Contratos ──
+const IRREGULARIDADES = [
+  { key: "juros_abusivos", label: "Juros abusivos" },
+  { key: "tarifas_indevidas", label: "Tarifas indevidas" },
+  { key: "venda_casada", label: "Venda casada" },
+  { key: "seguros_embutidos", label: "Seguros embutidos" },
+];
+
+// ── tipos de seguro para Revisional de Veículo e Contratos ──
+const TIPOS_SEGURO = [
+  "Seguro prestamista",
+  "Seguro proteção financeira",
+  "Seguro desemprego",
+  "Seguro acidentes pessoais",
+  "Seguro de vida",
+  "Outros seguros",
 ];
 
 let _id = 1;
 
 interface UserProfile { name?: string; oab?: Array<{ state: string; number: string }>; company?: { name?: string } }
+
+// ── Componente Formação Rápida ─────────────────────────────────
+function FormacaoRapida({ onGerar }: {
+  onGerar: (lancamentos: { data: string; valor: string }[]) => void;
+}) {
+  const [qtd, setQtd] = useState("12");
+  const [dataInicial, setDataInicial] = useState("");
+  const [valor, setValor] = useState("");
+  const [periodicidade, setPeriodicidade] = useState("mensal");
+  const [aberto, setAberto] = useState(false);
+
+  const gerar = () => {
+    const n = Math.min(parseInt(qtd) || 1, 480);
+    if (!valor) return;
+    const lancamentos: { data: string; valor: string }[] = [];
+
+    let dataBase = dataInicial ? new Date(dataInicial + "T12:00:00") : null;
+
+    for (let i = 0; i < n; i++) {
+      let dataStr = "";
+      if (dataBase) {
+        const d = new Date(dataBase);
+        if (periodicidade === "diario") d.setDate(d.getDate() + i);
+        else if (periodicidade === "semanal") d.setDate(d.getDate() + i * 7);
+        else if (periodicidade === "mensal") d.setMonth(d.getMonth() + i);
+        else if (periodicidade === "anual") d.setFullYear(d.getFullYear() + i);
+        dataStr = d.toISOString().split("T")[0];
+      }
+      lancamentos.push({ data: dataStr, valor });
+    }
+    onGerar(lancamentos);
+    setAberto(false);
+  };
+
+  return (
+    <div>
+      <button onClick={() => setAberto(!aberto)}
+        className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg"
+        style={{ color: "var(--gold)", border: "1px dashed var(--gold)", background: "rgba(201,168,76,0.05)" }}>
+        ⚡ Formação Rápida de Lançamentos
+      </button>
+      {aberto && (
+        <div className="mt-3 p-4 rounded-xl space-y-3" style={{ background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.2)" }}>
+          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--gold)" }}>Formação Rápida de Lançamentos</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div>
+              <span className="text-xs mb-1 block" style={{ color: "var(--text3)" }}>Quantidade (máx. 480)</span>
+              <input type="number" value={qtd} onChange={e => setQtd(e.target.value)} min="1" max="480"
+                className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+                style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }} />
+            </div>
+            <div>
+              <span className="text-xs mb-1 block" style={{ color: "var(--text3)" }}>Data inicial (opcional)</span>
+              <input type="date" value={dataInicial} onChange={e => setDataInicial(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+                style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }} />
+            </div>
+            <div>
+              <span className="text-xs mb-1 block" style={{ color: "var(--text3)" }}>Valor padrão (R$)</span>
+              <input type="text" value={valor} onChange={e => setValor(e.target.value)} placeholder="0,00"
+                className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+                style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }} />
+            </div>
+            <div>
+              <span className="text-xs mb-1 block" style={{ color: "var(--text3)" }}>Periodicidade</span>
+              <select value={periodicidade} onChange={e => setPeriodicidade(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+                style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
+                <option value="diario">Diário</option>
+                <option value="semanal">Semanal</option>
+                <option value="mensal">Mensal</option>
+                <option value="anual">Anual</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={gerar}
+              className="px-4 py-2 rounded-lg text-sm font-semibold"
+              style={{ background: "var(--gold)", color: "#000" }}>
+              Gerar {qtd || "0"} lançamentos
+            </button>
+            <button onClick={() => setAberto(false)}
+              className="px-4 py-2 rounded-lg text-sm"
+              style={{ background: "var(--surface2)", color: "var(--text3)", border: "1px solid var(--border)" }}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Componente Seguros Embutidos ───────────────────────────────
+function SegurosEmbutidos({ valores, onChange }: {
+  valores: Record<string, string>;
+  onChange: (v: Record<string, string>) => void;
+}) {
+  const total = TIPOS_SEGURO.reduce((s, t) => {
+    const v = parseFloat((valores[t] || "0").replace(/\./g, "").replace(",", ".")) || 0;
+    return s + v;
+  }, 0);
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#f59e0b" }}>🛡️ Seguros Embutidos</span>
+        {total > 0 && <span className="text-xs font-semibold" style={{ color: "#f87171" }}>Total: {fmtBRL(total)}</span>}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {TIPOS_SEGURO.map(tipo => (
+          <div key={tipo}>
+            <span className="text-xs mb-1 block" style={{ color: "var(--text3)" }}>{tipo} (R$)</span>
+            <input
+              type="text"
+              value={valores[tipo] || ""}
+              onChange={e => onChange({ ...valores, [tipo]: e.target.value })}
+              placeholder="0,00"
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}
+            />
+          </div>
+        ))}
+      </div>
+      {total > 0 && (
+        <div className="px-3 py-2 rounded-lg text-xs"
+          style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
+          ⚠️ Total de seguros embutidos potencialmente restituíveis: <strong>{fmtBRL(total)}</strong>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function CalculadoraPage() {
   const { data: session } = useSession();
@@ -110,7 +293,7 @@ export default function CalculadoraPage() {
 
   // ── modos principais ──
   const [tribunal, setTribunal] = useState("TJMG");
-  const [modo, setModo] = useState("execucao");
+  const [modo, setModo] = useState("inicial");
   const [dataCalculo, setDataCalculo] = useState(today);
   const [honorariosPct, setHonorariosPct] = useState("20");
   const [multa523, setMulta523] = useState(false);
@@ -133,6 +316,9 @@ export default function CalculadoraPage() {
   const [revDataContrat, setRevDataContrat] = useState("");
   const [revDataCalc, setRevDataCalc] = useState(today);
   const [revTaxaBacen, setRevTaxaBacen] = useState("");
+  const [segurosVeiculo, setSegurosVeiculo] = useState<Record<string, string>>({});
+  const [segurosContrato, setSegurosContrato] = useState<Record<string, string>>({});
+  const [irregularidades, setIrregularidades] = useState<Record<string, boolean>>({});
 
   // ── estado ──
   const [loading, setLoading] = useState(false);
@@ -145,11 +331,17 @@ export default function CalculadoraPage() {
   const [processoInfo, setProcessoInfo] = useState({ numero: "", parte: "", advogado: "" });
 
   const parseBRL = (s: string) => parseFloat(s.replace(/\./g, "").replace(",", ".")) || 0;
+  const totalSeguros = (seg: Record<string, string>) =>
+    Object.values(seg).reduce((s, v) => s + parseBRL(v), 0);
 
   const addLancamento = () => setLancamentos(p => [...p, { id: _id++, data: "", valor: "" }]);
   const removeLancamento = (id: number) => setLancamentos(p => p.filter(l => l.id !== id));
   const updateLancamento = (id: number, f: "data" | "valor", v: string) =>
     setLancamentos(p => p.map(l => l.id === id ? { ...l, [f]: v } : l));
+
+  const gerarLancamentos = (novos: { data: string; valor: string }[]) => {
+    setLancamentos(novos.map(n => ({ id: _id++, ...n })));
+  };
 
   const isRevisional = modo === "revisional_veiculo" || modo === "revisional_emprestimo";
 
@@ -168,6 +360,7 @@ export default function CalculadoraPage() {
         });
         setHonResult(r);
       } else if (isRevisional) {
+        const seguros = modo === "revisional_veiculo" ? segurosVeiculo : segurosContrato;
         const r = await fetchAPI("/calculadora/revisional", {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -176,6 +369,7 @@ export default function CalculadoraPage() {
             n_parcelas: parseInt(revN) || 0,
             data_contratacao: revDataContrat, data_calculo: revDataCalc,
             taxa_bacen: revTaxaBacen ? parseFloat(revTaxaBacen) : null,
+            total_seguros: totalSeguros(seguros),
           }),
         });
         setRevResult(r);
@@ -199,9 +393,11 @@ export default function CalculadoraPage() {
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modo, lancamentos, dataCalculo, tribunal, honorariosPct, multa523, aplicarDobro, danoMoral,
     honValor, honDataOrigem, honDataCalc, honTribunal, honPct, honProcesso,
-    revPV, revPMT, revN, revDataContrat, revDataCalc, revTaxaBacen, isRevisional]);
+    revPV, revPMT, revN, revDataContrat, revDataCalc, revTaxaBacen, isRevisional,
+    segurosVeiculo, segurosContrato]);
 
   const atualizarIndices = async () => {
     setAtualizando(true);
@@ -214,6 +410,8 @@ export default function CalculadoraPage() {
     if (!canExport(plan, "pdf")) { alert("Seu plano não inclui exportação em PDF."); return; }
     window.print();
   };
+
+  const clearResults = () => { setRows([]); setSummary(null); setHonResult(null); setRevResult(null); setError(""); };
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-5">
@@ -250,7 +448,7 @@ export default function CalculadoraPage() {
       {/* Seletor de modo */}
       <div className="flex flex-wrap gap-2">
         {MODOS.map(m => (
-          <button key={m.value} onClick={() => { setModo(m.value); setError(""); setRows([]); setSummary(null); setHonResult(null); setRevResult(null); }}
+          <button key={m.value} onClick={() => { setModo(m.value); clearResults(); }}
             className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
             style={{
               background: modo === m.value ? "rgba(201,168,76,0.15)" : "var(--surface2)",
@@ -262,7 +460,7 @@ export default function CalculadoraPage() {
         ))}
       </div>
 
-      {/* ── Modo Execução / Inicial ────────────────────────────── */}
+      {/* ── Modo Petição Inicial / Cumprimento de Sentença ─── */}
       {(modo === "execucao" || modo === "inicial") && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="lg:col-span-1 space-y-5">
@@ -353,14 +551,17 @@ export default function CalculadoraPage() {
                   </div>
                 ))}
               </div>
-              <button onClick={addLancamento}
-                className="mt-3 flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg"
-                style={{ color: "var(--gold)", border: "1px dashed var(--gold)", background: "rgba(201,168,76,0.05)" }}>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Adicionar lançamento
-              </button>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button onClick={addLancamento}
+                  className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg"
+                  style={{ color: "var(--gold)", border: "1px dashed var(--gold)", background: "rgba(201,168,76,0.05)" }}>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Adicionar lançamento
+                </button>
+                <FormacaoRapida onGerar={gerarLancamentos} />
+              </div>
             </Card>
             {error && (
               <div className="px-4 py-3 rounded-lg text-sm"
@@ -412,11 +613,11 @@ export default function CalculadoraPage() {
         </Card>
       )}
 
-      {/* ── Modos Revisionais ───────────────────────────────────── */}
-      {isRevisional && (
+      {/* ── Revisional de Veículo ─────────────────────────────── */}
+      {modo === "revisional_veiculo" && (
         <Card>
-          <SectionTitle>{modo === "revisional_veiculo" ? "Revisional de Veículo" : "Empréstimo Não Consignado"}</SectionTitle>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <SectionTitle>Revisional de Veículo</SectionTitle>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div><Label>Valor financiado — PV (R$)</Label>
                 <Input type="text" value={revPV} onChange={e => setRevPV(e.target.value)} placeholder="0,00" className="mt-1" /></div>
@@ -435,6 +636,60 @@ export default function CalculadoraPage() {
                   placeholder="Taxa média de mercado" step="0.01" className="mt-1" /></div>
             </div>
           </div>
+          <div className="mt-5 pt-4 border-t" style={{ borderColor: "var(--border)" }}>
+            <SegurosEmbutidos valores={segurosVeiculo} onChange={setSegurosVeiculo} />
+          </div>
+          {error && <div className="mt-4 px-4 py-3 rounded-lg text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>{error}</div>}
+          <button onClick={calcular} disabled={loading}
+            className="mt-4 w-full py-3 rounded-xl font-semibold text-base"
+            style={{ background: loading ? "var(--surface2)" : "var(--gold)", color: loading ? "var(--text3)" : "#000" }}>
+            {loading ? "Calculando..." : "Calcular revisional"}
+          </button>
+        </Card>
+      )}
+
+      {/* ── Revisional de Contratos Bancários ────────────────── */}
+      {modo === "revisional_emprestimo" && (
+        <Card>
+          <SectionTitle>Revisional de Contratos Bancários</SectionTitle>
+          <div className="mb-4">
+            <p className="text-xs mb-2" style={{ color: "var(--text3)" }}>Selecione as irregularidades identificadas no contrato:</p>
+            <div className="flex flex-wrap gap-2">
+              {IRREGULARIDADES.map(irr => (
+                <label key={irr.key} className="flex items-center gap-1.5 cursor-pointer text-sm px-3 py-1.5 rounded-lg"
+                  style={{ background: irregularidades[irr.key] ? "rgba(201,168,76,0.12)" : "var(--surface2)", border: `1px solid ${irregularidades[irr.key] ? "var(--gold)" : "var(--border)"}`, color: irregularidades[irr.key] ? "var(--gold)" : "var(--text2)" }}>
+                  <input type="checkbox" checked={!!irregularidades[irr.key]}
+                    onChange={e => setIrregularidades(p => ({ ...p, [irr.key]: e.target.checked }))}
+                    className="hidden" />
+                  {irregularidades[irr.key] ? "✓" : "○"} {irr.label}
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div><Label>Valor financiado — PV (R$)</Label>
+                <Input type="text" value={revPV} onChange={e => setRevPV(e.target.value)} placeholder="0,00" className="mt-1" /></div>
+              <div><Label>Parcela contratada (R$)</Label>
+                <Input type="text" value={revPMT} onChange={e => setRevPMT(e.target.value)} placeholder="0,00" className="mt-1" /></div>
+              <div><Label>Número de parcelas</Label>
+                <Input type="number" value={revN} onChange={e => setRevN(e.target.value)} min="1" className="mt-1" /></div>
+            </div>
+            <div className="space-y-4">
+              <div><Label>Data da contratação</Label>
+                <Input type="date" value={revDataContrat} onChange={e => setRevDataContrat(e.target.value)} className="mt-1" /></div>
+              <div><Label>Data do cálculo</Label>
+                <Input type="date" value={revDataCalc} onChange={e => setRevDataCalc(e.target.value)} className="mt-1" /></div>
+              <div><Label>Taxa BACEN de referência (% a.m.) — opcional</Label>
+                <Input type="number" value={revTaxaBacen} onChange={e => setRevTaxaBacen(e.target.value)}
+                  placeholder="Taxa média de mercado" step="0.01" className="mt-1" /></div>
+            </div>
+          </div>
+          {irregularidades.seguros_embutidos && (
+            <div className="mt-5 pt-4 border-t" style={{ borderColor: "var(--border)" }}>
+              <SegurosEmbutidos valores={segurosContrato} onChange={setSegurosContrato} />
+            </div>
+          )}
           {error && <div className="mt-4 px-4 py-3 rounded-lg text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>{error}</div>}
           <button onClick={calcular} disabled={loading}
             className="mt-4 w-full py-3 rounded-xl font-semibold text-base"
@@ -447,18 +702,13 @@ export default function CalculadoraPage() {
       {/* ── Resultados Execução / Inicial ──────────────────────── */}
       {rows.length > 0 && summary && (
         <div className="space-y-5">
-          {/* Cabeçalho do PDF — visível apenas na impressão */}
           <div className="hidden print:block mb-6 pb-4 border-b border-gray-300">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-lg font-bold">LEGALLIS — Demonstrativo de Débito</p>
-                {userProfile?.company?.name && (
-                  <p className="text-sm">{userProfile.company.name}</p>
-                )}
+                {userProfile?.company?.name && <p className="text-sm">{userProfile.company.name}</p>}
                 {userProfile?.oab && userProfile.oab.length > 0 && (
-                  <p className="text-sm">
-                    OAB: {userProfile.oab.map(o => `${o.state} ${o.number}`).join(" | ")}
-                  </p>
+                  <p className="text-sm">OAB: {userProfile.oab.map(o => `${o.state} ${o.number}`).join(" | ")}</p>
                 )}
               </div>
               <div className="text-right text-sm">
@@ -523,6 +773,40 @@ export default function CalculadoraPage() {
                 </span>
               </div>
             </div>
+            <BotoesExport nome={`calculo-${modo}-${new Date().toISOString().slice(0,10)}`} doc={{
+              titulo: modo === "inicial" ? "Petição Inicial — Demonstrativo de Débito" : "Cumprimento de Sentença — Demonstrativo de Débito",
+              subtitulo: `Gerado em ${new Date().toLocaleString("pt-BR")}`,
+              secoes: [
+                {
+                  nome: "Demonstrativo de Débito",
+                  tipo: "tabela",
+                  colunas: ["Data", "Valor Original", "Fator", "Débito Corrigido", "Juros %", "Valor Juros", "Total"],
+                  dados: rows.map(r => ({
+                    "Data": r.data_cobranca,
+                    "Valor Original": fmtBRL(r.valor_original),
+                    "Fator": r.fator_correcao.toFixed(6),
+                    "Débito Corrigido": fmtBRL(r.debito_corrigido),
+                    "Juros %": fmtPct(r.juros_pct),
+                    "Valor Juros": fmtBRL(r.juros_valor),
+                    "Total": fmtBRL(r.total),
+                  })),
+                },
+                {
+                  nome: "Resumo",
+                  tipo: "resumo",
+                  linhas: [
+                    { label: "Débito corrigido (principal)", valor: fmtBRL(summary.subtotal_principal) },
+                    { label: "Juros moratórios", valor: fmtBRL(summary.subtotal_juros) },
+                    { label: "Subtotal", valor: fmtBRL(summary.subtotal_base) },
+                    ...(modo === "execucao" && summary.honorarios_valor !== undefined ? [{ label: `Honorários (${summary.honorarios_pct}%)`, valor: fmtBRL(summary.honorarios_valor) }] : []),
+                    ...(modo === "execucao" && summary.multa_523 && summary.multa_valor !== undefined ? [{ label: "Multa art. 523 §1º CPC (10%)", valor: fmtBRL(summary.multa_valor) }] : []),
+                    ...(modo === "inicial" && summary.aplicar_dobro && summary.subtotal_material !== undefined ? [{ label: "Repetição em dobro (CDC art. 42)", valor: fmtBRL(summary.subtotal_material) }] : []),
+                    ...(modo === "inicial" && summary.dano_moral ? [{ label: "Dano moral", valor: fmtBRL(summary.dano_moral) }] : []),
+                    { label: modo === "inicial" ? "Valor da causa" : "Total geral", valor: fmtBRL(summary.total_geral) },
+                  ],
+                },
+              ],
+            }} />
           </Card>
         </div>
       )}
@@ -550,6 +834,22 @@ export default function CalculadoraPage() {
           <p className="text-xs mt-2" style={{ color: "var(--text3)" }}>
             Correção: {honResult.indice_label} — sem juros de mora.
           </p>
+          <BotoesExport nome={`honorario-${new Date().toISOString().slice(0,10)}`} doc={{
+            titulo: "Execução de Honorário",
+            subtitulo: honResult.numero_processo ? `Processo: ${honResult.numero_processo}` : undefined,
+            secoes: [{
+              nome: "Resultado",
+              tipo: "resumo",
+              linhas: [
+                { label: "Valor da causa (original)", valor: fmtBRL(honResult.valor_original) },
+                { label: "Índice de correção", valor: honResult.indice_label },
+                { label: "Período", valor: `${honResult.meses_corr} mês(es) — ${honResult.periodo}` },
+                { label: "Fator acumulado", valor: honResult.corr_factor.toFixed(6) },
+                { label: "Valor corrigido", valor: fmtBRL(honResult.valor_corrigido) },
+                { label: `Honorário (${honResult.honorarios_pct}%)`, valor: fmtBRL(honResult.honorario_valor) },
+              ],
+            }],
+          }} />
         </Card>
       )}
 
@@ -557,7 +857,7 @@ export default function CalculadoraPage() {
       {revResult && (
         <div className="space-y-5">
           <Card>
-            <SectionTitle>Resultado — {revResult.tipo === "veiculo" ? "Revisional de Veículo" : "Empréstimo Não Consignado"}</SectionTitle>
+            <SectionTitle>Resultado — {revResult.tipo === "veiculo" ? "Revisional de Veículo" : "Revisional de Contratos Bancários"}</SectionTitle>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1 text-sm">
                 <SummaryRow label="Valor financiado (PV)" value={fmtBRL(revResult.pv)} />
@@ -567,6 +867,12 @@ export default function CalculadoraPage() {
                 <SummaryRow label="Parcela contratada" value={fmtBRL(revResult.pmt_contratada)} />
                 <SummaryRow label="Parcela justa" value={fmtBRL(revResult.pmt_justa)} highlight />
                 <SummaryRow label="Excesso mensal" value={fmtBRL(revResult.excesso_mensal)} />
+                {revResult.tipo === "veiculo" && totalSeguros(segurosVeiculo) > 0 && (
+                  <SummaryRow label="Seguros embutidos (restituíveis)" value={fmtBRL(totalSeguros(segurosVeiculo))} />
+                )}
+                {revResult.tipo === "emprestimo" && totalSeguros(segurosContrato) > 0 && (
+                  <SummaryRow label="Seguros embutidos (restituíveis)" value={fmtBRL(totalSeguros(segurosContrato))} />
+                )}
               </div>
               <div className="flex flex-col items-center justify-center rounded-xl p-6"
                 style={{ background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.2)" }}>
@@ -601,6 +907,37 @@ export default function CalculadoraPage() {
                   </tbody>
                 </table>
               </div>
+              <BotoesExport nome={`revisional-${revResult.tipo}-${new Date().toISOString().slice(0,10)}`} doc={{
+                titulo: revResult.tipo === "veiculo" ? "Revisional de Veículo" : "Revisional de Contratos Bancários",
+                secoes: [
+                  {
+                    nome: "Resumo",
+                    tipo: "resumo",
+                    linhas: [
+                      { label: "Valor financiado (PV)", valor: fmtBRL(revResult.pv) },
+                      { label: "Número de parcelas", valor: String(revResult.n_parcelas) },
+                      { label: "Taxa contratada implícita", valor: `${revResult.taxa_contratada_pct.toFixed(4)}% a.m.` },
+                      { label: "Taxa de referência", valor: `${revResult.taxa_referencia_pct.toFixed(4)}% a.m.` },
+                      { label: "Parcela contratada", valor: fmtBRL(revResult.pmt_contratada) },
+                      { label: "Parcela justa", valor: fmtBRL(revResult.pmt_justa) },
+                      { label: "Excesso mensal", valor: fmtBRL(revResult.excesso_mensal) },
+                      { label: "Total de excesso cobrado", valor: fmtBRL(revResult.total_excesso) },
+                    ],
+                  },
+                  {
+                    nome: "Planilha de Parcelas",
+                    tipo: "tabela",
+                    colunas: ["Parcela", "Vencimento", "Pmt Contratada", "Pmt Justa", "Excesso"],
+                    dados: revResult.parcelas.map(p => ({
+                      "Parcela": p.parcela,
+                      "Vencimento": p.data_vencimento,
+                      "Pmt Contratada": fmtBRL(p.pmt_contratada),
+                      "Pmt Justa": fmtBRL(p.pmt_justa),
+                      "Excesso": fmtBRL(p.excesso),
+                    })),
+                  },
+                ],
+              }} />
             </Card>
           )}
         </div>

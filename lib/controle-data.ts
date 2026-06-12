@@ -1,7 +1,10 @@
 import fs from "fs";
 import path from "path";
+import { dbGet, dbSet, dbInit, hasDb } from "./db";
 
 const DATA_FILE = path.join(process.cwd(), "data", "controle_data.json");
+const TMP_CONTROLE = "/tmp/legallis_controle.json";
+const DB_KEY_PREFIX = "controle";
 
 export interface Processo {
   id: string; autor: string; reu: string; objeto: string;
@@ -28,10 +31,7 @@ interface ControleData {
   iniciais: Inicial[];
 }
 
-export function getData(): ControleData {
-  if (!fs.existsSync(DATA_FILE)) return { processos: [], clientes: [], iniciais: [] };
-  const raw = fs.readFileSync(DATA_FILE, "utf-8");
-  const d = JSON.parse(raw);
+function parseRaw(d: Partial<ControleData>): ControleData {
   return {
     processos: (d.processos || []).map((p: Processo) => ({
       ...{ atencao: false, finalizado: false, hora: "", responsavel: "",
@@ -50,8 +50,49 @@ export function getData(): ControleData {
   };
 }
 
+function emptyData(): ControleData {
+  return { processos: [], clientes: [], iniciais: [] };
+}
+
+function readFromFile(): ControleData {
+  const file = fs.existsSync(TMP_CONTROLE) ? TMP_CONTROLE : DATA_FILE;
+  if (!fs.existsSync(file)) return emptyData();
+  return parseRaw(JSON.parse(fs.readFileSync(file, "utf-8")));
+}
+
+export async function getDataAsync(tenantId = "default"): Promise<ControleData> {
+  const key = `${DB_KEY_PREFIX}_${tenantId}`;
+  if (hasDb()) {
+    await dbInit();
+    const d = await dbGet<Partial<ControleData>>(key);
+    if (d) return parseRaw(d);
+    const fromFile = readFromFile();
+    await dbSet(key, fromFile);
+    return fromFile;
+  }
+  return readFromFile();
+}
+
+export async function saveDataAsync(data: ControleData, tenantId = "default"): Promise<void> {
+  const key = `${DB_KEY_PREFIX}_${tenantId}`;
+  if (hasDb()) {
+    await dbSet(key, data);
+    return;
+  }
+  const content = JSON.stringify(data, null, 2);
+  try { fs.writeFileSync(DATA_FILE, content, "utf-8"); }
+  catch { fs.writeFileSync(TMP_CONTROLE, content, "utf-8"); }
+}
+
+// Legacy sync API
+export function getData(): ControleData {
+  return readFromFile();
+}
+
 export function saveData(data: ControleData) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
+  const content = JSON.stringify(data, null, 2);
+  try { fs.writeFileSync(DATA_FILE, content, "utf-8"); }
+  catch { fs.writeFileSync(TMP_CONTROLE, content, "utf-8"); }
 }
 
 export function newId() {

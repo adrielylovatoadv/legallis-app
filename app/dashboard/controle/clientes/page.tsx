@@ -232,11 +232,18 @@ export default function ClientesPage() {
           <h1 className="font-serif text-2xl font-semibold" style={{ color:"var(--text)" }}>Clientes</h1>
           <p className="text-sm mt-0.5" style={{ color:"var(--text3)" }}>{clientes.length} cadastrado{clientes.length !== 1 ? "s" : ""}</p>
         </div>
-        <button onClick={() => { setNovoAberto(true); setEditando(null); }}
-          className="px-4 py-2 rounded-lg text-sm font-semibold"
-          style={{ background:"var(--gold)", color:"#000" }}>
-          + Novo cliente
-        </button>
+        <div className="flex gap-2">
+          <a href="/dashboard/controle"
+            className="px-4 py-2 rounded-lg text-sm font-medium"
+            style={{ background:"var(--surface2)", border:"1px solid var(--border)", color:"var(--text2)" }}>
+            📊 Dashboard
+          </a>
+          <button onClick={() => { setNovoAberto(true); setEditando(null); }}
+            className="px-4 py-2 rounded-lg text-sm font-semibold"
+            style={{ background:"var(--gold)", color:"#000" }}>
+            + Novo cliente
+          </button>
+        </div>
       </div>
 
       <input value={busca} onChange={e => setBusca(e.target.value)}

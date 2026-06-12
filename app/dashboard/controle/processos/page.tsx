@@ -299,9 +299,16 @@ export default function ProcessosPage() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-5">
-      <div>
-        <h1 className="font-serif text-2xl font-semibold" style={{ color:"var(--text)" }}>Andamentos Processuais</h1>
-        <p className="text-sm mt-0.5" style={{ color:"var(--text3)" }}>Prazos, audiências e movimentações</p>
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="font-serif text-2xl font-semibold" style={{ color:"var(--text)" }}>Andamentos Processuais</h1>
+          <p className="text-sm mt-0.5" style={{ color:"var(--text3)" }}>Prazos, audiências e movimentações</p>
+        </div>
+        <a href="/dashboard/controle"
+          className="px-4 py-2 rounded-lg text-sm font-medium"
+          style={{ background:"var(--surface2)", border:"1px solid var(--border)", color:"var(--text2)" }}>
+          📊 Dashboard
+        </a>
       </div>
 
       {/* Abas */}

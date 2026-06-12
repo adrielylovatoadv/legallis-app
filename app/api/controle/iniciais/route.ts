@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getData, saveData, newId } from "@/lib/controle-data";
+import { auth } from "@/auth";
+import { getDataAsync as getData, saveDataAsync as saveData, newId } from "@/lib/controle-data";
 
 export async function GET(req: NextRequest) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  const tid = session.user.tenantId;
   const { searchParams } = new URL(req.url);
   const busca = searchParams.get("busca") || "";
   const andamento = searchParams.get("andamento") || "";
   const responsavel = searchParams.get("responsavel") || "";
 
-  const data = getData();
+  const data = await getData(tid);
   let lista = data.iniciais;
 
   if (busca) {
@@ -25,8 +29,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  const tid = session.user.tenantId;
   const body = await req.json();
-  const data = getData();
+  const data = await getData(tid);
   const novo = {
     id: newId(), cliente: body.cliente || "", reu: body.reu || "",
     objeto: body.objeto || "", andamento: body.andamento || "FAZER INICIAL",
@@ -34,6 +41,6 @@ export async function POST(req: NextRequest) {
     criado_em: new Date().toISOString(),
   };
   data.iniciais.push(novo);
-  saveData(data);
+  await saveData(data, tid);
   return NextResponse.json(novo, { status: 201 });
 }

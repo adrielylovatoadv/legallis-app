@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getData, saveData, newId, normNome, isFinalizado } from "@/lib/controle-data";
+import { auth } from "@/auth";
+import { getDataAsync as getData, saveDataAsync as saveData, newId, normNome, isFinalizado } from "@/lib/controle-data";
 
 export async function GET(req: NextRequest) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  const tid = session.user.tenantId;
   const { searchParams } = new URL(req.url);
   const busca = searchParams.get("busca") || "";
   const comProcessos = searchParams.get("com_processos") === "1";
 
-  const data = getData();
+  const data = await getData(tid);
   let lista = [...data.clientes].sort((a, b) => a.nome.localeCompare(b.nome));
 
   if (busca) {
@@ -33,8 +37,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  const tid = session.user.tenantId;
   const body = await req.json();
-  const data = getData();
+  const data = await getData(tid);
   const novo = {
     id: newId(), nome: body.nome || "", telefone: body.telefone || "",
     cpf: body.cpf || "", email: body.email || "", endereco: body.endereco || "",
@@ -43,6 +50,6 @@ export async function POST(req: NextRequest) {
     criado_em: new Date().toISOString(),
   };
   data.clientes.push(novo);
-  saveData(data);
+  await saveData(data, tid);
   return NextResponse.json(novo, { status: 201 });
 }

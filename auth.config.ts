@@ -9,6 +9,7 @@ declare module "next-auth" {
     trialEndsAt?: string;
     theme?: string;
     isActive?: boolean;
+    tenantId?: string;
   }
   interface Session {
     user: {
@@ -20,6 +21,7 @@ declare module "next-auth" {
       subscriptionStatus: SubscriptionStatus;
       trialEndsAt?: string;
       theme?: string;
+      tenantId: string;
     };
   }
 }
@@ -79,6 +81,7 @@ export const authConfig = {
         token.trialEndsAt = user.trialEndsAt;
         token.theme = user.theme;
         token.isActive = user.isActive;
+        token.tenantId = user.tenantId;
       }
       return token;
     },
@@ -90,6 +93,7 @@ export const authConfig = {
         session.user.subscriptionStatus = (token.subscriptionStatus as SubscriptionStatus) ?? "active";
         session.user.trialEndsAt = token.trialEndsAt as string | undefined;
         session.user.theme = token.theme as string | undefined;
+        session.user.tenantId = (token.tenantId as string) ?? `t_${token.sub}`;
       }
       return session;
     },

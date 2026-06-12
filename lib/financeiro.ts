@@ -1,6 +1,15 @@
-import { fetchAPI, fmtBRL } from "./api";
+async function fetchAPI(path: string, options?: RequestInit) {
+  const base = typeof window === "undefined" ? (process.env.NEXTAUTH_URL || "http://localhost:3001") : "";
+  const res = await fetch(`${base}/api${path}`, options);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || "Erro na API");
+  }
+  return res.json();
+}
 
-export { fmtBRL };
+export const fmtBRL = (v: number) =>
+  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 export const MESES = [
   "Out/2025","Nov/2025","Dez/2025",
@@ -37,7 +46,8 @@ export interface HonorarioInicial {
 }
 export interface Fixa {
   categoria: string; quem: string;
-  valores: Record<string, number>; status: Record<string, string>; total: number;
+  valores: Record<string, number>; status: Record<string, string>;
+  valor_fixo: number; total: number;
 }
 export interface Variavel {
   id: string; descricao: string; valor: number; parcelas: string;
@@ -74,14 +84,26 @@ export const deleteHonInicial = (id: string) => fetchAPI(`${p}/honorarios-inicia
 export const statusHonInicial = (id: string, status: string) => fetchAPI(`${p}/honorarios-iniciais/${id}/status`, { method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ status }) });
 
 export const getFixas = () => fetchAPI(`${p}/fixas`) as Promise<Fixa[]>;
-export const updateFixa = (categoria: string, body: { quem: string; valores: Record<string,number> }) =>
-  fetchAPI(`${p}/fixas/${encodeURIComponent(categoria)}`, { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ categoria, ...body }) });
+export const createFixa = (body: { categoria: string; quem: string; valores: Record<string,number>; valor_fixo?: number }) =>
+  fetchAPI(`${p}/fixas`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
+export const updateFixa = (categoria: string, body: { quem?: string; valores?: Record<string,number>; nova_categoria?: string; valor_fixo?: number }) =>
+  fetchAPI(`${p}/fixas/${encodeURIComponent(categoria)}`, { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
+export const deleteFixa = (categoria: string) =>
+  fetchAPI(`${p}/fixas/${encodeURIComponent(categoria)}`, { method:"DELETE" });
+export const statusFixaMes = (categoria: string, col: string, status: string) =>
+  fetchAPI(`${p}/fixas/${encodeURIComponent(categoria)}/status`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ col, status }) });
 
 export const getVariaveis = () => fetchAPI(`${p}/variaveis`) as Promise<Variavel[]>;
 export const createVariavel = (v: Omit<Variavel,"id">) => fetchAPI(`${p}/variaveis`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(v) });
 export const updateVariavel = (id: string, v: Partial<Variavel>) => fetchAPI(`${p}/variaveis/${id}`, { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(v) });
 export const deleteVariavel = (id: string) => fetchAPI(`${p}/variaveis/${id}`, { method:"DELETE" });
 export const statusVariavel = (id: string, status: string) => fetchAPI(`${p}/variaveis/${id}/status`, { method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ status }) });
+
+export interface Socio { id: string; nome: string; percentual: number; }
+export interface ConfigEscritorio { tipo: "individual" | "socios"; socios: Socio[]; }
+
+export const getConfig = () => fetchAPI(`${p}/config`) as Promise<ConfigEscritorio>;
+export const saveConfig = (c: ConfigEscritorio) => fetchAPI(`${p}/config`, { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(c) });
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 export const NEXT_STATUS: Record<string, Status> = {

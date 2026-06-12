@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
-import { getData, isFinalizado } from "@/lib/controle-data";
+import { auth } from "@/auth";
+import { getDataAsync as getData, isFinalizado } from "@/lib/controle-data";
 
 export async function GET() {
-  const data = getData();
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  const tid = session.user.tenantId;
+  const data = await getData(tid);
   const hoje = new Date().toISOString().split("T")[0];
   const em3 = new Date(Date.now() + 3 * 86400000).toISOString().split("T")[0];
 
