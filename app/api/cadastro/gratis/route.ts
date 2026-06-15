@@ -33,6 +33,10 @@ export async function POST(req: NextRequest) {
     isActive: true,
   });
 
+  // Salva tenantId baseado no ID real do usuário para consistência permanente
+  const { updateUser } = await import("@/lib/users");
+  updateUser(user.id, { tenantId: `t_${user.id}` });
+
   // Send welcome email (non-blocking)
   import("@/lib/email").then(({ sendWelcomeTrial }) =>
     sendWelcomeTrial(user.name, user.email, trialEndsAt).catch(console.error)

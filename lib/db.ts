@@ -20,16 +20,13 @@ export async function dbInit() {
   `;
 }
 
+// Returns null when key not found, throws on DB error
 export async function dbGet<T>(key: string): Promise<T | null> {
   const sql = getSql();
   if (!sql) return null;
-  try {
-    const rows = await sql`SELECT value FROM kv_store WHERE key = ${key}` as Array<{value: T}>;
-    if (!Array.isArray(rows) || rows.length === 0) return null;
-    return rows[0].value as T;
-  } catch {
-    return null;
-  }
+  const rows = await sql`SELECT value FROM kv_store WHERE key = ${key}` as Array<{value: T}>;
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  return rows[0].value as T;
 }
 
 export async function dbSet<T>(key: string, value: T): Promise<boolean> {

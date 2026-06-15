@@ -93,11 +93,17 @@ export async function getDataAsync(tenantId = "default"): Promise<FinanceiroData
   const key = `${DB_KEY_PREFIX}_${tenantId}`;
   if (hasDb()) {
     await dbInit();
-    const d = await dbGet<Partial<FinanceiroData>>(key);
-    if (d) return parseRaw(d);
-    const fromFile = readFromFile();
-    await dbSet(key, fromFile);
-    return fromFile;
+    try {
+      const d = await dbGet<Partial<FinanceiroData>>(key);
+      if (d) return parseRaw(d);
+      // Primeira vez: semeia com dados vazios (não sobrescreve com arquivo do build)
+      const empty = emptyData();
+      await dbSet(key, empty);
+      return empty;
+    } catch (e) {
+      console.error(`[financeiro] Erro ao ler banco, usando fallback: ${e}`);
+      return readFromFile();
+    }
   }
   return readFromFile();
 }

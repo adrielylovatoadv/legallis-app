@@ -36,5 +36,9 @@ export async function POST(req: NextRequest) {
     isActive: true,
   });
 
+  // Salva tenantId baseado no ID real do usuário para consistência permanente
+  const { updateUser } = await import("@/lib/users");
+  updateUser(user.id, { tenantId: `t_${user.id}` });
+
   return NextResponse.json({ userId: user.id }, { status: 201 });
 }
