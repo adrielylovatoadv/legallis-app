@@ -8,9 +8,9 @@ const PLAN_MAP: Record<string, { role: "user"; plan: "basic" | "pro" | "profissi
 };
 
 export async function POST(req: NextRequest) {
-  const { nome, email, senha, plan } = await req.json();
+  const { nome, nomeEscritorio, email, telefone, senha, plan } = await req.json();
 
-  if (!nome || !email || !senha || !plan) {
+  if (!nome || !nomeEscritorio || !email || !senha || !plan) {
     return NextResponse.json({ error: "Campos obrigatórios faltando." }, { status: 400 });
   }
   if (senha.length < 6) {
@@ -30,6 +30,8 @@ export async function POST(req: NextRequest) {
     role: planConfig.role,
     plan: "basic",
     avatar: "",
+    phone: telefone ?? "",
+    company: { name: nomeEscritorio },
     subscriptionStatus: "pending",
     isActive: true,
   });

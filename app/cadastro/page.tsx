@@ -42,9 +42,14 @@ export default function CadastroPage() {
   const [step, setStep] = useState<"plano" | "dados">("plano");
   const [planSelecionado, setPlanSelecionado] = useState<typeof PLANS[0] | null>(null);
   const [nome, setNome] = useState("");
+  const [nomeEscritorio, setNomeEscritorio] = useState("");
   const [email, setEmail] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [senha, setSenha] = useState("");
+  const [confirmSenha, setConfirmSenha] = useState("");
+  const [termosAceitos, setTermosAceitos] = useState(false);
   const [showSenha, setShowSenha] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -56,6 +61,8 @@ export default function CadastroPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!planSelecionado) return;
+    if (!termosAceitos) { setError("Você precisa aceitar os termos de uso e política de privacidade."); return; }
+    if (senha !== confirmSenha) { setError("Senhas não conferem."); return; }
     if (senha.length < 6) { setError("Senha mínima de 6 caracteres."); return; }
     setError("");
     setLoading(true);
@@ -64,7 +71,7 @@ export default function CadastroPage() {
     const res = await fetch("/api/cadastro", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nome, email, senha, plan: planSelecionado.id }),
+      body: JSON.stringify({ nome, nomeEscritorio, email, telefone, senha, plan: planSelecionado.id }),
     });
 
     setLoading(false);
@@ -201,21 +208,35 @@ export default function CadastroPage() {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Nome completo</label>
+                  <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Nome completo *</label>
                   <input value={nome} onChange={e => setNome(e.target.value)} required
                     placeholder="Adriely Lovato" className={inp} style={inpStyle}
                     onFocus={e => (e.target.style.borderColor = "var(--gold)")}
                     onBlur={e => (e.target.style.borderColor = "var(--border)")} />
                 </div>
                 <div>
-                  <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>E-mail</label>
+                  <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Nome do escritório *</label>
+                  <input value={nomeEscritorio} onChange={e => setNomeEscritorio(e.target.value)} required
+                    placeholder="Lovato & Associados Advocacia" className={inp} style={inpStyle}
+                    onFocus={e => (e.target.style.borderColor = "var(--gold)")}
+                    onBlur={e => (e.target.style.borderColor = "var(--border)")} />
+                </div>
+                <div>
+                  <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>E-mail *</label>
                   <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
                     placeholder="adriely@escritorio.com" className={inp} style={inpStyle}
                     onFocus={e => (e.target.style.borderColor = "var(--gold)")}
                     onBlur={e => (e.target.style.borderColor = "var(--border)")} />
                 </div>
                 <div>
-                  <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Senha</label>
+                  <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Telefone</label>
+                  <input type="tel" value={telefone} onChange={e => setTelefone(e.target.value)}
+                    placeholder="(11) 99999-9999" className={inp} style={inpStyle}
+                    onFocus={e => (e.target.style.borderColor = "var(--gold)")}
+                    onBlur={e => (e.target.style.borderColor = "var(--border)")} />
+                </div>
+                <div>
+                  <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Senha *</label>
                   <div className="relative">
                     <input type={showSenha ? "text" : "password"} value={senha}
                       onChange={e => setSenha(e.target.value)} required minLength={6}
@@ -235,6 +256,44 @@ export default function CadastroPage() {
                     </button>
                   </div>
                 </div>
+                <div>
+                  <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Confirmar senha *</label>
+                  <div className="relative">
+                    <input type={showConfirm ? "text" : "password"} value={confirmSenha}
+                      onChange={e => setConfirmSenha(e.target.value)} required
+                      placeholder="Repita a senha"
+                      className={inp + " pr-12"} style={inpStyle}
+                      onFocus={e => (e.target.style.borderColor = "var(--gold)")}
+                      onBlur={e => (e.target.style.borderColor = "var(--border)")} />
+                    <button type="button" onClick={() => setShowConfirm(!showConfirm)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
+                      style={{ color: "var(--text3)" }} tabIndex={-1}>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                          d={showConfirm
+                            ? "M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                            : "M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"} />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={termosAceitos}
+                    onChange={e => setTermosAceitos(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded flex-shrink-0"
+                    style={{ accentColor: "var(--gold)" }}
+                  />
+                  <span className="text-xs leading-relaxed" style={{ color: "var(--text3)" }}>
+                    Li e concordo com os{" "}
+                    <Link href="/termos" target="_blank" className="underline" style={{ color: "var(--gold)" }}>Termos de Uso</Link>
+                    {" "}e a{" "}
+                    <Link href="/privacidade" target="_blank" className="underline" style={{ color: "var(--gold)" }}>Política de Privacidade</Link>.
+                    Pagamento processado com segurança pelo Stripe.
+                  </span>
+                </label>
 
                 {error && (
                   <div className="text-sm px-4 py-2.5 rounded-lg"
@@ -248,10 +307,6 @@ export default function CadastroPage() {
                   style={{ background: loading ? "var(--surface2)" : "var(--gold)", color: loading ? "var(--text3)" : "#000" }}>
                   {loading ? "Criando conta..." : "Continuar para pagamento →"}
                 </button>
-
-                <p className="text-xs text-center" style={{ color: "var(--text3)" }}>
-                  Ao continuar, você concorda com os termos de uso. Pagamento processado com segurança pelo Stripe.
-                </p>
               </form>
             </div>
 

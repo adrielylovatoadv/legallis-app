@@ -93,6 +93,25 @@ export async function POST(req: NextRequest) {
       break;
     }
 
+    // ── Assinatura criada ────────────────────────────────────────────
+    case "customer.subscription.created": {
+      const sub = event.data.object as {
+        customer?: string;
+        status?: string;
+        id?: string;
+      };
+      if (sub.status === "active" || sub.status === "trialing") {
+        const users = (await import("@/lib/users")).getUsers();
+        const user = users.find(u => u.stripeCustomerId === sub.customer) ?? null;
+        if (user) {
+          const subscriptionStatus: SubscriptionStatus = sub.status === "trialing" ? "trial" : "active";
+          updateUser(user.id, { subscriptionStatus, stripeSubscriptionId: sub.id });
+          console.log(`[Stripe] Assinatura criada: ${user.email} → ${subscriptionStatus}`);
+        }
+      }
+      break;
+    }
+
     // ── Renovação de assinatura ──────────────────────────────────────
     case "invoice.payment_succeeded": {
       const invoice = event.data.object as {

@@ -105,7 +105,8 @@ export async function getDataAsync(tenantId = "default"): Promise<FinanceiroData
 export async function saveDataAsync(data: FinanceiroData, tenantId = "default"): Promise<void> {
   const key = `${DB_KEY_PREFIX}_${tenantId}`;
   if (hasDb()) {
-    await dbSet(key, data);
+    const ok = await dbSet(key, data);
+    if (!ok) console.error(`[financeiro] FALHA ao salvar no banco: chave=${key}`);
     return;
   }
   const content = JSON.stringify(data, null, 2);

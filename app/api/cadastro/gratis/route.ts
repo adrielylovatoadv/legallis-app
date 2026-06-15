@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserByEmail, createUser } from "@/lib/users";
 
 export async function POST(req: NextRequest) {
-  const { nome, email, telefone, senha, confirmSenha } = await req.json();
+  const { nome, nomeEscritorio, email, telefone, senha, confirmSenha } = await req.json();
 
-  if (!nome || !email || !senha) {
+  if (!nome || !nomeEscritorio || !email || !senha) {
     return NextResponse.json({ error: "Campos obrigatórios faltando." }, { status: 400 });
   }
   if (senha.length < 6) {
@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
     plan: "basic",
     avatar: "",
     phone: telefone ?? "",
+    company: { name: nomeEscritorio },
     subscriptionStatus: "trial",
     trialEndsAt,
     isActive: true,
