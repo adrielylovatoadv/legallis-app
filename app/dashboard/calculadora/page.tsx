@@ -291,6 +291,13 @@ export default function CalculadoraPage() {
     }
   }, [session?.user?.id]);
 
+  const advogadoInfo = userProfile ? {
+    nome: userProfile.name,
+    oab: userProfile.oab?.[0]?.number,
+    estado: userProfile.oab?.[0]?.state,
+    escritorio: userProfile.company?.name,
+  } : undefined;
+
   // ── modos principais ──
   const [tribunal, setTribunal] = useState("TJMG");
   const [modo, setModo] = useState("inicial");
@@ -776,6 +783,8 @@ export default function CalculadoraPage() {
             <BotoesExport nome={`calculo-${modo}-${new Date().toISOString().slice(0,10)}`} doc={{
               titulo: modo === "inicial" ? "Petição Inicial — Demonstrativo de Débito" : "Cumprimento de Sentença — Demonstrativo de Débito",
               subtitulo: `Gerado em ${new Date().toLocaleString("pt-BR")}`,
+              advogado: advogadoInfo,
+              processo: processoInfo.numero || undefined,
               secoes: [
                 {
                   nome: "Demonstrativo de Débito",
@@ -837,6 +846,8 @@ export default function CalculadoraPage() {
           <BotoesExport nome={`honorario-${new Date().toISOString().slice(0,10)}`} doc={{
             titulo: "Execução de Honorário",
             subtitulo: honResult.numero_processo ? `Processo: ${honResult.numero_processo}` : undefined,
+            advogado: advogadoInfo,
+            processo: honResult.numero_processo || undefined,
             secoes: [{
               nome: "Resultado",
               tipo: "resumo",
@@ -909,6 +920,7 @@ export default function CalculadoraPage() {
               </div>
               <BotoesExport nome={`revisional-${revResult.tipo}-${new Date().toISOString().slice(0,10)}`} doc={{
                 titulo: revResult.tipo === "veiculo" ? "Revisional de Veículo" : "Revisional de Contratos Bancários",
+                advogado: advogadoInfo,
                 secoes: [
                   {
                     nome: "Resumo",

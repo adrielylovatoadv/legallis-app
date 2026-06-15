@@ -2,9 +2,18 @@
 
 export interface ExportRow { [key: string]: string | number }
 
+export interface AdvogadoInfo {
+  nome?: string;
+  oab?: string;
+  estado?: string;
+  escritorio?: string;
+}
+
 export interface ExportDoc {
   titulo: string;
   subtitulo?: string;
+  advogado?: AdvogadoInfo;
+  processo?: string;
   secoes: Array<{
     nome: string;
     tipo: "resumo" | "tabela";
@@ -19,14 +28,25 @@ export async function exportarExcel(doc: ExportDoc, nomeArquivo: string) {
   const XLSX = await import("xlsx");
   const wb = XLSX.utils.book_new();
 
+  const headerRows: (string | number)[][] = [];
+  if (doc.advogado?.escritorio) headerRows.push([doc.advogado.escritorio]);
+  if (doc.advogado?.nome) headerRows.push([doc.advogado.nome]);
+  if (doc.advogado?.oab) {
+    const oabStr = doc.advogado.estado ? `OAB/${doc.advogado.estado} ${doc.advogado.oab}` : `OAB ${doc.advogado.oab}`;
+    headerRows.push([oabStr]);
+  }
+  if (headerRows.length > 0) headerRows.push([]);
+
   for (const secao of doc.secoes) {
     const sheetName = secao.nome.slice(0, 31);
     let ws: ReturnType<typeof XLSX.utils.aoa_to_sheet>;
 
     if (secao.tipo === "resumo" && secao.linhas) {
       const aoa = [
+        ...headerRows,
         [doc.titulo],
         doc.subtitulo ? [doc.subtitulo] : [],
+        doc.processo ? [`Processo: ${doc.processo}`] : [],
         [],
         [secao.nome],
         [],
@@ -64,25 +84,66 @@ export async function exportarPDF(doc: ExportDoc, nomeArquivo: string) {
   const margem = 15;
   let y = margem;
 
-  // Cabeçalho
+  // Cabeçalho do advogado (se informado)
+  if (doc.advogado?.nome || doc.advogado?.escritorio) {
+    pdf.setFontSize(11);
+    pdf.setTextColor(40, 40, 40);
+    if (doc.advogado.escritorio) {
+      pdf.setFont("helvetica", "bold");
+      pdf.text(doc.advogado.escritorio, margem, y);
+      y += 6;
+    }
+    if (doc.advogado.nome) {
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(10);
+      pdf.text(doc.advogado.nome, margem, y);
+      y += 5;
+    }
+    if (doc.advogado.oab) {
+      pdf.setFontSize(9);
+      pdf.setTextColor(80, 80, 80);
+      const oabStr = doc.advogado.estado ? `OAB/${doc.advogado.estado} ${doc.advogado.oab}` : `OAB ${doc.advogado.oab}`;
+      pdf.text(oabStr, margem, y);
+      y += 5;
+    }
+    y += 2;
+  }
+
+  // Linha dourada superior
+  pdf.setDrawColor(212, 175, 55);
+  pdf.setLineWidth(0.5);
+  pdf.line(margem, y, 210 - margem, y);
+  y += 6;
+
+  // Título do cálculo
+  pdf.setFont("helvetica", "bold");
   pdf.setFontSize(16);
   pdf.setTextColor(40, 40, 40);
   pdf.text(doc.titulo, margem, y);
   y += 8;
 
   if (doc.subtitulo) {
+    pdf.setFont("helvetica", "normal");
     pdf.setFontSize(10);
     pdf.setTextColor(100, 100, 100);
     pdf.text(doc.subtitulo, margem, y);
     y += 6;
   }
 
+  if (doc.processo) {
+    pdf.setFontSize(9);
+    pdf.setTextColor(80, 80, 80);
+    pdf.text(`Processo: ${doc.processo}`, margem, y);
+    y += 5;
+  }
+
+  pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
   pdf.setTextColor(150, 150, 150);
   pdf.text(`Gerado em ${new Date().toLocaleString("pt-BR")}`, margem, y);
   y += 8;
 
-  // Linha dourada
+  // Linha dourada inferior do cabeçalho
   pdf.setDrawColor(212, 175, 55);
   pdf.setLineWidth(0.5);
   pdf.line(margem, y, 210 - margem, y);

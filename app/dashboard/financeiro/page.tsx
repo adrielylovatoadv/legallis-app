@@ -142,7 +142,7 @@ function sortByMesDesc<T extends { mes: string; data_pagamento?: string }>(arr: 
 // ─────────────────────────────────────────────────────────────────────────────
 // ACORDOS
 // ─────────────────────────────────────────────────────────────────────────────
-function AcordosView({ reload }: { reload: () => void }) {
+function AcordosView({ reload, filtroMes }: { reload: () => void; filtroMes?: string }) {
   const [acordos, setAcordos] = useState<Acordo[]>([]);
   const [novo, setNovo] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -156,7 +156,9 @@ function AcordosView({ reload }: { reload: () => void }) {
   };
   const del = async (id: string) => { await deleteAcordo(id); load(); reload(); };
 
-  const sorted = sortByMesDesc(acordos);
+  const sorted = filtroMes
+    ? sortByMesDesc(acordos.filter(a => a.mes === filtroMes))
+    : sortByMesDesc(acordos);
   const total = acordos.reduce((s, a) => s + a.honorarios, 0);
   const recebido = acordos.filter(a => a.status !== "pendente").reduce((s, a) => s + a.honorarios, 0);
   const pendente = acordos.filter(a => a.status === "pendente").reduce((s, a) => s + a.honorarios, 0);
@@ -174,7 +176,9 @@ function AcordosView({ reload }: { reload: () => void }) {
         <MetricCard label="A Repassar ao Cliente" value={repasse} color="#f59e0b" />
       </div>
       <div className="flex justify-between items-center">
-        <span className="text-sm" style={{ color: "var(--text3)" }}>{acordos.length} acordos</span>
+        <span className="text-sm" style={{ color: "var(--text3)" }}>
+          {sorted.length} acordos{filtroMes ? <span style={{ color: "var(--gold)" }}> · {filtroMes}</span> : ""}
+        </span>
         <button onClick={() => setNovo(true)} className="px-3 py-1.5 rounded-lg text-sm font-semibold"
           style={{ background: "var(--gold)", color: "#000" }}>+ Novo</button>
       </div>
@@ -285,7 +289,7 @@ function AcordoForm({ initial, onSave, onCancel }: {
 // ─────────────────────────────────────────────────────────────────────────────
 // EXECUÇÕES
 // ─────────────────────────────────────────────────────────────────────────────
-function ExecucoesView({ reload }: { reload: () => void }) {
+function ExecucoesView({ reload, filtroMes }: { reload: () => void; filtroMes?: string }) {
   const [execucoes, setExecucoes] = useState<Execucao[]>([]);
   const [novo, setNovo] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -299,7 +303,9 @@ function ExecucoesView({ reload }: { reload: () => void }) {
   };
   const del = async (id: string) => { await deleteExecucao(id); load(); reload(); };
 
-  const sorted = sortByMesDesc(execucoes);
+  const sorted = filtroMes
+    ? sortByMesDesc(execucoes.filter(e => e.mes === filtroMes))
+    : sortByMesDesc(execucoes);
   const total = execucoes.reduce((s, e) => s + e.honorarios, 0);
   const recebido = execucoes.filter(e => e.status !== "pendente").reduce((s, e) => s + e.honorarios, 0);
   const pendente = execucoes.filter(e => e.status === "pendente").reduce((s, e) => s + e.honorarios, 0);
@@ -315,7 +321,9 @@ function ExecucoesView({ reload }: { reload: () => void }) {
         <MetricCard label="Pendente" value={pendente} color="#ef4444" />
       </div>
       <div className="flex justify-between items-center">
-        <span className="text-sm" style={{ color:"var(--text3)" }}>{execucoes.length} execuções</span>
+        <span className="text-sm" style={{ color:"var(--text3)" }}>
+          {sorted.length} execuções{filtroMes ? <span style={{ color: "var(--gold)" }}> · {filtroMes}</span> : ""}
+        </span>
         <button onClick={() => setNovo(true)} className="px-3 py-1.5 rounded-lg text-sm font-semibold" style={{ background:"var(--gold)", color:"#000" }}>+ Nova</button>
       </div>
       {novo && <ExecucaoForm onSave={async f => { await createExecucao(f); setNovo(false); load(); reload(); }} onCancel={() => setNovo(false)} />}
@@ -514,6 +522,85 @@ function getCurrentCol(): string {
   const now = new Date();
   const MONTH_SHORT = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
   return MONTH_SHORT[now.getMonth()];
+}
+
+function getColIndex(): number {
+  const now = new Date();
+  return now.getFullYear() * 12 + now.getMonth() - (2025 * 12 + 9);
+}
+
+function getCurrentMes(): string {
+  const now = new Date();
+  const M = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+  return `${M[now.getMonth()]}/${now.getFullYear()}`;
+}
+
+function getNextMes(): string {
+  const d = new Date(); d.setMonth(d.getMonth() + 1);
+  const M = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+  return `${M[d.getMonth()]}/${d.getFullYear()}`;
+}
+
+// ── alertas de pendências ─────────────────────────────────────────────────────
+function AlertasPendentes() {
+  const [acordos, setAcordos] = useState<Acordo[]>([]);
+  const [execucoes, setExecucoes] = useState<Execucao[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const curMes = getCurrentMes();
+  const nextMes = getNextMes();
+
+  useEffect(() => {
+    Promise.all([getAcordos(), getExecucoes()]).then(([a, e]) => {
+      setAcordos(a); setExecucoes(e); setLoaded(true);
+    });
+  }, []);
+
+  if (!loaded) return null;
+
+  const curIdx = MESES.indexOf(curMes);
+  const atrasados = [
+    ...acordos.filter(a => a.status === "pendente" && MESES.indexOf(a.mes) < curIdx && MESES.indexOf(a.mes) >= 0)
+      .map(a => ({ tipo: "Acordo", cliente: a.cliente, mes: a.mes, valor: a.honorarios })),
+    ...execucoes.filter(e => e.status === "pendente" && MESES.indexOf(e.mes) < curIdx && MESES.indexOf(e.mes) >= 0)
+      .map(e => ({ tipo: "Execução", cliente: e.cliente, mes: e.mes, valor: e.honorarios })),
+  ];
+  const proximos = [
+    ...acordos.filter(a => a.status === "pendente" && a.mes === nextMes)
+      .map(a => ({ tipo: "Acordo", cliente: a.cliente, mes: a.mes, valor: a.honorarios })),
+    ...execucoes.filter(e => e.status === "pendente" && e.mes === nextMes)
+      .map(e => ({ tipo: "Execução", cliente: e.cliente, mes: e.mes, valor: e.honorarios })),
+  ];
+
+  if (atrasados.length === 0 && proximos.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      {atrasados.length > 0 && (
+        <div className="px-4 py-3 rounded-xl" style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.25)" }}>
+          <p className="text-xs font-semibold mb-2" style={{ color: "#f87171" }}>⚠️ Honorários em Atraso ({atrasados.length})</p>
+          <div className="flex flex-wrap gap-2">
+            {atrasados.map((a, i) => (
+              <span key={i} className="text-xs px-2.5 py-1 rounded-full" style={{ background: "rgba(239,68,68,0.12)", color: "#f87171", border: "1px solid rgba(239,68,68,0.3)" }}>
+                {a.tipo} · {a.cliente} · {a.mes} · {fmtBRL(a.valor)}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      {proximos.length > 0 && (
+        <div className="px-4 py-3 rounded-xl" style={{ background: "rgba(234,179,8,0.07)", border: "1px solid rgba(234,179,8,0.25)" }}>
+          <p className="text-xs font-semibold mb-2" style={{ color: "#facc15" }}>📅 Vencimentos em {nextMes} ({proximos.length})</p>
+          <div className="flex flex-wrap gap-2">
+            {proximos.map((p, i) => (
+              <span key={i} className="text-xs px-2.5 py-1 rounded-full" style={{ background: "rgba(234,179,8,0.12)", color: "#facc15", border: "1px solid rgba(234,179,8,0.3)" }}>
+                {p.tipo} · {p.cliente} · {fmtBRL(p.valor)}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -768,6 +855,9 @@ function VariaveisView() {
   const totalAtivas = ativas.reduce((s, v) => s + v.valor, 0);
   const totalMesAtivo = ativas.reduce((s, v) => s + (v.meses[mesAtual] || 0), 0);
 
+  const colIdx = getColIndex();
+  const nextCol = colIdx + 1 < COLS.length ? COLS[colIdx + 1] : null;
+
   const renderCard = (v: Variavel) => {
     if (editId === v.id) {
       return <VariavelForm key={v.id} initial={v} onSave={async f => { await updateVariavel(v.id, f); setEditId(null); load(); }} onCancel={() => setEditId(null)} />;
@@ -775,12 +865,16 @@ function VariaveisView() {
     const parcelaMes = varParcelaMes(v);
     const valorMesAtual = v.meses[mesAtual] || 0;
     const prog = varProgress(v, mesAtual);
+    const hasCurrentMonth = valorMesAtual > 0;
+    const hasNextMonth = nextCol && (v.meses[nextCol] || 0) > 0;
     return (
       <div key={v.id} className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
         <div className="flex items-center gap-3 px-4 py-3" style={{ background: "var(--surface)" }}>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="font-medium text-sm" style={{ color:"var(--text)" }}>{v.descricao}</p>
+              {hasCurrentMonth && <span title="Parcela neste mês" className="text-xs">🔵</span>}
+              {hasNextMonth && <span title="Parcela no próximo mês" className="text-xs">🟠</span>}
               <span className="text-xs px-2 py-0.5 rounded-full font-semibold tabular-nums"
                 style={{ background: prog.pago >= prog.total ? "rgba(34,197,94,0.12)" : "rgba(var(--gold-rgb,212,175,55),0.12)", color: prog.pago >= prog.total ? "#4ade80" : "var(--gold)", border: `1px solid ${prog.pago >= prog.total ? "rgba(34,197,94,0.3)" : "rgba(212,175,55,0.3)"}` }}>
                 {prog.pago}/{prog.total}
@@ -1235,6 +1329,10 @@ function ConfiguracaoView() {
 export default function FinanceiroPage() {
   const [aba, setAba] = useState(0);
   const [dash, setDash] = useState<DashFinanceiro | null>(null);
+  const [filtroMes, setFiltroMes] = useState<string>("todos");
+
+  const mesAtualLabel = getCurrentMes();
+  const mesProximoLabel = getNextMes();
 
   const loadDash = useCallback(async () => { setDash(await getDash()); }, []);
   useEffect(() => { loadDash(); }, [loadDash]);
@@ -1245,12 +1343,43 @@ export default function FinanceiroPage() {
     border: "1px solid var(--border)",
   });
 
+  const filtroAtivo = filtroMes === "todos" ? undefined
+    : filtroMes === "atual" ? mesAtualLabel
+    : mesProximoLabel;
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-5">
-      <div>
-        <h1 className="font-serif text-2xl font-semibold" style={{ color:"var(--text)" }}>Financeiro Escritório</h1>
-        <p className="text-sm mt-0.5" style={{ color:"var(--text3)" }}>Sócias: Adriely & Eduarda</p>
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="font-serif text-2xl font-semibold" style={{ color:"var(--text)" }}>Financeiro Escritório</h1>
+          <p className="text-sm mt-0.5" style={{ color:"var(--text3)" }}>
+            Sócias: Adriely & Eduarda &nbsp;·&nbsp;
+            <span className="font-semibold" style={{ color: "var(--gold)" }}>{mesAtualLabel}</span>
+          </p>
+        </div>
+        {/* Filtro por competência */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-xs" style={{ color: "var(--text3)" }}>Competência:</span>
+          {[
+            { key: "todos", label: "Todos" },
+            { key: "atual", label: `🔵 ${mesAtualLabel}` },
+            { key: "proximo", label: `🟠 ${mesProximoLabel}` },
+          ].map(f => (
+            <button key={f.key} onClick={() => setFiltroMes(f.key)}
+              className="px-3 py-1 rounded-lg text-xs font-medium transition-colors"
+              style={{
+                background: filtroMes === f.key ? "var(--gold)" : "var(--surface2)",
+                color: filtroMes === f.key ? "#000" : "var(--text2)",
+                border: `1px solid ${filtroMes === f.key ? "var(--gold)" : "var(--border)"}`,
+              }}>
+              {f.label}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {/* Alertas */}
+      <AlertasPendentes />
 
       {/* Abas */}
       <div className="flex gap-2 flex-wrap">
@@ -1265,8 +1394,8 @@ export default function FinanceiroPage() {
 
       {/* Conteúdo */}
       {aba === 0 && (dash ? <DashView data={dash} /> : <div className="py-8 text-center" style={{ color:"var(--text3)" }}>Carregando...</div>)}
-      {aba === 1 && <AcordosView reload={loadDash} />}
-      {aba === 2 && <ExecucoesView reload={loadDash} />}
+      {aba === 1 && <AcordosView reload={loadDash} filtroMes={filtroAtivo} />}
+      {aba === 2 && <ExecucoesView reload={loadDash} filtroMes={filtroAtivo} />}
       {aba === 3 && <HonIniciaisView reload={loadDash} />}
       {aba === 4 && <FixasView />}
       {aba === 5 && <VariaveisView />}
