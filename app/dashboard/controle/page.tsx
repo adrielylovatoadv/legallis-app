@@ -229,6 +229,11 @@ export default function ControleDashboard() {
             style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text2)" }}>
             👥 Clientes
           </Link>
+          <Link href="/dashboard/controle/importar"
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", color: "var(--gold)" }}>
+            ⬆️ Importar
+          </Link>
         </div>
       </div>
 
