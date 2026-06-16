@@ -1,32 +1,313 @@
 {
   "processos": [
     {
-      "id": "a2e168df",
-      "autor": "LENITA APARECIDA PAULA SOUSA",
+      "id": "a0bd3199",
+      "autor": "RUTH FELICIANA DA SILVA SOUZA",
       "reu": "ITAU",
-      "objeto": "TAR EXTRATO MES (E) + TAR PACOTE ITAU (R$ 336,00)",
-      "numero_processo": "5000185-88.2026.8.13.0329",
+      "objeto": "633090574",
+      "numero_processo": "5008748-24.2025.8.13.0647",
+      "data": "2026-06-30",
+      "hora": "14:00",
+      "andamento": "AIJ - AUDIÊNCIA",
+      "observacoes": "Pedimos oitiva do reu e da autora",
+      "responsavel": "",
+      "atencao": true,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.520477"
+    },
+    {
+      "id": "beb6b621",
+      "autor": "ANA MARIA SILVA",
+      "reu": "BMG",
+      "objeto": "RMC 16488811 (R$ 3.220,10)",
+      "numero_processo": "5000203-12.2026.8.13.0329",
       "data": "",
       "hora": "",
-      "andamento": "AGUARDAR SENTENÇA",
-      "observacoes": "",
+      "andamento": "AGUARDANDO DESPACHO",
+      "observacoes": "tem vídeo e aúdio, mandamos proposta de acordo",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.521724",
+      "atencao": true,
+      "criado_em": "2026-05-08T14:50:44.516305"
+    },
+    {
+      "id": "f039e9fa",
+      "autor": "RUTH FELICIANA DA SILVA SOUZA",
+      "reu": "SANTANDER",
+      "objeto": "261975963, 238966775, 238836464, 201378837",
+      "numero_processo": "5008402-73.2025.8.13.0647",
+      "data": "",
+      "hora": "",
+      "andamento": "AGUARDANDO DESPACHO",
+      "observacoes": "Pedimos oitiva do reu e da autora - ainda não marcou aij",
+      "responsavel": "",
+      "atencao": true,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.527522"
+    },
+    {
+      "id": "e64934cc",
+      "autor": "ANA MARIA SILVA",
+      "reu": "AGIBANK",
+      "objeto": "TARIFA COMUNICACAO DIGITAL e DEBITO DE SEGURO",
+      "numero_processo": "5000103-57.2026.8.13.0329",
+      "data": "",
+      "hora": "",
+      "andamento": "AGUARDANDO DESPACHO",
+      "observacoes": "cumprimento da liminar",
+      "responsavel": "",
+      "atencao": true,
+      "criado_em": "2026-05-08T14:50:44.518640",
       "dashboard_ok": true
     },
     {
-      "id": "8e1200a4",
-      "autor": "JOSE CARLOS DOS SANTOS",
-      "reu": "MASTER",
-      "objeto": "cartao RMC 802630166 e RCC 802630008",
-      "numero_processo": "5001238-41.2025.8.13.0329",
+      "id": "571de3cb",
+      "autor": "APARECIDO DONIZETE SILVA",
+      "reu": "PAN",
+      "objeto": "346945298-5, 345644606-5, 345026930-7, 341471762-3",
+      "numero_processo": "5000829-65.2025.8.13.0329",
       "data": "",
       "hora": "",
       "andamento": "AGUARDANDO DESPACHO",
       "observacoes": "",
-      "responsavel": "Outro",
-      "criado_em": "2026-05-08T14:50:44.516468",
+      "responsavel": "",
+      "atencao": true,
+      "criado_em": "2026-05-08T14:50:44.526421",
       "dashboard_ok": true
+    },
+    {
+      "id": "f04ea5ee",
+      "autor": "IZILDINHA APARECIDA LOVATO",
+      "reu": "BRADESCO",
+      "objeto": "TÍTULO DE CAPITALIZAÇÃO, TARIFA BANCARIA EXTRATOmovimento e TARIFA BANCÁRIA SAQUEcorrespondente",
+      "numero_processo": "1000051-32.2026.8.13.0329",
+      "data": "2026-06-17",
+      "hora": "",
+      "andamento": "RÉPLICA SEM INTIMAÇÃO",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.516782"
+    },
+    {
+      "id": "9d1d810e",
+      "autor": "JANAINA SILVA GUEDES",
+      "reu": "ITAU",
+      "objeto": "SEGURO CARTAO",
+      "numero_processo": "1000062-61.2026.8.13.0329",
+      "data": "2026-06-17",
+      "hora": "",
+      "andamento": "PROVAS",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.516971"
+    },
+    {
+      "id": "5f58b2cb",
+      "autor": "MARLI DAS VIRGENS ROCHA CELESTINO",
+      "reu": "SANTANDER",
+      "objeto": "232012940",
+      "numero_processo": "1000063-46.2026.8.13.0329",
+      "data": "2026-06-17",
+      "hora": "",
+      "andamento": "RÉPLICA",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "criado_em": "2026-05-08T14:50:44.517747"
+    },
+    {
+      "id": "a9db29af",
+      "autor": "TEREZINHA IVONE DE SOUSA",
+      "reu": "ITAU",
+      "objeto": "SEGURO CARTÃO (R$ 711,79)",
+      "numero_processo": "1000010-65.2026.8.13.0329",
+      "data": "2026-06-17",
+      "hora": "",
+      "andamento": "PROVAS",
+      "observacoes": "reu pediu aij",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.519510"
+    },
+    {
+      "id": "bebd9044",
+      "autor": "BERNADETE NARDI DE PAULA",
+      "reu": "BRADESCO",
+      "objeto": "PGTO ELETRON COBRANCA BRADESCO SEG-RESID/OUTROS",
+      "numero_processo": "1000202-95.2026.8.13.0329",
+      "data": "2026-06-17",
+      "hora": "13:30",
+      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "criado_em": "2026-05-15T18:44:24.402105"
+    },
+    {
+      "id": "179eed50",
+      "autor": "BERNADETE NARDI DE PAULA",
+      "reu": "BRADESCO",
+      "objeto": "TARIFA BANCARIA SAQUETERMINAL E SAQUECORRESPONDENTE",
+      "numero_processo": "1000201-13.2026.8.13.0329",
+      "data": "2026-06-17",
+      "hora": "13:45",
+      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "criado_em": "2026-05-15T17:34:53.347192"
+    },
+    {
+      "id": "accb7ca6",
+      "autor": "MARLENE APARECIDA LEMES",
+      "reu": "ITAU",
+      "objeto": "SEGURO CARTAO",
+      "numero_processo": "1000081-67.2026.8.13.0329",
+      "data": "2026-06-17",
+      "hora": "14:00",
+      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
+      "observacoes": "fazer replica",
+      "responsavel": "",
+      "atencao": false,
+      "criado_em": "2026-05-08T14:50:44.527913"
+    },
+    {
+      "id": "94b079c8",
+      "autor": "MARIA DA GLORIA SILVA",
+      "reu": "PARANA",
+      "objeto": "58010923775-331, 58010923772-331, 58010923773-331, 58010279091-331.",
+      "numero_processo": "5001249-70.2025.8.13.0329",
+      "data": "2026-06-18",
+      "hora": "13:00",
+      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
+      "observacoes": "",
+      "responsavel": "",
+      "criado_em": "2026-05-08T14:50:44.520252",
+      "atencao": false
+    },
+    {
+      "id": "885b4ef6",
+      "autor": "IVAN LOGUERCIO E LETICIA",
+      "reu": "ITAU",
+      "objeto": "GOLPE PIX",
+      "numero_processo": "1000189-96.2026.8.13.0329",
+      "data": "2026-06-18",
+      "hora": "15:00",
+      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "criado_em": "2026-05-12T17:56:04.332322"
+    },
+    {
+      "id": "0e382894",
+      "autor": "JESSICA DA SILVA COSTA",
+      "reu": "SANTANDER",
+      "objeto": "REVISIONAL CONTRATO 110798124/00699576008",
+      "numero_processo": "1000190-81.2026.8.13.0329",
+      "data": "2026-06-18",
+      "hora": "15:15",
+      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
+      "observacoes": "PRECISA DA CLIENTE NA AUDIENCIA JUIZADO ESPECIAL",
+      "responsavel": "",
+      "atencao": false,
+      "criado_em": "2026-05-12T23:34:41.228214"
+    },
+    {
+      "id": "70935c1f",
+      "autor": "CLEIDE DE SOUSA ALVES",
+      "reu": "ITAU",
+      "objeto": "contrato 2677140283",
+      "numero_processo": "1000172-60.2026.8.13.0329",
+      "data": "2026-06-18",
+      "hora": "15:45",
+      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "criado_em": "2026-05-08T14:50:44.528288"
+    },
+    {
+      "id": "f2fc4cc5",
+      "autor": "KLEYSON ROBERTO SOUSA DIAS",
+      "reu": "ITAU",
+      "objeto": "REVISIONAL ITAU SOB MEDIDA",
+      "numero_processo": "1000059-09.2026.8.13.0329",
+      "data": "2026-06-19",
+      "hora": "",
+      "andamento": "PROVAS",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.517619"
+    },
+    {
+      "id": "2d466bfe",
+      "autor": "COSMO DONIZETE MARQUES",
+      "reu": "ITAU",
+      "objeto": "ITAU SEG AP PF (R$ 1.216,52)",
+      "numero_processo": "5001208-06.2025.8.13.0329",
+      "data": "2026-06-19",
+      "hora": "",
+      "andamento": "PROVAS",
+      "observacoes": "pediu aij",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.524010"
+    },
+    {
+      "id": "d2aa0d75",
+      "autor": "NEIDE MARTINS BELCHIOR",
+      "reu": "BRADESCO",
+      "objeto": "PGTO COBRANCA ASPECIR – UNIAO SEGURADORA",
+      "numero_processo": "5001133-64.2025.8.13.0329",
+      "data": "2026-06-19",
+      "hora": "",
+      "andamento": "PROVAS",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.524928"
+    },
+    {
+      "id": "71e06798",
+      "autor": "CLEIDE DE SOUSA ALVES",
+      "reu": "ITAU",
+      "objeto": "ITAU SEG AP PF",
+      "numero_processo": "5001142-26.2025.8.13.0329",
+      "data": "2026-06-19",
+      "hora": "",
+      "andamento": "PROVAS",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.527036"
     },
     {
       "id": "2aa5dc71",
@@ -41,6 +322,491 @@
       "responsavel": "",
       "atencao": false,
       "criado_em": "2026-05-08T14:50:44.517137"
+    },
+    {
+      "id": "d02486bd",
+      "autor": "MATHEUS SERRAGLIA REIS AMENT",
+      "reu": "ITAU",
+      "objeto": "ANUIDADE",
+      "numero_processo": "4008026-45.2026.8.26.0506",
+      "data": "2026-06-22",
+      "hora": "",
+      "andamento": "PROVAS",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.521127"
+    },
+    {
+      "id": "a4ca91e0",
+      "autor": "HELIO DE SOUZA",
+      "reu": "ITAU",
+      "objeto": "ITAU SEG AP PF E SISDEB",
+      "numero_processo": "4012553-94.2026.8.26.0003",
+      "data": "2026-06-22",
+      "hora": "",
+      "andamento": "RÉPLICA SEM INTIMAÇÃO",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.528468"
+    },
+    {
+      "id": "a793e8fe",
+      "autor": "ALCIDES MARQUES DA SILVA",
+      "reu": "ITAU",
+      "objeto": "SEG AP PF",
+      "numero_processo": "5001341-48.2025.8.13.0329",
+      "data": "2026-06-22",
+      "hora": "14:30",
+      "andamento": "AIJ - AUDIÊNCIA",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.522418"
+    },
+    {
+      "id": "5830b193",
+      "autor": "MARLI DAS VIRGENS ROCHA CELESTINO",
+      "reu": "ITAU",
+      "objeto": "0011234720820240226C e 0041219267620230427C",
+      "numero_processo": "5000192-80.2026.8.13.0329",
+      "data": "2026-06-22",
+      "hora": "15:00",
+      "andamento": "AIJ - AUDIÊNCIA",
+      "observacoes": "AIJ 22/06 - os valores foram disponibilizados na conta",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.523074"
+    },
+    {
+      "id": "aaa336d6",
+      "autor": "BERNADETE NARDI DE PAULA",
+      "reu": "DIGIO",
+      "objeto": "PENSAO 815911212",
+      "numero_processo": "5001231-49.2025.8.13.0329",
+      "data": "2026-06-25",
+      "hora": "",
+      "andamento": "CONCLUSO PARA JULGAMENTO",
+      "observacoes": "pericia",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.524136"
+    },
+    {
+      "id": "f66e6a69",
+      "autor": "HELIO DE SOUZA",
+      "reu": "ITAU",
+      "objeto": "TAR EXTRATO MOVIMENTO(E) e TAR PACOTE ITAU",
+      "numero_processo": "4010929-10.2026.8.26.0003",
+      "data": "2026-06-25",
+      "hora": "",
+      "andamento": "RÉPLICA",
+      "observacoes": "",
+      "responsavel": "Eduarda",
+      "atencao": false,
+      "criado_em": "2026-05-08T14:50:44.528227"
+    },
+    {
+      "id": "2cd8c97e",
+      "autor": "HELIO DE SOUZA",
+      "reu": "ITAU",
+      "objeto": "SEGURO RESIDENCIA",
+      "numero_processo": "4012568-63.2026.8.26.0003",
+      "data": "2026-06-25",
+      "hora": "",
+      "andamento": "RÉPLICA",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.528527"
+    },
+    {
+      "id": "44eae30f",
+      "autor": "TEREZINHA IVONE DE SOUSA",
+      "reu": "CLARO",
+      "objeto": "aumento indevido de fatura",
+      "numero_processo": "1000077-30.2026.8.13.0329",
+      "data": "2026-06-25",
+      "hora": "13:45",
+      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "criado_em": "2026-05-08T14:50:44.527850"
+    },
+    {
+      "id": "88b6edc2",
+      "autor": "ANA MARIA SILVA",
+      "reu": "ITAU",
+      "objeto": "0005338083820210923 e 0055942472620201106 (R$ 2.984,66)",
+      "numero_processo": "5000208-34.2026.8.13.0329",
+      "data": "2026-06-26",
+      "hora": "",
+      "andamento": "PROVAS",
+      "observacoes": "pediu aij - réplica boa\naceitou emenda",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.515866"
+    },
+    {
+      "id": "3faeed96",
+      "autor": "MARIA DA GLORIA SILVA",
+      "reu": "PARANA",
+      "objeto": "58029582127-331, 58014069573-331, 58013876034-331, 58012543951-331_0001",
+      "numero_processo": "5001281-75.2025.8.13.0329",
+      "data": "2026-07-01",
+      "hora": "13:15",
+      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
+      "observacoes": "",
+      "responsavel": "",
+      "criado_em": "2026-05-08T14:50:44.520379",
+      "atencao": false
+    },
+    {
+      "id": "38da35c8",
+      "autor": "MARLENE APARECIDA LEMES",
+      "reu": "ITAU",
+      "objeto": "ADIANTE DEPOSITANTE",
+      "numero_processo": "1000084-22.2026.8.13.0329",
+      "data": "2026-07-01",
+      "hora": "14:30",
+      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
+      "observacoes": "fazer replica",
+      "responsavel": "",
+      "atencao": false,
+      "criado_em": "2026-05-08T14:50:44.527982"
+    },
+    {
+      "id": "89598df0",
+      "autor": "VANIA MARIA DOS REIS SOARES",
+      "reu": "C6",
+      "objeto": "10016864267",
+      "numero_processo": "5001239-26.2025.8.13.0329",
+      "data": "2026-07-06",
+      "hora": "14:30",
+      "andamento": "OUTRO",
+      "observacoes": "Perícia agendada",
+      "responsavel": "",
+      "criado_em": "2026-05-08T14:50:44.526723",
+      "atencao": false
+    },
+    {
+      "id": "73673170",
+      "autor": "LENITA APARECIDA PAULA SOUSA",
+      "reu": "BANRISUL",
+      "objeto": "00000 000000 077153 13, nº 000000 000000 077153 0 e nº 00000 000000 077153 09",
+      "numero_processo": "5001265-24.2025.8.13.0329",
+      "data": "2026-07-06",
+      "hora": "15:00",
+      "andamento": "OUTRO",
+      "observacoes": "pericia",
+      "responsavel": "",
+      "criado_em": "2026-05-08T14:50:44.526003",
+      "atencao": false
+    },
+    {
+      "id": "eb600313",
+      "autor": "MARINA JANAINA SILVA",
+      "reu": "ITAU",
+      "objeto": "revisao de juros abusivo",
+      "numero_processo": "1000107-65.2026.8.13.0329",
+      "data": "2026-07-08",
+      "hora": "15:00",
+      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
+      "observacoes": "juntar documento pessoal e comprovante de residencia",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.528045"
+    },
+    {
+      "id": "f0de7805",
+      "autor": "FABIO APARECIDO SILVA",
+      "reu": "ITAU",
+      "objeto": "SEGURO LIS ITAU",
+      "numero_processo": "1000197-73.2026.8.13.0329",
+      "data": "2026-07-08",
+      "hora": "15:30",
+      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-14T22:21:38.815952"
+    },
+    {
+      "id": "7c58ff65",
+      "autor": "APARECIDA DE LOURDES SUDARIO SILVA",
+      "reu": "ITAU",
+      "objeto": "EXIBIÇÃO DE DOCS",
+      "numero_processo": "1000226-26.2026.8.13.0329",
+      "data": "2026-07-08",
+      "hora": "15:45",
+      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-27T21:01:03.716315"
+    },
+    {
+      "id": "5c5dae3c",
+      "autor": "ROSARIA LOGUERCIOS DOS SANTOS",
+      "reu": "ITAU",
+      "objeto": "2676900331, 0034352356920230523C, 0050818154220220414C, 0078095312120201109",
+      "numero_processo": "5001351-92.2025.8.13.0329",
+      "data": "2026-07-13",
+      "hora": "14:00",
+      "andamento": "AIJ - AUDIÊNCIA",
+      "observacoes": "pediu aij",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.524564"
+    },
+    {
+      "id": "29b33296",
+      "autor": "MARIA DA GLORIA SILVA",
+      "reu": "MERCANTIL",
+      "objeto": "58029582127-331",
+      "numero_processo": "5001248-85.2025.8.13.0329",
+      "data": "2026-07-13",
+      "hora": "14:30",
+      "andamento": "AIJ - AUDIÊNCIA",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.524319"
+    },
+    {
+      "id": "9fd53e11",
+      "autor": "TEREZINHA IVONE DE SOUSA",
+      "reu": "ITAU",
+      "objeto": "0040043558220220331C, 002136347932021083, 0064486579220210512, 0079280243120210224, 005861868762200630",
+      "numero_processo": "5001262-69.2025.8.13.0329",
+      "data": "2026-07-13",
+      "hora": "15:00",
+      "andamento": "AIJ - AUDIÊNCIA",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.523704"
+    },
+    {
+      "id": "37736493",
+      "autor": "NEIDE MARTINS BELCHIOR",
+      "reu": "BRADESCO",
+      "objeto": "PGTO COBRANCA MBM PREVIDENCIA COMPLEMENTAR",
+      "numero_processo": "5001135-34.2025.8.13.0329",
+      "data": "2026-07-13",
+      "hora": "15:30",
+      "andamento": "AIJ - AUDIÊNCIA",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.525182"
+    },
+    {
+      "id": "b2d38a14",
+      "autor": "ROSARIA LOGUERCIOS DOS SANTOS",
+      "reu": "SAFRA",
+      "objeto": "000014132072, 000018740120,",
+      "numero_processo": "5001349-25.2025.8.13.0329",
+      "data": "2026-07-13",
+      "hora": "16:00",
+      "andamento": "AIJ - AUDIÊNCIA",
+      "observacoes": "ass falsa",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.523395"
+    },
+    {
+      "id": "76b46037",
+      "autor": "CLEIDE DE SOUSA ALVES",
+      "reu": "ITAU",
+      "objeto": "TAR PACOTE",
+      "numero_processo": "5001353-62.2025.8.13.0329",
+      "data": "2026-07-13",
+      "hora": "16:30",
+      "andamento": "AIJ - AUDIÊNCIA",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.524803"
+    },
+    {
+      "id": "9226fe29",
+      "autor": "NEIDE MARTINS BELCHIOR",
+      "reu": "BRADESCO",
+      "objeto": "0123424212899, 0123424212978, 0123424213369, 0123369420923",
+      "numero_processo": "5001210-73.2025.8.13.0329",
+      "data": "2026-07-13",
+      "hora": "17:00",
+      "andamento": "AIJ - AUDIÊNCIA",
+      "observacoes": "AIJ",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.524260"
+    },
+    {
+      "id": "c9575b7c",
+      "autor": "LENITA APARECIDA PAULA SOUSA",
+      "reu": "ITAU",
+      "objeto": "nº 004099 064012 021041 2, nº 06570 937382 021041 5, nº 06570 484432 021041 5, nº 06570 638632 021041 5 e 006570 843982 021041 5 (R$ 4.099,25 c/ correcao)",
+      "numero_processo": "5001274-83.2025.8.13.0329",
+      "data": "2026-07-13",
+      "hora": "17:15",
+      "andamento": "AIJ - AUDIÊNCIA",
+      "observacoes": "pediu aij",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.523934"
+    },
+    {
+      "id": "3e1c2d03",
+      "autor": "ROSARIA LOGUERCIOS DOS SANTOS",
+      "reu": "ITAU",
+      "objeto": "SEG AP PF",
+      "numero_processo": "1000246-17.2026.8.13.0329",
+      "data": "2026-07-15",
+      "hora": "13:00",
+      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-06-03T18:31:29.182296"
+    },
+    {
+      "id": "180fde29",
+      "autor": "GERALDO MIGUEL DE SOUZA",
+      "reu": "ITAU",
+      "objeto": "consignado nº 0037613722020180629 e nº 0006294660320180525",
+      "numero_processo": "1000067-83.2026.8.13.0329",
+      "data": "2026-07-15",
+      "hora": "13:15",
+      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.516225"
+    },
+    {
+      "id": "09995111",
+      "autor": "LUCAS MELO BORGES",
+      "reu": "C6",
+      "objeto": "REVISIONAL JUROS",
+      "numero_processo": "1002391-62.2026.8.13.0647",
+      "data": "2026-08-13",
+      "hora": "13:30",
+      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
+      "observacoes": "pedi pra ser online",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-06-15T20:19:47.866792"
+    },
+    {
+      "id": "294f22cb",
+      "autor": "JOSE ALDAIR FERREIRA NUNES",
+      "reu": "CARLOS",
+      "objeto": "queixa crime juizado especial criminal - calunia",
+      "numero_processo": "5000452-42.2026.8.13.0432",
+      "data": "2026-10-29",
+      "hora": "16:15",
+      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
+      "observacoes": "",
+      "responsavel": "",
+      "criado_em": "2026-05-08T14:50:44.527589",
+      "atencao": false
+    },
+    {
+      "id": "a2e168df",
+      "autor": "LENITA APARECIDA PAULA SOUSA",
+      "reu": "ITAU",
+      "objeto": "TAR EXTRATO MES (E) + TAR PACOTE ITAU (R$ 336,00)",
+      "numero_processo": "5000185-88.2026.8.13.0329",
+      "data": "",
+      "hora": "",
+      "andamento": "AGUARDAR SENTENÇA",
+      "observacoes": "",
+      "responsavel": "",
+      "criado_em": "2026-05-08T14:50:44.521724",
+      "dashboard_ok": true,
+      "atencao": false
+    },
+    {
+      "id": "8e1200a4",
+      "autor": "JOSE CARLOS DOS SANTOS",
+      "reu": "MASTER",
+      "objeto": "cartao RMC 802630166 e RCC 802630008",
+      "numero_processo": "5001238-41.2025.8.13.0329",
+      "data": "",
+      "hora": "",
+      "andamento": "AGUARDANDO DESPACHO",
+      "observacoes": "",
+      "responsavel": "Outro",
+      "criado_em": "2026-05-08T14:50:44.516468",
+      "dashboard_ok": true,
+      "atencao": false
     },
     {
       "id": "f6baf130",
@@ -76,23 +842,6 @@
       "dashboard_ok": true
     },
     {
-      "id": "f04ea5ee",
-      "autor": "IZILDINHA APARECIDA LOVATO",
-      "reu": "BRADESCO",
-      "objeto": "TÍTULO DE CAPITALIZAÇÃO, TARIFA BANCARIA EXTRATOmovimento e TARIFA BANCÁRIA SAQUEcorrespondente",
-      "numero_processo": "1000051-32.2026.8.13.0329",
-      "data": "2026-06-17",
-      "hora": "",
-      "andamento": "RÉPLICA SEM INTIMAÇÃO",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.516782"
-    },
-    {
       "id": "52bb963d",
       "autor": "MARLI DAS VIRGENS ROCHA CELESTINO",
       "reu": "ITAU",
@@ -108,23 +857,6 @@
       "dashboard_ok": true
     },
     {
-      "id": "9d1d810e",
-      "autor": "JANAINA SILVA GUEDES",
-      "reu": "ITAU",
-      "objeto": "SEGURO CARTAO",
-      "numero_processo": "1000062-61.2026.8.13.0329",
-      "data": "2026-06-17",
-      "hora": "",
-      "andamento": "PROVAS",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.516971"
-    },
-    {
       "id": "82e26e39",
       "autor": "ROSARIA LOGUERCIOS DOS SANTOS",
       "reu": "ITAU",
@@ -135,20 +867,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "Outro",
-      "criado_em": "2026-05-08T14:50:44.517058"
-    },
-    {
-      "id": "89598df0",
-      "autor": "VANIA MARIA DOS REIS SOARES",
-      "reu": "C6",
-      "objeto": "10016864267",
-      "numero_processo": "5001239-26.2025.8.13.0329",
-      "data": "2026-07-06",
-      "hora": "14:30",
-      "andamento": "OUTRO",
-      "observacoes": "Perícia agendada",
-      "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.526723"
+      "criado_em": "2026-05-08T14:50:44.517058",
+      "atencao": false
     },
     {
       "id": "aa1d085a",
@@ -184,37 +904,6 @@
       "dashboard_ok": true
     },
     {
-      "id": "5f58b2cb",
-      "autor": "MARLI DAS VIRGENS ROCHA CELESTINO",
-      "reu": "SANTANDER",
-      "objeto": "232012940",
-      "numero_processo": "1000063-46.2026.8.13.0329",
-      "data": "2026-06-17",
-      "hora": "",
-      "andamento": "RÉPLICA",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "criado_em": "2026-05-08T14:50:44.517747"
-    },
-    {
-      "id": "f2fc4cc5",
-      "autor": "KLEYSON ROBERTO SOUSA DIAS",
-      "reu": "ITAU",
-      "objeto": "REVISIONAL ITAU SOB MEDIDA",
-      "numero_processo": "1000059-09.2026.8.13.0329",
-      "data": "2026-06-19",
-      "hora": "",
-      "andamento": "PROVAS",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.517619"
-    },
-    {
       "id": "8cf477b5",
       "autor": "TEREZINHA IVONE DE SOUSA",
       "reu": "ITAU",
@@ -223,7 +912,7 @@
       "data": "",
       "hora": "",
       "andamento": "AGUARDANDO DESPACHO",
-      "observacoes": "teve alguns resgates ",
+      "observacoes": "teve alguns resgates",
       "responsavel": "",
       "atencao": false,
       "criado_em": "2026-05-08T14:50:44.517537",
@@ -273,20 +962,6 @@
       "criado_em": "2026-05-08T14:50:44.527426"
     },
     {
-      "id": "beb6b621",
-      "autor": "ANA MARIA SILVA",
-      "reu": "BMG",
-      "objeto": "RMC 16488811 (R$ 3.220,10)",
-      "numero_processo": "5000203-12.2026.8.13.0329",
-      "data": "",
-      "hora": "",
-      "andamento": "AGUARDANDO DESPACHO",
-      "observacoes": "tem vídeo e aúdio, mandamos proposta de acordo",
-      "responsavel": "",
-      "atencao": true,
-      "criado_em": "2026-05-08T14:50:44.516305"
-    },
-    {
       "id": "4a528a3d",
       "autor": "MARILDA APARECIDA SOUSA DIAS",
       "reu": "ITAUCARD",
@@ -299,23 +974,6 @@
       "responsavel": "",
       "atencao": false,
       "criado_em": "2026-05-08T14:50:44.517840"
-    },
-    {
-      "id": "f039e9fa",
-      "autor": "RUTH FELICIANA DA SILVA SOUZA",
-      "reu": "SANTANDER",
-      "objeto": "261975963, 238966775, 238836464, 201378837",
-      "numero_processo": "5008402-73.2025.8.13.0647",
-      "data": "",
-      "hora": "",
-      "andamento": "AGUARDANDO DESPACHO",
-      "observacoes": "Pedimos oitiva do reu e da autora - ainda não marcou aij",
-      "responsavel": "",
-      "atencao": true,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.527522"
     },
     {
       "id": "c9b53ffa",
@@ -345,23 +1003,6 @@
       "atencao": false,
       "criado_em": "2026-05-08T14:50:44.515774",
       "dashboard_ok": true
-    },
-    {
-      "id": "180fde29",
-      "autor": "GERALDO MIGUEL DE SOUZA",
-      "reu": "ITAU",
-      "objeto": "consignado nº 0037613722020180629 e nº 0006294660320180525",
-      "numero_processo": "1000067-83.2026.8.13.0329",
-      "data": "2026-07-15",
-      "hora": "13:15",
-      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.516225"
     },
     {
       "id": "c2965e2c",
@@ -476,7 +1117,8 @@
       "observacoes": "reclamação em plataforma oficial (Consumidor.gov.br ou Procon)",
       "responsavel": "",
       "criado_em": "2026-05-08T14:50:44.518392",
-      "dashboard_ok": true
+      "dashboard_ok": true,
+      "atencao": false
     },
     {
       "id": "fe7227a0",
@@ -538,21 +1180,6 @@
       "dashboard_ok": true
     },
     {
-      "id": "e64934cc",
-      "autor": "ANA MARIA SILVA",
-      "reu": "AGIBANK",
-      "objeto": "TARIFA COMUNICACAO DIGITAL e DEBITO DE SEGURO",
-      "numero_processo": "5000103-57.2026.8.13.0329",
-      "data": "",
-      "hora": "",
-      "andamento": "AGUARDANDO DESPACHO",
-      "observacoes": "cumprimento da liminar",
-      "responsavel": "",
-      "atencao": true,
-      "criado_em": "2026-05-08T14:50:44.518640",
-      "dashboard_ok": true
-    },
-    {
       "id": "a1100bd4",
       "autor": "DANIELE CRISTINA SILVA",
       "reu": "UBER",
@@ -564,7 +1191,8 @@
       "observacoes": "",
       "responsavel": "",
       "criado_em": "2026-05-08T14:50:44.518795",
-      "dashboard_ok": true
+      "dashboard_ok": true,
+      "atencao": false
     },
     {
       "id": "64a76773",
@@ -606,7 +1234,8 @@
       "observacoes": "reclamação em plataforma oficial (Consumidor.gov.br ou Procon)",
       "responsavel": "",
       "criado_em": "2026-05-08T14:50:44.518098",
-      "dashboard_ok": true
+      "dashboard_ok": true,
+      "atencao": false
     },
     {
       "id": "13dbc558",
@@ -719,23 +1348,6 @@
       "dashboard_ok": true
     },
     {
-      "id": "5830b193",
-      "autor": "MARLI DAS VIRGENS ROCHA CELESTINO",
-      "reu": "ITAU",
-      "objeto": "0011234720820240226C e 0041219267620230427C",
-      "numero_processo": "5000192-80.2026.8.13.0329",
-      "data": "2026-06-22",
-      "hora": "15:00",
-      "andamento": "AIJ - AUDIÊNCIA",
-      "observacoes": "AIJ 22/06 - os valores foram disponibilizados na conta",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.523074"
-    },
-    {
       "id": "253455eb",
       "autor": "ADRIELY NAVES LOVATO",
       "reu": "SANTANDER",
@@ -747,7 +1359,8 @@
       "observacoes": "26/05/2026 - JULGAMENTO TJMG",
       "responsavel": "",
       "criado_em": "2026-05-08T14:50:44.525931",
-      "dashboard_ok": true
+      "dashboard_ok": true,
+      "atencao": false
     },
     {
       "id": "5d19cca6",
@@ -776,41 +1389,8 @@
       "observacoes": "",
       "responsavel": "",
       "criado_em": "2026-05-08T14:50:44.521618",
-      "dashboard_ok": true
-    },
-    {
-      "id": "2d466bfe",
-      "autor": "COSMO DONIZETE MARQUES",
-      "reu": "ITAU",
-      "objeto": "ITAU SEG AP PF (R$ 1.216,52)",
-      "numero_processo": "5001208-06.2025.8.13.0329",
-      "data": "2026-06-19",
-      "hora": "",
-      "andamento": "PROVAS",
-      "observacoes": "pediu aij",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.524010"
-    },
-    {
-      "id": "88b6edc2",
-      "autor": "ANA MARIA SILVA",
-      "reu": "ITAU",
-      "objeto": "0005338083820210923 e 0055942472620201106 (R$ 2.984,66)",
-      "numero_processo": "5000208-34.2026.8.13.0329",
-      "data": "2026-06-26",
-      "hora": "",
-      "andamento": "PROVAS",
-      "observacoes": "pediu aij - réplica boa\naceitou emenda\n",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.515866"
+      "dashboard_ok": true,
+      "atencao": false
     },
     {
       "id": "d65c2745",
@@ -845,23 +1425,6 @@
       "honorarios_acordo": 0,
       "data_pagamento_acordo": "",
       "criado_em": "2026-05-08T14:50:44.526123"
-    },
-    {
-      "id": "a9db29af",
-      "autor": "TEREZINHA IVONE DE SOUSA",
-      "reu": "ITAU",
-      "objeto": "SEGURO CARTÃO (R$ 711,79)",
-      "numero_processo": "1000010-65.2026.8.13.0329",
-      "data": "2026-06-17",
-      "hora": "",
-      "andamento": "PROVAS",
-      "observacoes": "reu pediu aij",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.519510"
     },
     {
       "id": "315e746a",
@@ -908,7 +1471,8 @@
       "observacoes": "(104 mil) - (fazer PIX dela)",
       "responsavel": "",
       "criado_em": "2026-05-08T14:50:44.519590",
-      "dashboard_ok": true
+      "dashboard_ok": true,
+      "atencao": false
     },
     {
       "id": "cf3b7232",
@@ -922,24 +1486,8 @@
       "observacoes": "",
       "responsavel": "",
       "criado_em": "2026-05-08T14:50:44.519820",
-      "dashboard_ok": true
-    },
-    {
-      "id": "682e2332",
-      "autor": "ANA MARIA DE OLIVEIRA",
-      "reu": "ITAÚ",
-      "objeto": "ITAU SEG AP PF (R$ 814,50)",
-      "numero_processo": "5001219-35.2025.8.13.0329",
-      "data": "",
-      "hora": "",
-      "andamento": "ACORDO",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "criado_em": "2026-05-08T14:50:44.519718",
-      "valor_acordo": 3700.0,
-      "honorarios_acordo": 0.0,
-      "data_pagamento_acordo": ""
+      "dashboard_ok": true,
+      "atencao": false
     },
     {
       "id": "ab548887",
@@ -953,7 +1501,8 @@
       "observacoes": "",
       "responsavel": "",
       "criado_em": "2026-05-08T14:50:44.520169",
-      "dashboard_ok": true
+      "dashboard_ok": true,
+      "atencao": false
     },
     {
       "id": "97dffecf",
@@ -971,40 +1520,6 @@
       "dashboard_ok": true
     },
     {
-      "id": "76d00929",
-      "autor": "ANA MARIA DE OLIVEIRA",
-      "reu": "C6",
-      "objeto": "90132715765, 90132715597, 90132715702, 90132715522",
-      "numero_processo": "5001003-74.2025.8.13.0329",
-      "data": "",
-      "hora": "",
-      "andamento": "DESISTÊNCIA",
-      "observacoes": "4 contratos, mesma foto - TED em nome de Panamericano pedir memoriais",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.520086"
-    },
-    {
-      "id": "63f558f0",
-      "autor": "ANA MARIA DE OLIVEIRA",
-      "reu": "ITAU",
-      "objeto": "632823469, 589893409, 630423159, 582693588, 630623016",
-      "numero_processo": "5001209-88.2025.8.13.0329",
-      "data": "",
-      "hora": "",
-      "andamento": "DESISTÊNCIA",
-      "observacoes": "oficio p/ caixa para extrato",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.524199"
-    },
-    {
       "id": "ded03a6d",
       "autor": "MARLENE APARECIDA LEMES",
       "reu": "ITAU",
@@ -1016,80 +1531,8 @@
       "observacoes": "",
       "responsavel": "",
       "criado_em": "2026-05-08T14:50:44.525612",
-      "dashboard_ok": true
-    },
-    {
-      "id": "53def45f",
-      "autor": "ANA MARIA DE OLIVEIRA",
-      "reu": "ITAÚ",
-      "objeto": "639623219, 580092865, 583793271, 638623336",
-      "numero_processo": "5001181-23.2025.8.13.0329",
-      "data": "",
-      "hora": "",
-      "andamento": "DESISTÊNCIA",
-      "observacoes": "mandamos acordo",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.524074"
-    },
-    {
-      "id": "94b079c8",
-      "autor": "MARIA DA GLORIA SILVA",
-      "reu": "PARANA",
-      "objeto": "58010923775-331, 58010923772-331, 58010923773-331, 58010279091-331.",
-      "numero_processo": "5001249-70.2025.8.13.0329",
-      "data": "2026-06-18",
-      "hora": "13:00",
-      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
-      "observacoes": "",
-      "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.520252"
-    },
-    {
-      "id": "a0bd3199",
-      "autor": "RUTH FELICIANA DA SILVA SOUZA",
-      "reu": "ITAU",
-      "objeto": "633090574",
-      "numero_processo": "5008748-24.2025.8.13.0647",
-      "data": "2026-06-30",
-      "hora": "14:00",
-      "andamento": "AIJ - AUDIÊNCIA",
-      "observacoes": "Pedimos oitiva do reu e da autora ",
-      "responsavel": "",
-      "atencao": true,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.520477"
-    },
-    {
-      "id": "3faeed96",
-      "autor": "MARIA DA GLORIA SILVA",
-      "reu": "PARANA",
-      "objeto": "58029582127-331, 58014069573-331, 58013876034-331, 58012543951-331_0001",
-      "numero_processo": "5001281-75.2025.8.13.0329",
-      "data": "2026-07-01",
-      "hora": "13:15",
-      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
-      "observacoes": "",
-      "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.520379"
-    },
-    {
-      "id": "294f22cb",
-      "autor": "JOSE ALDAIR FERREIRA NUNES",
-      "reu": "CARLOS",
-      "objeto": "queixa crime juizado especial criminal - calunia",
-      "numero_processo": "5000452-42.2026.8.13.0432",
-      "data": "2026-10-29",
-      "hora": "16:15",
-      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
-      "observacoes": "",
-      "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.527589"
+      "dashboard_ok": true,
+      "atencao": false
     },
     {
       "id": "e4e2f9cb",
@@ -1116,7 +1559,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "cumprimento multa astreinte - extrato liminar - pediram julgamento antecipado",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.520799"
+      "criado_em": "2026-05-08T14:50:44.520799",
+      "atencao": false
     },
     {
       "id": "5b9dd98d",
@@ -1129,7 +1573,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "aceitar acordo, teve resgate de 1050,00 e cobrou 1600,00",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.520925"
+      "criado_em": "2026-05-08T14:50:44.520925",
+      "atencao": false
     },
     {
       "id": "b4fb89af",
@@ -1142,7 +1587,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "mandamos proposta de acordo",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.521188"
+      "criado_em": "2026-05-08T14:50:44.521188",
+      "atencao": false
     },
     {
       "id": "02999995",
@@ -1155,7 +1601,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.521248"
+      "criado_em": "2026-05-08T14:50:44.521248",
+      "atencao": false
     },
     {
       "id": "3f2075f8",
@@ -1168,7 +1615,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "pediu aij",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.521308"
+      "criado_em": "2026-05-08T14:50:44.521308",
+      "atencao": false
     },
     {
       "id": "d896959d",
@@ -1181,7 +1629,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.521370"
+      "criado_em": "2026-05-08T14:50:44.521370",
+      "atencao": false
     },
     {
       "id": "ca58dd6c",
@@ -1194,7 +1643,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.521433"
+      "criado_em": "2026-05-08T14:50:44.521433",
+      "atencao": false
     },
     {
       "id": "70ddf9ec",
@@ -1207,7 +1657,8 @@
       "andamento": "SUSPENSO IRDR",
       "observacoes": "tentativa de acordo enviada no wpp",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.521495"
+      "criado_em": "2026-05-08T14:50:44.521495",
+      "atencao": false
     },
     {
       "id": "bffe9e15",
@@ -1220,7 +1671,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.521557"
+      "criado_em": "2026-05-08T14:50:44.521557",
+      "atencao": false
     },
     {
       "id": "e3f90b48",
@@ -1248,7 +1700,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.521922"
+      "criado_em": "2026-05-08T14:50:44.521922",
+      "atencao": false
     },
     {
       "id": "ca0c8098",
@@ -1279,7 +1732,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.522057"
+      "criado_em": "2026-05-08T14:50:44.522057",
+      "atencao": false
     },
     {
       "id": "e0e700d9",
@@ -1309,7 +1763,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.522237"
+      "criado_em": "2026-05-08T14:50:44.522237",
+      "atencao": false
     },
     {
       "id": "cec9b7d8",
@@ -1322,7 +1777,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "se der improcedente, da para apelar",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.522297"
+      "criado_em": "2026-05-08T14:50:44.522297",
+      "atencao": false
     },
     {
       "id": "a4af0730",
@@ -1342,23 +1798,6 @@
       "criado_em": "2026-05-08T14:50:44.522359"
     },
     {
-      "id": "a793e8fe",
-      "autor": "ALCIDES MARQUES DA SILVA",
-      "reu": "ITAU",
-      "objeto": "SEG AP PF",
-      "numero_processo": "5001341-48.2025.8.13.0329",
-      "data": "2026-06-22",
-      "hora": "14:30",
-      "andamento": "AIJ - AUDIÊNCIA",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.522418"
-    },
-    {
       "id": "3eb4dc82",
       "autor": "TONINHO PAULINO DOS SANTOS",
       "reu": "ITAU",
@@ -1369,7 +1808,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.522478"
+      "criado_em": "2026-05-08T14:50:44.522478",
+      "atencao": false
     },
     {
       "id": "b93bdf89",
@@ -1399,7 +1839,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "tentativa de acordo enviada no email",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.522600"
+      "criado_em": "2026-05-08T14:50:44.522600",
+      "atencao": false
     },
     {
       "id": "1e559d9e",
@@ -1412,7 +1853,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.522805"
+      "criado_em": "2026-05-08T14:50:44.522805",
+      "atencao": false
     },
     {
       "id": "d4cd97d3",
@@ -1440,7 +1882,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "tentar acordo, cobrou apenas R$ 312,17 e parcelas de 7,00, 8,00",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.522977"
+      "criado_em": "2026-05-08T14:50:44.522977",
+      "atencao": false
     },
     {
       "id": "72892f04",
@@ -1453,7 +1896,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.523210"
+      "criado_em": "2026-05-08T14:50:44.523210",
+      "atencao": false
     },
     {
       "id": "f9098732",
@@ -1487,23 +1931,6 @@
       "criado_em": "2026-05-08T14:50:44.523334"
     },
     {
-      "id": "b2d38a14",
-      "autor": "ROSARIA LOGUERCIOS DOS SANTOS",
-      "reu": "SAFRA",
-      "objeto": "000014132072, 000018740120,",
-      "numero_processo": "5001349-25.2025.8.13.0329",
-      "data": "2026-07-13",
-      "hora": "16:00",
-      "andamento": "AIJ - AUDIÊNCIA",
-      "observacoes": "ass falsa",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.523395"
-    },
-    {
       "id": "a595a1d4",
       "autor": "TEREZINHA IVONE DE SOUSA",
       "reu": "CETELEM",
@@ -1516,23 +1943,6 @@
       "responsavel": "",
       "atencao": false,
       "criado_em": "2026-05-08T14:50:44.523455"
-    },
-    {
-      "id": "4995ed49",
-      "autor": "COSMO DONIZETE MARQUES",
-      "reu": "ITAU",
-      "objeto": "SEGURO CARTAO",
-      "numero_processo": "5001186-45.2025.8.13.0329",
-      "data": "",
-      "hora": "",
-      "andamento": "ACORDO",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 2600.0,
-      "honorarios_acordo": 0.0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.523519"
     },
     {
       "id": "67586ffd",
@@ -1550,23 +1960,6 @@
       "dashboard_ok": true
     },
     {
-      "id": "9fd53e11",
-      "autor": "TEREZINHA IVONE DE SOUSA",
-      "reu": "ITAU",
-      "objeto": "0040043558220220331C, 002136347932021083, 0064486579220210512, 0079280243120210224, 005861868762200630",
-      "numero_processo": "5001262-69.2025.8.13.0329",
-      "data": "2026-07-13",
-      "hora": "15:00",
-      "andamento": "AIJ - AUDIÊNCIA",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.523704"
-    },
-    {
       "id": "e31afcea",
       "autor": "CLEIDE DE SOUSA ALVES",
       "reu": "ITAU",
@@ -1577,75 +1970,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "pediu aij",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.523867"
-    },
-    {
-      "id": "c9575b7c",
-      "autor": "LENITA APARECIDA PAULA SOUSA",
-      "reu": "ITAU",
-      "objeto": "nº 004099 064012 021041 2, nº 06570 937382 021041 5, nº 06570 484432 021041 5, nº 06570 638632 021041 5 e 006570 843982 021041 5 (R$ 4.099,25 c/ correcao)",
-      "numero_processo": "5001274-83.2025.8.13.0329",
-      "data": "2026-07-13",
-      "hora": "17:15",
-      "andamento": "AIJ - AUDIÊNCIA",
-      "observacoes": "pediu aij",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.523934"
-    },
-    {
-      "id": "aaa336d6",
-      "autor": "BERNADETE NARDI DE PAULA",
-      "reu": "DIGIO",
-      "objeto": "PENSAO 815911212",
-      "numero_processo": "5001231-49.2025.8.13.0329",
-      "data": "2026-06-25",
-      "hora": "",
-      "andamento": "CONCLUSO PARA JULGAMENTO",
-      "observacoes": "pericia",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.524136"
-    },
-    {
-      "id": "9226fe29",
-      "autor": "NEIDE MARTINS BELCHIOR",
-      "reu": "BRADESCO",
-      "objeto": "0123424212899, 0123424212978, 0123424213369, 0123369420923",
-      "numero_processo": "5001210-73.2025.8.13.0329",
-      "data": "2026-07-13",
-      "hora": "17:00",
-      "andamento": "AIJ - AUDIÊNCIA",
-      "observacoes": "AIJ",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.524260"
-    },
-    {
-      "id": "29b33296",
-      "autor": "MARIA DA GLORIA SILVA",
-      "reu": "MERCANTIL",
-      "objeto": "58029582127-331",
-      "numero_processo": "5001248-85.2025.8.13.0329",
-      "data": "2026-07-13",
-      "hora": "14:30",
-      "andamento": "AIJ - AUDIÊNCIA",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.524319"
+      "criado_em": "2026-05-08T14:50:44.523867",
+      "atencao": false
     },
     {
       "id": "c3a1bd18",
@@ -1700,23 +2026,6 @@
       "criado_em": "2026-05-08T14:50:44.524503"
     },
     {
-      "id": "5c5dae3c",
-      "autor": "ROSARIA LOGUERCIOS DOS SANTOS",
-      "reu": "ITAU",
-      "objeto": "2676900331, 0034352356920230523C, 0050818154220220414C, 0078095312120201109",
-      "numero_processo": "5001351-92.2025.8.13.0329",
-      "data": "2026-07-13",
-      "hora": "14:00",
-      "andamento": "AIJ - AUDIÊNCIA",
-      "observacoes": "pediu aij",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.524564"
-    },
-    {
       "id": "9fb90d51",
       "autor": "JOAO DONIZETE VAZ",
       "reu": "ITAU",
@@ -1727,7 +2036,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "pediu aij",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.524624"
+      "criado_em": "2026-05-08T14:50:44.524624",
+      "atencao": false
     },
     {
       "id": "c0d440c8",
@@ -1740,24 +2050,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.524732"
-    },
-    {
-      "id": "76b46037",
-      "autor": "CLEIDE DE SOUSA ALVES",
-      "reu": "ITAU",
-      "objeto": "TAR PACOTE",
-      "numero_processo": "5001353-62.2025.8.13.0329",
-      "data": "2026-07-13",
-      "hora": "16:30",
-      "andamento": "AIJ - AUDIÊNCIA",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.524803"
+      "criado_em": "2026-05-08T14:50:44.524732",
+      "atencao": false
     },
     {
       "id": "bbec3aa0",
@@ -1778,23 +2072,6 @@
       "dashboard_ok": true
     },
     {
-      "id": "d2aa0d75",
-      "autor": "NEIDE MARTINS BELCHIOR",
-      "reu": "BRADESCO",
-      "objeto": "PGTO COBRANCA ASPECIR – UNIAO SEGURADORA",
-      "numero_processo": "5001133-64.2025.8.13.0329",
-      "data": "2026-06-19",
-      "hora": "",
-      "andamento": "PROVAS",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.524928"
-    },
-    {
       "id": "00711e4e",
       "autor": "COSMO DONIZETE MARQUES",
       "reu": "ITAU",
@@ -1810,23 +2087,6 @@
       "dashboard_ok": true
     },
     {
-      "id": "97f3c110",
-      "autor": "JOSE CARLOS DOS SANTOS",
-      "reu": "AGIBANK",
-      "objeto": "1101020929",
-      "numero_processo": "5001272-16.2025.8.13.0329",
-      "data": "",
-      "hora": "",
-      "andamento": "DESISTÊNCIA",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.525062"
-    },
-    {
       "id": "ec764b34",
       "autor": "RUTH FELICIANA DA SILVA SOUZA",
       "reu": "BMG",
@@ -1837,24 +2097,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "pediu aij",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.525122"
-    },
-    {
-      "id": "37736493",
-      "autor": "NEIDE MARTINS BELCHIOR",
-      "reu": "BRADESCO",
-      "objeto": "PGTO COBRANCA MBM PREVIDENCIA COMPLEMENTAR",
-      "numero_processo": "5001135-34.2025.8.13.0329",
-      "data": "2026-07-13",
-      "hora": "15:30",
-      "andamento": "AIJ - AUDIÊNCIA",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.525182"
+      "criado_em": "2026-05-08T14:50:44.525122",
+      "atencao": false
     },
     {
       "id": "d8e26887",
@@ -1867,7 +2111,8 @@
       "andamento": "PERÍCIA",
       "observacoes": "essa é a do áudio - mas a replica ta boa",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.525303"
+      "criado_em": "2026-05-08T14:50:44.525303",
+      "atencao": false
     },
     {
       "id": "f0d3bdef",
@@ -1880,7 +2125,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "Não pediram pericia, a assinatura parece meio diferente",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.525364"
+      "criado_em": "2026-05-08T14:50:44.525364",
+      "atencao": false
     },
     {
       "id": "d4a26260",
@@ -1893,7 +2139,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.525546"
+      "criado_em": "2026-05-08T14:50:44.525546",
+      "atencao": false
     },
     {
       "id": "41b0ff15",
@@ -1906,7 +2153,8 @@
       "andamento": "RECURSO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.525734"
+      "criado_em": "2026-05-08T14:50:44.525734",
+      "atencao": false
     },
     {
       "id": "6befda69",
@@ -1919,7 +2167,8 @@
       "andamento": "RECURSO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.525808"
+      "criado_em": "2026-05-08T14:50:44.525808",
+      "atencao": false
     },
     {
       "id": "5e87019d",
@@ -1932,20 +2181,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.525870"
-    },
-    {
-      "id": "73673170",
-      "autor": "LENITA APARECIDA PAULA SOUSA",
-      "reu": "BANRISUL",
-      "objeto": "00000 000000 077153 13, nº 000000 000000 077153 0 e nº 00000 000000 077153 09",
-      "numero_processo": "5001265-24.2025.8.13.0329",
-      "data": "2026-07-06",
-      "hora": "15:00",
-      "andamento": "OUTRO",
-      "observacoes": "pericia",
-      "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.526003"
+      "criado_em": "2026-05-08T14:50:44.525870",
+      "atencao": false
     },
     {
       "id": "8c33c0fe",
@@ -1958,7 +2195,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.526063"
+      "criado_em": "2026-05-08T14:50:44.526063",
+      "atencao": false
     },
     {
       "id": "55572870",
@@ -1971,7 +2209,8 @@
       "andamento": "RECURSO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.526184"
+      "criado_em": "2026-05-08T14:50:44.526184",
+      "atencao": false
     },
     {
       "id": "28cf85bd",
@@ -1984,7 +2223,8 @@
       "andamento": "RECURSO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.526244"
+      "criado_em": "2026-05-08T14:50:44.526244",
+      "atencao": false
     },
     {
       "id": "52475f0d",
@@ -1997,22 +2237,8 @@
       "andamento": "RECURSO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.526303"
-    },
-    {
-      "id": "571de3cb",
-      "autor": "APARECIDO DONIZETE SILVA",
-      "reu": "PAN",
-      "objeto": "346945298-5, 345644606-5, 345026930-7, 341471762-3",
-      "numero_processo": "5000829-65.2025.8.13.0329",
-      "data": "",
-      "hora": "",
-      "andamento": "AGUARDANDO DESPACHO",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": true,
-      "criado_em": "2026-05-08T14:50:44.526421",
-      "dashboard_ok": true
+      "criado_em": "2026-05-08T14:50:44.526303",
+      "atencao": false
     },
     {
       "id": "a4d4eb73",
@@ -2054,7 +2280,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.526600"
+      "criado_em": "2026-05-08T14:50:44.526600",
+      "atencao": false
     },
     {
       "id": "33dce47b",
@@ -2067,7 +2294,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.526837"
+      "criado_em": "2026-05-08T14:50:44.526837",
+      "atencao": false
     },
     {
       "id": "212cbb1c",
@@ -2080,24 +2308,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.526955"
-    },
-    {
-      "id": "71e06798",
-      "autor": "CLEIDE DE SOUSA ALVES",
-      "reu": "ITAU",
-      "objeto": "ITAU SEG AP PF",
-      "numero_processo": "5001142-26.2025.8.13.0329",
-      "data": "2026-06-19",
-      "hora": "",
-      "andamento": "PROVAS",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.527036"
+      "criado_em": "2026-05-08T14:50:44.526955",
+      "atencao": false
     },
     {
       "id": "782d0ddd",
@@ -2125,7 +2337,8 @@
       "observacoes": "",
       "responsavel": "",
       "criado_em": "2026-05-08T14:50:44.515118",
-      "dashboard_ok": true
+      "dashboard_ok": true,
+      "atencao": false
     },
     {
       "id": "de4ebe35",
@@ -2139,7 +2352,8 @@
       "observacoes": "",
       "responsavel": "",
       "criado_em": "2026-05-08T14:50:44.515425",
-      "dashboard_ok": true
+      "dashboard_ok": true,
+      "atencao": false
     },
     {
       "id": "6f641728",
@@ -2153,7 +2367,8 @@
       "observacoes": "não tem contrato, sem assinatura, sem nada, ta bom o processo",
       "responsavel": "",
       "criado_em": "2026-05-08T14:50:44.515260",
-      "dashboard_ok": true
+      "dashboard_ok": true,
+      "atencao": false
     },
     {
       "id": "846d236f",
@@ -2167,7 +2382,8 @@
       "observacoes": "",
       "responsavel": "",
       "criado_em": "2026-05-08T14:50:44.515638",
-      "dashboard_ok": true
+      "dashboard_ok": true,
+      "atencao": false
     },
     {
       "id": "b5134f45",
@@ -2181,7 +2397,8 @@
       "observacoes": "",
       "responsavel": "",
       "criado_em": "2026-05-08T14:50:44.515543",
-      "dashboard_ok": true
+      "dashboard_ok": true,
+      "atencao": false
     },
     {
       "id": "f1cc9206",
@@ -2194,7 +2411,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.514928"
+      "criado_em": "2026-05-08T14:50:44.514928",
+      "atencao": false
     },
     {
       "id": "549c39e0",
@@ -2208,7 +2426,8 @@
       "observacoes": "",
       "responsavel": "",
       "criado_em": "2026-05-08T14:50:44.516142",
-      "dashboard_ok": true
+      "dashboard_ok": true,
+      "atencao": false
     },
     {
       "id": "2cee9976",
@@ -2221,7 +2440,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "Banco vai entrar em contato",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.520546"
+      "criado_em": "2026-05-08T14:50:44.520546",
+      "atencao": false
     },
     {
       "id": "b2af6826",
@@ -2234,7 +2454,8 @@
       "andamento": "AGUARDANDO MANIFESTAÇÃO RÉU",
       "observacoes": "Aguardando contestacao",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.520610"
+      "criado_em": "2026-05-08T14:50:44.520610",
+      "atencao": false
     },
     {
       "id": "4543b745",
@@ -2247,66 +2468,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.527681"
-    },
-    {
-      "id": "44eae30f",
-      "autor": "TEREZINHA IVONE DE SOUSA",
-      "reu": "CLARO",
-      "objeto": "aumento indevido de fatura",
-      "numero_processo": "1000077-30.2026.8.13.0329",
-      "data": "2026-06-25",
-      "hora": "13:45",
-      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "criado_em": "2026-05-08T14:50:44.527850"
-    },
-    {
-      "id": "accb7ca6",
-      "autor": "MARLENE APARECIDA LEMES",
-      "reu": "ITAU",
-      "objeto": "SEGURO CARTAO",
-      "numero_processo": "1000081-67.2026.8.13.0329",
-      "data": "2026-06-17",
-      "hora": "14:00",
-      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
-      "observacoes": "fazer replica",
-      "responsavel": "",
-      "atencao": false,
-      "criado_em": "2026-05-08T14:50:44.527913"
-    },
-    {
-      "id": "38da35c8",
-      "autor": "MARLENE APARECIDA LEMES",
-      "reu": "ITAU",
-      "objeto": "ADIANTE DEPOSITANTE",
-      "numero_processo": "1000084-22.2026.8.13.0329",
-      "data": "2026-07-01",
-      "hora": "14:30",
-      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
-      "observacoes": "fazer replica",
-      "responsavel": "",
-      "atencao": false,
-      "criado_em": "2026-05-08T14:50:44.527982"
-    },
-    {
-      "id": "eb600313",
-      "autor": "MARINA JANAINA SILVA",
-      "reu": "ITAU",
-      "objeto": "revisao de juros abusivo",
-      "numero_processo": "1000107-65.2026.8.13.0329",
-      "data": "2026-07-08",
-      "hora": "15:00",
-      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
-      "observacoes": "juntar documento pessoal e comprovante de residencia",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.528045"
+      "criado_em": "2026-05-08T14:50:44.527681",
+      "atencao": false
     },
     {
       "id": "1b22e805",
@@ -2319,21 +2482,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.528107"
-    },
-    {
-      "id": "70935c1f",
-      "autor": "CLEIDE DE SOUSA ALVES",
-      "reu": "ITAU",
-      "objeto": "contrato 2677140283",
-      "numero_processo": "1000172-60.2026.8.13.0329",
-      "data": "2026-06-18",
-      "hora": "15:45",
-      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "criado_em": "2026-05-08T14:50:44.528288"
+      "criado_em": "2026-05-08T14:50:44.528107",
+      "atencao": false
     },
     {
       "id": "959d8b6a",
@@ -2346,7 +2496,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.528347"
+      "criado_em": "2026-05-08T14:50:44.528347",
+      "atencao": false
     },
     {
       "id": "80284363",
@@ -2359,7 +2510,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-12T15:40:43.923400"
+      "criado_em": "2026-05-12T15:40:43.923400",
+      "atencao": false
     },
     {
       "id": "58c3554e",
@@ -2380,23 +2532,6 @@
       "dashboard_ok": true
     },
     {
-      "id": "d02486bd",
-      "autor": "MATHEUS SERRAGLIA REIS AMENT",
-      "reu": "ITAU",
-      "objeto": "ANUIDADE",
-      "numero_processo": "4008026-45.2026.8.26.0506",
-      "data": "2026-06-22",
-      "hora": "",
-      "andamento": "PROVAS",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.521127"
-    },
-    {
       "id": "aa4c7cfd",
       "autor": "JOAO GABRIEL ADALBERTO REMOS PAIVA",
       "reu": "FACEBOOK",
@@ -2407,7 +2542,8 @@
       "andamento": "RECURSO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.522117"
+      "criado_em": "2026-05-08T14:50:44.522117",
+      "atencao": false
     },
     {
       "id": "7dd339bb",
@@ -2420,21 +2556,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.528168"
-    },
-    {
-      "id": "f66e6a69",
-      "autor": "HELIO DE SOUZA",
-      "reu": "ITAU",
-      "objeto": "TAR EXTRATO MOVIMENTO(E) e TAR PACOTE ITAU",
-      "numero_processo": "4010929-10.2026.8.26.0003",
-      "data": "2026-06-25",
-      "hora": "",
-      "andamento": "RÉPLICA",
-      "observacoes": "",
-      "responsavel": "Eduarda",
-      "atencao": false,
-      "criado_em": "2026-05-08T14:50:44.528227"
+      "criado_em": "2026-05-08T14:50:44.528168",
+      "atencao": false
     },
     {
       "id": "df0f2c41",
@@ -2447,41 +2570,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.528407"
-    },
-    {
-      "id": "a4ca91e0",
-      "autor": "HELIO DE SOUZA",
-      "reu": "ITAU",
-      "objeto": "ITAU SEG AP PF E SISDEB",
-      "numero_processo": "4012553-94.2026.8.26.0003",
-      "data": "2026-06-22",
-      "hora": "",
-      "andamento": "RÉPLICA SEM INTIMAÇÃO",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.528468"
-    },
-    {
-      "id": "2cd8c97e",
-      "autor": "HELIO DE SOUZA",
-      "reu": "ITAU",
-      "objeto": "SEGURO RESIDENCIA",
-      "numero_processo": "4012568-63.2026.8.26.0003",
-      "data": "2026-06-25",
-      "hora": "",
-      "andamento": "RÉPLICA",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-08T14:50:44.528527"
+      "criado_em": "2026-05-08T14:50:44.528407",
+      "atencao": false
     },
     {
       "id": "7ed43180",
@@ -2512,7 +2602,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.523148"
+      "criado_em": "2026-05-08T14:50:44.523148",
+      "atencao": false
     },
     {
       "id": "1bd7a316",
@@ -2525,7 +2616,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.525485"
+      "criado_em": "2026-05-08T14:50:44.525485",
+      "atencao": false
     },
     {
       "id": "9ab966bd",
@@ -2538,7 +2630,8 @@
       "andamento": "RECURSO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-08T14:50:44.527314"
+      "criado_em": "2026-05-08T14:50:44.527314",
+      "atencao": false
     },
     {
       "id": "80284364",
@@ -2551,52 +2644,8 @@
       "andamento": "CONCLUSO PARA JULGAMENTO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-12T15:40:43.923919"
-    },
-    {
-      "id": "885b4ef6",
-      "autor": "IVAN LOGUERCIO E LETICIA",
-      "reu": "ITAU",
-      "objeto": "GOLPE PIX",
-      "numero_processo": "1000189-96.2026.8.13.0329",
-      "data": "2026-06-18",
-      "hora": "15:00",
-      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "criado_em": "2026-05-12T17:56:04.332322"
-    },
-    {
-      "id": "0e382894",
-      "autor": "JESSICA DA SILVA COSTA",
-      "reu": "SANTANDER",
-      "objeto": "REVISIONAL CONTRATO 110798124/00699576008",
-      "numero_processo": "1000190-81.2026.8.13.0329",
-      "data": "2026-06-18",
-      "hora": "15:15",
-      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
-      "observacoes": "PRECISA DA CLIENTE NA AUDIENCIA JUIZADO ESPECIAL",
-      "responsavel": "",
-      "atencao": false,
-      "criado_em": "2026-05-12T23:34:41.228214"
-    },
-    {
-      "id": "f0de7805",
-      "autor": "FABIO APARECIDO SILVA",
-      "reu": "ITAU",
-      "objeto": "SEGURO LIS ITAU",
-      "numero_processo": "1000197-73.2026.8.13.0329",
-      "data": "2026-07-08",
-      "hora": "15:30",
-      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-14T22:21:38.815952"
+      "criado_em": "2026-05-12T15:40:43.923919",
+      "atencao": false
     },
     {
       "id": "5a10353c",
@@ -2609,7 +2658,8 @@
       "andamento": "AGUARDANDO DESPACHO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-14T22:31:43.738215"
+      "criado_em": "2026-05-14T22:31:43.738215",
+      "atencao": false
     },
     {
       "id": "8c3b28a8",
@@ -2622,35 +2672,8 @@
       "andamento": "AGUARDANDO DESPACHO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-14T23:01:11.196039"
-    },
-    {
-      "id": "179eed50",
-      "autor": "BERNADETE NARDI DE PAULA",
-      "reu": "BRADESCO",
-      "objeto": "TARIFA BANCARIA SAQUETERMINAL E SAQUECORRESPONDENTE",
-      "numero_processo": "1000201-13.2026.8.13.0329",
-      "data": "2026-06-17",
-      "hora": "13:45",
-      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "criado_em": "2026-05-15T17:34:53.347192"
-    },
-    {
-      "id": "bebd9044",
-      "autor": "BERNADETE NARDI DE PAULA",
-      "reu": "BRADESCO",
-      "objeto": "PGTO ELETRON COBRANCA BRADESCO SEG-RESID/OUTROS",
-      "numero_processo": "1000202-95.2026.8.13.0329",
-      "data": "2026-06-17",
-      "hora": "13:30",
-      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "criado_em": "2026-05-15T18:44:24.402105"
+      "criado_em": "2026-05-14T23:01:11.196039",
+      "atencao": false
     },
     {
       "id": "1ef0e898",
@@ -2663,7 +2686,208 @@
       "andamento": "AGUARDANDO DESPACHO",
       "observacoes": "",
       "responsavel": "",
-      "criado_em": "2026-05-22T18:08:10.485440"
+      "criado_em": "2026-05-22T18:08:10.485440",
+      "atencao": false
+    },
+    {
+      "id": "99405445",
+      "autor": "JESSICA DA SILVA COSTA",
+      "reu": "SAFRA",
+      "objeto": "REVISIONAL CONTRATO 010230001 155505",
+      "numero_processo": "1000225-41.2026.8.13.0329",
+      "data": "",
+      "hora": "",
+      "andamento": "AGUARDANDO DESPACHO",
+      "observacoes": "",
+      "responsavel": "",
+      "criado_em": "2026-05-27T20:29:03.338568",
+      "atencao": false
+    },
+    {
+      "id": "5b45de46",
+      "autor": "ROSARIA LOGUERCIOS DOS SANTOS",
+      "reu": "ITAU",
+      "objeto": "SEGURO CARTAO",
+      "numero_processo": "1000233-18.2026.8.13.0329",
+      "data": "",
+      "hora": "",
+      "andamento": "AGUARDANDO DESPACHO",
+      "observacoes": "",
+      "responsavel": "Outro",
+      "criado_em": "2026-05-28T17:57:07.277302",
+      "atencao": false
+    },
+    {
+      "id": "b0c288a4",
+      "autor": "ROSARIA LOGUERCIOS DOS SANTOS",
+      "reu": "ITAU",
+      "objeto": "TAR PACOTE e TAR EXTRATO MES (E)",
+      "numero_processo": "1000235-85.2026.8.13.0329",
+      "data": "",
+      "hora": "",
+      "andamento": "AGUARDANDO DESPACHO",
+      "observacoes": "",
+      "responsavel": "",
+      "criado_em": "2026-05-28T20:02:11.202710",
+      "atencao": false
+    },
+    {
+      "id": "9657a622",
+      "autor": "ROSARIA LOGUERCIOS DOS SANTOS",
+      "reu": "ITAU",
+      "objeto": "SEGURO RESIDENCIA",
+      "numero_processo": "1000238-40.2026.8.13.0329",
+      "data": "",
+      "hora": "",
+      "andamento": "AGUARDANDO DESPACHO",
+      "observacoes": "",
+      "responsavel": "",
+      "criado_em": "2026-05-29T17:56:57.095246",
+      "atencao": false
+    },
+    {
+      "id": "a2d09123",
+      "autor": "ALCIDES MARQUES DA SILVA",
+      "reu": "ITAU",
+      "objeto": "TAR PACOTE, TAR EXTRATO E TAR SAQUE",
+      "numero_processo": "1000256-61.2026.8.13.0329",
+      "data": "",
+      "hora": "",
+      "andamento": "AGUARDANDO DESPACHO",
+      "observacoes": "",
+      "responsavel": "",
+      "criado_em": "2026-06-09T19:58:04.034855",
+      "atencao": false
+    },
+    {
+      "id": "c082bd2a",
+      "autor": "LUCELIA DOS REIS SANTANA SANTOS",
+      "reu": "C6",
+      "objeto": "revisao de juros divergente do contrato",
+      "numero_processo": "1000265-23.2026.8.13.0329",
+      "data": "",
+      "hora": "",
+      "andamento": "AGUARDANDO DESPACHO",
+      "observacoes": "",
+      "responsavel": "",
+      "criado_em": "2026-06-15T21:01:26.625977",
+      "atencao": false
+    },
+    {
+      "id": "f583967b",
+      "autor": "ROSARIA LOGUERCIOS DOS SANTOS",
+      "reu": "ITAU",
+      "objeto": "DEB AUTOR MONETARIE SOCI, DEB AUTOR PAULISTA SERV E SISDEB",
+      "numero_processo": "1000271-30.2026.8.13.0329",
+      "data": "",
+      "hora": "",
+      "andamento": "AGUARDANDO DESPACHO",
+      "observacoes": "DEB 2 descontos, DEB SERV 1 desconto e SISDEB 2 descontos",
+      "responsavel": "",
+      "criado_em": "2026-06-16T17:55:53.749946",
+      "atencao": false
+    },
+    {
+      "id": "682e2332",
+      "autor": "ANA MARIA DE OLIVEIRA",
+      "reu": "ITAÚ",
+      "objeto": "ITAU SEG AP PF (R$ 814,50)",
+      "numero_processo": "5001219-35.2025.8.13.0329",
+      "data": "",
+      "hora": "",
+      "andamento": "ACORDO",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "criado_em": "2026-05-08T14:50:44.519718",
+      "valor_acordo": 3700.0,
+      "honorarios_acordo": 0.0,
+      "data_pagamento_acordo": ""
+    },
+    {
+      "id": "76d00929",
+      "autor": "ANA MARIA DE OLIVEIRA",
+      "reu": "C6",
+      "objeto": "90132715765, 90132715597, 90132715702, 90132715522",
+      "numero_processo": "5001003-74.2025.8.13.0329",
+      "data": "",
+      "hora": "",
+      "andamento": "DESISTÊNCIA",
+      "observacoes": "4 contratos, mesma foto - TED em nome de Panamericano pedir memoriais",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.520086"
+    },
+    {
+      "id": "63f558f0",
+      "autor": "ANA MARIA DE OLIVEIRA",
+      "reu": "ITAU",
+      "objeto": "632823469, 589893409, 630423159, 582693588, 630623016",
+      "numero_processo": "5001209-88.2025.8.13.0329",
+      "data": "",
+      "hora": "",
+      "andamento": "DESISTÊNCIA",
+      "observacoes": "oficio p/ caixa para extrato",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.524199"
+    },
+    {
+      "id": "53def45f",
+      "autor": "ANA MARIA DE OLIVEIRA",
+      "reu": "ITAÚ",
+      "objeto": "639623219, 580092865, 583793271, 638623336",
+      "numero_processo": "5001181-23.2025.8.13.0329",
+      "data": "",
+      "hora": "",
+      "andamento": "DESISTÊNCIA",
+      "observacoes": "mandamos acordo",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.524074"
+    },
+    {
+      "id": "4995ed49",
+      "autor": "COSMO DONIZETE MARQUES",
+      "reu": "ITAU",
+      "objeto": "SEGURO CARTAO",
+      "numero_processo": "5001186-45.2025.8.13.0329",
+      "data": "",
+      "hora": "",
+      "andamento": "ACORDO",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 2600.0,
+      "honorarios_acordo": 0.0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.523519"
+    },
+    {
+      "id": "97f3c110",
+      "autor": "JOSE CARLOS DOS SANTOS",
+      "reu": "AGIBANK",
+      "objeto": "1101020929",
+      "numero_processo": "5001272-16.2025.8.13.0329",
+      "data": "",
+      "hora": "",
+      "andamento": "DESISTÊNCIA",
+      "observacoes": "",
+      "responsavel": "",
+      "atencao": false,
+      "valor_acordo": 0,
+      "honorarios_acordo": 0,
+      "data_pagamento_acordo": "",
+      "criado_em": "2026-05-08T14:50:44.525062"
     },
     {
       "id": "c6b24f32",
@@ -2678,148 +2902,6 @@
       "responsavel": "",
       "atencao": false,
       "criado_em": "2026-05-25T18:41:53.155972"
-    },
-    {
-      "id": "99405445",
-      "autor": "JESSICA DA SILVA COSTA",
-      "reu": "SAFRA",
-      "objeto": "REVISIONAL CONTRATO 010230001 155505",
-      "numero_processo": "1000225-41.2026.8.13.0329",
-      "data": "",
-      "hora": "",
-      "andamento": "AGUARDANDO DESPACHO",
-      "observacoes": "",
-      "responsavel": "",
-      "criado_em": "2026-05-27T20:29:03.338568"
-    },
-    {
-      "id": "7c58ff65",
-      "autor": "APARECIDA DE LOURDES SUDARIO SILVA",
-      "reu": "ITAU",
-      "objeto": "EXIBIÇÃO DE DOCS",
-      "numero_processo": "1000226-26.2026.8.13.0329",
-      "data": "2026-07-08",
-      "hora": "15:45",
-      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-05-27T21:01:03.716315"
-    },
-    {
-      "id": "5b45de46",
-      "autor": "ROSARIA LOGUERCIOS DOS SANTOS",
-      "reu": "ITAU",
-      "objeto": "SEGURO CARTAO",
-      "numero_processo": "1000233-18.2026.8.13.0329",
-      "data": "",
-      "hora": "",
-      "andamento": "AGUARDANDO DESPACHO",
-      "observacoes": "",
-      "responsavel": "Outro",
-      "criado_em": "2026-05-28T17:57:07.277302"
-    },
-    {
-      "id": "b0c288a4",
-      "autor": "ROSARIA LOGUERCIOS DOS SANTOS",
-      "reu": "ITAU",
-      "objeto": "TAR PACOTE e TAR EXTRATO MES (E)",
-      "numero_processo": "1000235-85.2026.8.13.0329",
-      "data": "",
-      "hora": "",
-      "andamento": "AGUARDANDO DESPACHO",
-      "observacoes": "",
-      "responsavel": "",
-      "criado_em": "2026-05-28T20:02:11.202710"
-    },
-    {
-      "id": "9657a622",
-      "autor": "ROSARIA LOGUERCIOS DOS SANTOS",
-      "reu": "ITAU",
-      "objeto": "SEGURO RESIDENCIA",
-      "numero_processo": "1000238-40.2026.8.13.0329",
-      "data": "",
-      "hora": "",
-      "andamento": "AGUARDANDO DESPACHO",
-      "observacoes": "",
-      "responsavel": "",
-      "criado_em": "2026-05-29T17:56:57.095246"
-    },
-    {
-      "id": "3e1c2d03",
-      "autor": "ROSARIA LOGUERCIOS DOS SANTOS",
-      "reu": "ITAU",
-      "objeto": "SEG AP PF",
-      "numero_processo": "1000246-17.2026.8.13.0329",
-      "data": "2026-07-15",
-      "hora": "13:00",
-      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
-      "observacoes": "",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-06-03T18:31:29.182296"
-    },
-    {
-      "id": "a2d09123",
-      "autor": "ALCIDES MARQUES DA SILVA",
-      "reu": "ITAU",
-      "objeto": "TAR PACOTE, TAR EXTRATO E TAR SAQUE",
-      "numero_processo": "1000256-61.2026.8.13.0329",
-      "data": "",
-      "hora": "",
-      "andamento": "AGUARDANDO DESPACHO",
-      "observacoes": "",
-      "responsavel": "",
-      "criado_em": "2026-06-09T19:58:04.034855"
-    },
-    {
-      "id": "09995111",
-      "autor": "LUCAS MELO BORGES",
-      "reu": "C6",
-      "objeto": "REVISIONAL JUROS",
-      "numero_processo": "1002391-62.2026.8.13.0647",
-      "data": "2026-08-13",
-      "hora": "13:30",
-      "andamento": "AC - AUDIÊNCIA DE CONCILIAÇÃO",
-      "observacoes": "pedi pra ser online",
-      "responsavel": "",
-      "atencao": false,
-      "valor_acordo": 0,
-      "honorarios_acordo": 0,
-      "data_pagamento_acordo": "",
-      "criado_em": "2026-06-15T20:19:47.866792"
-    },
-    {
-      "id": "c082bd2a",
-      "autor": "LUCELIA DOS REIS SANTANA SANTOS",
-      "reu": "C6",
-      "objeto": "revisao de juros divergente do contrato",
-      "numero_processo": "1000265-23.2026.8.13.0329",
-      "data": "",
-      "hora": "",
-      "andamento": "AGUARDANDO DESPACHO",
-      "observacoes": "",
-      "responsavel": "",
-      "criado_em": "2026-06-15T21:01:26.625977"
-    },
-    {
-      "id": "f583967b",
-      "autor": "ROSARIA LOGUERCIOS DOS SANTOS",
-      "reu": "ITAU",
-      "objeto": "DEB AUTOR MONETARIE SOCI, DEB AUTOR PAULISTA SERV E SISDEB ",
-      "numero_processo": "1000271-30.2026.8.13.0329",
-      "data": "",
-      "hora": "",
-      "andamento": "AGUARDANDO DESPACHO",
-      "observacoes": "DEB 2 descontos, DEB SERV 1 desconto e SISDEB 2 descontos",
-      "responsavel": "",
-      "criado_em": "2026-06-16T17:55:53.749946"
     }
   ],
   "clientes": [
@@ -3567,26 +3649,6 @@
   ],
   "iniciais": [
     {
-      "id": "b8f0df58",
-      "cliente": "JESSICA DA SILVA COSTA",
-      "reu": "SANTANDER",
-      "objeto": "REVISIONAL CONTRATO 110798124/00699576008",
-      "andamento": "PROTOCOLADO",
-      "responsavel": "",
-      "observacoes": "",
-      "criado_em": "2026-05-08T14:50:44.767759"
-    },
-    {
-      "id": "f564bdaa",
-      "cliente": "JESSICA DA SILVA COSTA",
-      "reu": "SAFRA",
-      "objeto": "REVISIONAL CONTRATO 010230001 155505",
-      "andamento": "PROTOCOLADO",
-      "responsavel": "",
-      "observacoes": "",
-      "criado_em": "2026-05-08T14:50:44.767941"
-    },
-    {
       "id": "8122e052",
       "cliente": "JESSICA DA SILVA COSTA",
       "reu": "CHEVROLET",
@@ -3617,16 +3679,6 @@
       "criado_em": "2026-05-08T14:50:44.768360"
     },
     {
-      "id": "7e0a272a",
-      "cliente": "BERNADETE NARDI DE PAULA",
-      "reu": "BRADESCO",
-      "objeto": "PGTO ELETRON COBRANCA BRADESCO SEG-RESID/OUTROS",
-      "andamento": "PROTOCOLADO",
-      "responsavel": "",
-      "observacoes": "",
-      "criado_em": "2026-05-08T14:50:44.768493"
-    },
-    {
       "id": "b63b9154",
       "cliente": "BERNADETE NARDI DE PAULA",
       "reu": "BRADESCO",
@@ -3635,16 +3687,6 @@
       "responsavel": "Adriely",
       "observacoes": "",
       "criado_em": "2026-05-08T14:50:44.768623"
-    },
-    {
-      "id": "fdf0718f",
-      "cliente": "BERNADETE NARDI DE PAULA",
-      "reu": "BRADESCO",
-      "objeto": "TARIFA BANCARIA SAQUETERMINAL E SAQUECORRESPONDENTE",
-      "andamento": "PROTOCOLADO",
-      "responsavel": "",
-      "observacoes": "",
-      "criado_em": "2026-05-08T14:50:44.768820"
     },
     {
       "id": "b2dc5b7f",
@@ -3665,56 +3707,6 @@
       "responsavel": "",
       "observacoes": "",
       "criado_em": "2026-05-08T14:50:44.769146"
-    },
-    {
-      "id": "6729880f",
-      "cliente": "ROSARIA LOGUERCIOS DOS SANTOS",
-      "reu": "ITAU",
-      "objeto": "SEGURO CARTAO",
-      "andamento": "PROTOCOLADO",
-      "responsavel": "",
-      "observacoes": "22/05",
-      "criado_em": "2026-05-08T14:50:44.769278"
-    },
-    {
-      "id": "efaa2e7e",
-      "cliente": "ROSARIA LOGUERCIOS DOS SANTOS",
-      "reu": "ITAU",
-      "objeto": "TAR PACOTE e TAR EXTRATO MES (E)",
-      "andamento": "PROTOCOLADO",
-      "responsavel": "",
-      "observacoes": "",
-      "criado_em": "2026-05-08T14:50:44.769409"
-    },
-    {
-      "id": "35bee76e",
-      "cliente": "ROSARIA LOGUERCIOS DOS SANTOS",
-      "reu": "ITAU",
-      "objeto": "SEGURO RESIDENCIA",
-      "andamento": "PROTOCOLADO",
-      "responsavel": "",
-      "observacoes": "",
-      "criado_em": "2026-05-08T14:50:44.769691"
-    },
-    {
-      "id": "4147768e",
-      "cliente": "ROSARIA LOGUERCIOS DOS SANTOS",
-      "reu": "ITAU",
-      "objeto": "SEG AP PF",
-      "andamento": "PROTOCOLADO",
-      "responsavel": "",
-      "observacoes": "",
-      "criado_em": "2026-05-08T14:50:44.769829"
-    },
-    {
-      "id": "0dd881df",
-      "cliente": "ROSARIA LOGUERCIOS DOS SANTOS",
-      "reu": "ITAU",
-      "objeto": "DEB AUTOR MONETARIE SOCI, DEB AUTOR PAULISTA SERV E SISDEB ",
-      "andamento": "PROTOCOLADO",
-      "responsavel": "",
-      "observacoes": "DEB 2 descontos, DEB SERV 1 desconto e SISDEB 2 descontos",
-      "criado_em": "2026-05-08T14:50:44.769956"
     },
     {
       "id": "48136594",
@@ -3757,36 +3749,6 @@
       "criado_em": "2026-05-08T14:50:44.770571"
     },
     {
-      "id": "7265a840",
-      "cliente": "FABIO APARECIDO SILVA",
-      "reu": "ITAU",
-      "objeto": "SEGURO LIS ITAU",
-      "andamento": "PROTOCOLADO",
-      "responsavel": "",
-      "observacoes": "",
-      "criado_em": "2026-05-08T14:50:44.770727"
-    },
-    {
-      "id": "835d3f18",
-      "cliente": "MARLI DAS VIRGENS ROCHA CELESTINO",
-      "reu": "PAN",
-      "objeto": "exibicao 355199507-3",
-      "andamento": "PROTOCOLADO",
-      "responsavel": "",
-      "observacoes": "",
-      "criado_em": "2026-05-08T14:50:44.770984"
-    },
-    {
-      "id": "5fc27877",
-      "cliente": "CLEIDE AP. PEREIRA MARIANO",
-      "reu": "PAN",
-      "objeto": "NEGATIVAÇÃO INDEVIDA",
-      "andamento": "ARQUIVADO",
-      "responsavel": "",
-      "observacoes": "",
-      "criado_em": "2026-05-08T14:50:44.771113"
-    },
-    {
       "id": "71ccfaba",
       "cliente": "JANAINA SILVA GUEDES E MARIDO",
       "reu": "",
@@ -3797,16 +3759,6 @@
       "criado_em": "2026-05-08T14:50:44.771243"
     },
     {
-      "id": "4ef95c77",
-      "cliente": "IVAN LOGUERCIO E LETICIA",
-      "reu": "SICOOB E ITAU",
-      "objeto": "GOLPE PIX",
-      "andamento": "PROTOCOLADO",
-      "responsavel": "",
-      "observacoes": "",
-      "criado_em": "2026-05-08T14:50:44.771368"
-    },
-    {
       "id": "b297e9e8",
       "cliente": "CRISTINA MARIA COSTA MOYSES",
       "reu": "SL TERAPIAS",
@@ -3815,16 +3767,6 @@
       "responsavel": "",
       "observacoes": "",
       "criado_em": "2026-05-08T14:50:44.771492"
-    },
-    {
-      "id": "2385bff5",
-      "cliente": "ALCIDES MARQUES DA SILVA",
-      "reu": "ITAU",
-      "objeto": "TAR PACOTE, TAR EXTRATO E TAR SAQUE",
-      "andamento": "PROTOCOLADO",
-      "responsavel": "",
-      "observacoes": "",
-      "criado_em": "2026-05-08T14:50:44.771621"
     },
     {
       "id": "a765ec2a",
@@ -3845,16 +3787,6 @@
       "responsavel": "",
       "observacoes": "",
       "criado_em": "2026-05-08T14:50:44.771925"
-    },
-    {
-      "id": "8e8bfeb6",
-      "cliente": "APARECIDA DE LOURDES SUDARIO SILVA",
-      "reu": "ITAU",
-      "objeto": "EXIBIÇÃO DE DOCS",
-      "andamento": "PROTOCOLADO",
-      "responsavel": "",
-      "observacoes": "",
-      "criado_em": "2026-05-08T14:50:44.772051"
     },
     {
       "id": "901362a7",
@@ -3947,26 +3879,6 @@
       "criado_em": "2026-05-08T14:50:44.773202"
     },
     {
-      "id": "4b899be3",
-      "cliente": "FABIANA DE SOUSA LIMA",
-      "reu": "BRASIL CARD",
-      "objeto": "FACILIDADE SMS PLUS",
-      "andamento": "PROTOCOLADO",
-      "responsavel": "",
-      "observacoes": "",
-      "criado_em": "2026-05-08T14:50:44.773324"
-    },
-    {
-      "id": "36cfa739",
-      "cliente": "FABIANA DE SOUSA LIMA",
-      "reu": "BRASIL CARD",
-      "objeto": "EXIBICAO DE CONTRATO DE RENEGOCIACAO DE FATURA",
-      "andamento": "PROTOCOLADO",
-      "responsavel": "",
-      "observacoes": "",
-      "criado_em": "2026-05-08T14:50:44.773445"
-    },
-    {
       "id": "9b434d23",
       "cliente": "VIVIANE RODRIGUES DE OLIVEIRA CARVALHO",
       "reu": "CPFL",
@@ -4047,16 +3959,6 @@
       "criado_em": "2026-05-08T14:50:44.774710"
     },
     {
-      "id": "5cb6e950",
-      "cliente": "LUCAS MELO BORGES",
-      "reu": "C6",
-      "objeto": "REVISIONAL JUROS",
-      "andamento": "PROTOCOLADO",
-      "responsavel": "",
-      "observacoes": "",
-      "criado_em": "2026-05-08T14:50:44.774848"
-    },
-    {
       "id": "d55e7087",
       "cliente": "MARILDA APARECIDA SOUSA DIAS",
       "reu": "ITAU",
@@ -4077,6 +3979,186 @@
       "criado_em": "2026-06-11T16:58:05.456085"
     },
     {
+      "id": "b8f0df58",
+      "cliente": "JESSICA DA SILVA COSTA",
+      "reu": "SANTANDER",
+      "objeto": "REVISIONAL CONTRATO 110798124/00699576008",
+      "andamento": "PROTOCOLADO",
+      "responsavel": "",
+      "observacoes": "",
+      "criado_em": "2026-05-08T14:50:44.767759"
+    },
+    {
+      "id": "f564bdaa",
+      "cliente": "JESSICA DA SILVA COSTA",
+      "reu": "SAFRA",
+      "objeto": "REVISIONAL CONTRATO 010230001 155505",
+      "andamento": "PROTOCOLADO",
+      "responsavel": "",
+      "observacoes": "",
+      "criado_em": "2026-05-08T14:50:44.767941"
+    },
+    {
+      "id": "7e0a272a",
+      "cliente": "BERNADETE NARDI DE PAULA",
+      "reu": "BRADESCO",
+      "objeto": "PGTO ELETRON COBRANCA BRADESCO SEG-RESID/OUTROS",
+      "andamento": "PROTOCOLADO",
+      "responsavel": "",
+      "observacoes": "",
+      "criado_em": "2026-05-08T14:50:44.768493"
+    },
+    {
+      "id": "fdf0718f",
+      "cliente": "BERNADETE NARDI DE PAULA",
+      "reu": "BRADESCO",
+      "objeto": "TARIFA BANCARIA SAQUETERMINAL E SAQUECORRESPONDENTE",
+      "andamento": "PROTOCOLADO",
+      "responsavel": "",
+      "observacoes": "",
+      "criado_em": "2026-05-08T14:50:44.768820"
+    },
+    {
+      "id": "6729880f",
+      "cliente": "ROSARIA LOGUERCIOS DOS SANTOS",
+      "reu": "ITAU",
+      "objeto": "SEGURO CARTAO",
+      "andamento": "PROTOCOLADO",
+      "responsavel": "",
+      "observacoes": "22/05",
+      "criado_em": "2026-05-08T14:50:44.769278"
+    },
+    {
+      "id": "efaa2e7e",
+      "cliente": "ROSARIA LOGUERCIOS DOS SANTOS",
+      "reu": "ITAU",
+      "objeto": "TAR PACOTE e TAR EXTRATO MES (E)",
+      "andamento": "PROTOCOLADO",
+      "responsavel": "",
+      "observacoes": "",
+      "criado_em": "2026-05-08T14:50:44.769409"
+    },
+    {
+      "id": "35bee76e",
+      "cliente": "ROSARIA LOGUERCIOS DOS SANTOS",
+      "reu": "ITAU",
+      "objeto": "SEGURO RESIDENCIA",
+      "andamento": "PROTOCOLADO",
+      "responsavel": "",
+      "observacoes": "",
+      "criado_em": "2026-05-08T14:50:44.769691"
+    },
+    {
+      "id": "4147768e",
+      "cliente": "ROSARIA LOGUERCIOS DOS SANTOS",
+      "reu": "ITAU",
+      "objeto": "SEG AP PF",
+      "andamento": "PROTOCOLADO",
+      "responsavel": "",
+      "observacoes": "",
+      "criado_em": "2026-05-08T14:50:44.769829"
+    },
+    {
+      "id": "0dd881df",
+      "cliente": "ROSARIA LOGUERCIOS DOS SANTOS",
+      "reu": "ITAU",
+      "objeto": "DEB AUTOR MONETARIE SOCI, DEB AUTOR PAULISTA SERV E SISDEB ",
+      "andamento": "PROTOCOLADO",
+      "responsavel": "",
+      "observacoes": "DEB 2 descontos, DEB SERV 1 desconto e SISDEB 2 descontos",
+      "criado_em": "2026-05-08T14:50:44.769956"
+    },
+    {
+      "id": "7265a840",
+      "cliente": "FABIO APARECIDO SILVA",
+      "reu": "ITAU",
+      "objeto": "SEGURO LIS ITAU",
+      "andamento": "PROTOCOLADO",
+      "responsavel": "",
+      "observacoes": "",
+      "criado_em": "2026-05-08T14:50:44.770727"
+    },
+    {
+      "id": "835d3f18",
+      "cliente": "MARLI DAS VIRGENS ROCHA CELESTINO",
+      "reu": "PAN",
+      "objeto": "exibicao 355199507-3",
+      "andamento": "PROTOCOLADO",
+      "responsavel": "",
+      "observacoes": "",
+      "criado_em": "2026-05-08T14:50:44.770984"
+    },
+    {
+      "id": "5fc27877",
+      "cliente": "CLEIDE AP. PEREIRA MARIANO",
+      "reu": "PAN",
+      "objeto": "NEGATIVAÇÃO INDEVIDA",
+      "andamento": "ARQUIVADO",
+      "responsavel": "",
+      "observacoes": "",
+      "criado_em": "2026-05-08T14:50:44.771113"
+    },
+    {
+      "id": "4ef95c77",
+      "cliente": "IVAN LOGUERCIO E LETICIA",
+      "reu": "SICOOB E ITAU",
+      "objeto": "GOLPE PIX",
+      "andamento": "PROTOCOLADO",
+      "responsavel": "",
+      "observacoes": "",
+      "criado_em": "2026-05-08T14:50:44.771368"
+    },
+    {
+      "id": "2385bff5",
+      "cliente": "ALCIDES MARQUES DA SILVA",
+      "reu": "ITAU",
+      "objeto": "TAR PACOTE, TAR EXTRATO E TAR SAQUE",
+      "andamento": "PROTOCOLADO",
+      "responsavel": "",
+      "observacoes": "",
+      "criado_em": "2026-05-08T14:50:44.771621"
+    },
+    {
+      "id": "8e8bfeb6",
+      "cliente": "APARECIDA DE LOURDES SUDARIO SILVA",
+      "reu": "ITAU",
+      "objeto": "EXIBIÇÃO DE DOCS",
+      "andamento": "PROTOCOLADO",
+      "responsavel": "",
+      "observacoes": "",
+      "criado_em": "2026-05-08T14:50:44.772051"
+    },
+    {
+      "id": "4b899be3",
+      "cliente": "FABIANA DE SOUSA LIMA",
+      "reu": "BRASIL CARD",
+      "objeto": "FACILIDADE SMS PLUS",
+      "andamento": "PROTOCOLADO",
+      "responsavel": "",
+      "observacoes": "",
+      "criado_em": "2026-05-08T14:50:44.773324"
+    },
+    {
+      "id": "36cfa739",
+      "cliente": "FABIANA DE SOUSA LIMA",
+      "reu": "BRASIL CARD",
+      "objeto": "EXIBICAO DE CONTRATO DE RENEGOCIACAO DE FATURA",
+      "andamento": "PROTOCOLADO",
+      "responsavel": "",
+      "observacoes": "",
+      "criado_em": "2026-05-08T14:50:44.773445"
+    },
+    {
+      "id": "5cb6e950",
+      "cliente": "LUCAS MELO BORGES",
+      "reu": "C6",
+      "objeto": "REVISIONAL JUROS",
+      "andamento": "PROTOCOLADO",
+      "responsavel": "",
+      "observacoes": "",
+      "criado_em": "2026-05-08T14:50:44.774848"
+    },
+    {
       "id": "78742deb",
       "cliente": "LUCELIA DOS REIS SANTANA SANTOS",
       "reu": "C6",
@@ -4089,67 +4171,11 @@
   ],
   "finalizados_externos_sem_honor": [
     {
-      "cliente": "MARCIA MARQUES SILVA ESTEVÃO",
-      "reu": "CAMPOS ELISIOS",
-      "processo": "5000059-38.2026.8.13.0329",
-      "objeto": "OBRIGAÇÃO DE FAZER",
-      "data_finalizacao": "",
-      "motivo": "Extinção"
-    },
-    {
-      "cliente": "MATHEUS SERRAGLIA REIS AMENT",
-      "reu": "ITAU",
-      "processo": "4006494-36.2026.8.26.0506",
-      "objeto": "TAR PACOTE",
-      "data_finalizacao": "",
-      "motivo": "Cancelado"
-    },
-    {
-      "cliente": "HELIO DE SOUZA",
-      "reu": "BANRISUL",
-      "processo": "5008843-54.2025.8.13.0647",
-      "objeto": "13176708",
-      "data_finalizacao": "",
-      "motivo": "Desistência"
-    },
-    {
-      "cliente": "JOSE CARLOS DOS SANTOS",
-      "reu": "QI SOCIE",
-      "processo": "5001251-40.2025.8.13.0329",
-      "objeto": "0023336525JCD",
-      "data_finalizacao": "",
-      "motivo": "Desistência"
-    },
-    {
-      "cliente": "RUTH FELICIANA DA SILVA SOUZA",
-      "reu": "SANTANDER",
-      "processo": "5007260-34.2025.8.13.0647",
-      "objeto": "RMC n. 877742182-0",
-      "data_finalizacao": "",
-      "motivo": "Improcedência"
-    },
-    {
-      "cliente": "HELIO DE SOUZA",
-      "reu": "BMG",
-      "processo": "5007845-86.2025.8.13.0647",
-      "objeto": "RMC 8932388 e 11105568",
-      "data_finalizacao": "",
-      "motivo": "Desistência"
-    },
-    {
       "cliente": "ANA MARIA DE OLIVEIRA",
       "reu": "FACTA",
       "processo": "5001079-98.2025.8.13.0329",
       "objeto": "73773620",
-      "data_finalizacao": "",
-      "motivo": "Desistência"
-    },
-    {
-      "cliente": "MATHEUS SERRAGLIA REIS AMENT",
-      "reu": "ITAU",
-      "processo": "4014073-35.2026.8.26.0506",
-      "objeto": "TAR PACOTE",
-      "data_finalizacao": "",
+      "data_fin": "",
       "motivo": "Desistência"
     },
     {
@@ -4157,190 +4183,130 @@
       "reu": "ITAU",
       "processo": "5000918-88.2025.8.13.0329",
       "objeto": "647932633 / 633079531 / 638223061 / 599824559",
-      "data_finalizacao": "",
+      "data_fin": "",
       "motivo": "Desistência"
+    },
+    {
+      "cliente": "ANA MARIA DE OLIVEIRA",
+      "reu": "C6",
+      "processo": "5001003-74.2025.8.13.0329",
+      "objeto": "90132715765, 90132715597, 90132715702, 90132715522",
+      "data_fin": "",
+      "motivo": "DESISTÊNCIA"
+    },
+    {
+      "cliente": "ANA MARIA DE OLIVEIRA",
+      "reu": "ITAU",
+      "processo": "5001209-88.2025.8.13.0329",
+      "objeto": "632823469, 589893409, 630423159, 582693588, 630623016",
+      "data_fin": "",
+      "motivo": "DESISTÊNCIA"
+    },
+    {
+      "cliente": "ANA MARIA DE OLIVEIRA",
+      "reu": "ITAÚ",
+      "processo": "5001181-23.2025.8.13.0329",
+      "objeto": "639623219, 580092865, 583793271, 638623336",
+      "data_fin": "",
+      "motivo": "DESISTÊNCIA"
+    },
+    {
+      "cliente": "HELIO DE SOUZA",
+      "reu": "BANRISUL",
+      "processo": "5008843-54.2025.8.13.0647",
+      "objeto": "13176708",
+      "data_fin": "",
+      "motivo": "Desistência"
+    },
+    {
+      "cliente": "HELIO DE SOUZA",
+      "reu": "BMG",
+      "processo": "5007845-86.2025.8.13.0647",
+      "objeto": "RMC 8932388 e 11105568",
+      "data_fin": "",
+      "motivo": "Desistência"
+    },
+    {
+      "cliente": "JOSE CARLOS DOS SANTOS",
+      "reu": "QI SOCIE",
+      "processo": "5001251-40.2025.8.13.0329",
+      "objeto": "0023336525JCD",
+      "data_fin": "",
+      "motivo": "Desistência"
+    },
+    {
+      "cliente": "JOSE CARLOS DOS SANTOS",
+      "reu": "AGIBANK",
+      "processo": "5001272-16.2025.8.13.0329",
+      "objeto": "1101020929",
+      "data_fin": "",
+      "motivo": "DESISTÊNCIA"
+    },
+    {
+      "cliente": "LUCELIA DOS REIS SANTANA SANTOS",
+      "reu": "BANCO C6 S.A.",
+      "processo": "4064219-37.2026.8.26.0100",
+      "objeto": "revisional financiamento",
+      "data_fin": "",
+      "motivo": "ARQUIVADO"
+    },
+    {
+      "cliente": "MARCIA MARQUES SILVA ESTEVÃO",
+      "reu": "CAMPOS ELISIOS",
+      "processo": "5000059-38.2026.8.13.0329",
+      "objeto": "OBRIGAÇÃO DE FAZER",
+      "data_fin": "",
+      "motivo": "Extinção"
+    },
+    {
+      "cliente": "MATHEUS SERRAGLIA REIS AMENT",
+      "reu": "ITAU",
+      "processo": "4006494-36.2026.8.26.0506",
+      "objeto": "TAR PACOTE",
+      "data_fin": "",
+      "motivo": "Cancelado"
+    },
+    {
+      "cliente": "MATHEUS SERRAGLIA REIS AMENT",
+      "reu": "ITAU",
+      "processo": "4014073-35.2026.8.26.0506",
+      "objeto": "TAR PACOTE",
+      "data_fin": "",
+      "motivo": "Desistência"
+    },
+    {
+      "cliente": "RUTH FELICIANA DA SILVA SOUZA",
+      "reu": "SANTANDER",
+      "processo": "5007260-34.2025.8.13.0647",
+      "objeto": "RMC n. 877742182-0",
+      "data_fin": "",
+      "motivo": "Improcedência"
     }
   ],
   "finalizados_externos_acordos": [
     {
-      "mes": "Out/2025",
-      "data_pagamento": "31/10/2025",
-      "cliente": "BERNADETE NARDI DE PAULA",
-      "reu": "SANTANDER",
-      "objeto": "aposentadoria 145353811",
-      "valor_acordo": 5000.0,
-      "honorarios": 2075.0,
-      "status": "pago"
-    },
-    {
-      "mes": "Jan/2026",
-      "data_pagamento": "21/01/2026",
+      "mes": "",
+      "data_pagamento": "",
       "cliente": "ANA MARIA DE OLIVEIRA",
       "reu": "ITAÚ",
-      "objeto": "seguro cartão",
-      "valor_acordo": 4638.0,
-      "honorarios": 1924.77,
-      "status": "pago"
+      "objeto": "ITAU SEG AP PF (R$ 814,50)",
+      "valor_acordo": 3700.0,
+      "honorarios": 0.0,
+      "status": "pendente",
+      "processo": "5001219-35.2025.8.13.0329",
+      "repasse_cliente": 3700.0
     },
     {
-      "mes": "Jan/2026",
-      "data_pagamento": "21/01/2026",
-      "cliente": "MARTA APARECIDA DE PAULA REIS",
+      "mes": "",
+      "data_pagamento": "",
+      "cliente": "COSMO DONIZETE MARQUES",
       "reu": "ITAU",
-      "objeto": "seguro residencial",
-      "valor_acordo": 4155.0,
-      "honorarios": 1724.32,
-      "status": "pago"
-    },
-    {
-      "mes": "Jan/2026",
-      "data_pagamento": "29/01/2026",
-      "cliente": "JOSE CARLOS DOS SANTOS",
-      "reu": "ITAU",
-      "objeto": "seguro lis e sisdeb",
-      "valor_acordo": 4770.0,
-      "honorarios": 1979.55,
-      "status": "pago"
-    },
-    {
-      "mes": "Jan/2026",
-      "data_pagamento": "29/01/2026",
-      "cliente": "LENITA APARECIDA PAULA SOUSA",
-      "reu": "ITAU",
-      "objeto": "SISDEB ITAUPORTOSEGUR",
-      "valor_acordo": 2900.0,
-      "honorarios": 1203.5,
-      "status": "pago"
-    },
-    {
-      "mes": "Jan/2026",
-      "data_pagamento": "30/01/2026",
-      "cliente": "MARTA APARECIDA DE PAULA REIS",
-      "reu": "ITAU",
-      "objeto": "SISDEB ITAUPORTOSEGUR",
-      "valor_acordo": 4000.0,
-      "honorarios": 1660.0,
-      "status": "pago"
-    },
-    {
-      "mes": "Fev/2026",
-      "data_pagamento": "06/02/2026",
-      "cliente": "MARTA APARECIDA DE PAULA REIS",
-      "reu": "ITAU",
-      "objeto": "ITAU SEG VIDA PF",
-      "valor_acordo": 4000.0,
-      "honorarios": 1660.0,
-      "status": "pago"
-    },
-    {
-      "mes": "Fev/2026",
-      "data_pagamento": "12/02/2026",
-      "cliente": "MARTA APARECIDA DE PAULA REIS",
-      "reu": "ITAU",
-      "objeto": "PGTO PROTECAO FAMILIAR",
-      "valor_acordo": 3900.0,
-      "honorarios": 1618.5,
-      "status": "pago"
-    },
-    {
-      "mes": "Fev/2026",
-      "data_pagamento": "24/02/2026",
-      "cliente": "ANA MARIA DE OLIVEIRA",
-      "reu": "ITAÚ",
-      "objeto": "MENSAL COMBINAQUI",
-      "valor_acordo": 3300.0,
-      "honorarios": 1369.5,
-      "status": "pago"
-    },
-    {
-      "mes": "Mar/2026",
-      "data_pagamento": "04/03/2026",
-      "cliente": "LENITA APARECIDA PAULA SOUSA",
-      "reu": "ITAU",
-      "objeto": "ITAU SEG AP PF",
-      "valor_acordo": 5000.0,
-      "honorarios": 2075.0,
-      "status": "pago"
-    },
-    {
-      "mes": "Mar/2026",
-      "data_pagamento": "04/03/2026",
-      "cliente": "BERNADETE NARDI DE PAULA",
-      "reu": "SANTANDER",
-      "objeto": "PENSAO 145353251 · falta R$ 352,64 em cobrança",
-      "valor_acordo": 3000.0,
-      "honorarios": 1245.0,
-      "status": "pago"
-    },
-    {
-      "mes": "Mar/2026",
-      "data_pagamento": "09/03/2026",
-      "cliente": "ROSARIA LOGUERCIOS DOS SANTOS",
-      "reu": "ITAU",
-      "objeto": "MENSAL COMBINAQUI · R$ 4.500,00 recebido · falta R$ 636,68 em cobrança",
-      "valor_acordo": 5000.0,
-      "honorarios": 2075.0,
-      "status": "pago"
-    },
-    {
-      "mes": "Mar/2026",
-      "data_pagamento": "10/03/2026",
-      "cliente": "TEREZINHA IVONE DE SOUSA",
-      "reu": "ITAU",
-      "objeto": "MENSAL COMBINAQUI",
-      "valor_acordo": 4000.0,
-      "honorarios": 1660.0,
-      "status": "pago"
-    },
-    {
-      "mes": "Mar/2026",
-      "data_pagamento": "10/03/2026",
-      "cliente": "LENITA APARECIDA PAULA SOUSA",
-      "reu": "ITAU",
-      "objeto": "SISDEB",
-      "valor_acordo": 3760.0,
-      "honorarios": 1560.4,
-      "status": "pago"
-    },
-    {
-      "mes": "Mar/2026",
-      "data_pagamento": "11/03/2026",
-      "cliente": "CLEIDE DE SOUSA ALVES",
-      "reu": "ITAU",
-      "objeto": "MENSAL COMBINAQUI",
-      "valor_acordo": 5000.0,
-      "honorarios": 2075.0,
-      "status": "pago"
-    },
-    {
-      "mes": "Mar/2026",
-      "data_pagamento": "16/03/2026",
-      "cliente": "MARTA APARECIDA DE PAULA REIS",
-      "reu": "ITAU",
-      "objeto": "SISDEB",
-      "valor_acordo": 5000.0,
-      "honorarios": 2075.0,
-      "status": "pago"
-    },
-    {
-      "mes": "Mar/2026",
-      "data_pagamento": "23/03/2026",
-      "cliente": "MARTA APARECIDA DE PAULA REIS",
-      "reu": "ITAU",
-      "objeto": "TAR PACOTE",
-      "valor_acordo": 5000.0,
-      "honorarios": 2075.0,
-      "status": "pago"
-    },
-    {
-      "mes": "Mar/2026",
-      "data_pagamento": "26/03/2026",
-      "cliente": "MARTA APARECIDA DE PAULA REIS",
-      "reu": "ITAU",
-      "objeto": "CAP PIC",
-      "valor_acordo": 5600.0,
-      "honorarios": 2324.0,
-      "status": "pago"
+      "objeto": "SEGURO CARTAO",
+      "valor_acordo": 2600.0,
+      "honorarios": 0.0,
+      "status": "pendente",
+      "processo": "5001186-45.2025.8.13.0329",
+      "repasse_cliente": 2600.0
     },
     {
       "mes": "Abr/2026",
@@ -4350,7 +4316,9 @@
       "objeto": "RENEGOCIAÇÕES",
       "valor_acordo": 8237.44,
       "honorarios": 3418.54,
-      "status": "pago"
+      "status": "pago",
+      "processo": "5001363-09.2025.8.13.0329",
+      "repasse_cliente": 4818.9
     },
     {
       "mes": "Abr/2026",
@@ -4360,7 +4328,9 @@
       "objeto": "MENSAL COMBINAQUI",
       "valor_acordo": 6442.64,
       "honorarios": 2673.7,
-      "status": "pago"
+      "status": "pend_repasse ao cliente",
+      "processo": "5001243-63.2025.8.13.0329",
+      "repasse_cliente": 3768.94
     },
     {
       "mes": "Abr/2026",
@@ -4370,7 +4340,9 @@
       "objeto": "SEGURO CARTAO",
       "valor_acordo": 5500.0,
       "honorarios": 2282.5,
-      "status": "pago"
+      "status": "pago",
+      "processo": "5001149-18.2025.8.13.0329",
+      "repasse_cliente": 3217.5
     },
     {
       "mes": "Abr/2026",
@@ -4380,7 +4352,9 @@
       "objeto": "SEGURO CARTAO",
       "valor_acordo": 4270.0,
       "honorarios": 1772.05,
-      "status": "pago"
+      "status": "pago",
+      "processo": "5001193-37.2025.8.13.0329",
+      "repasse_cliente": 2497.95
     },
     {
       "mes": "Abr/2026",
@@ -4390,7 +4364,105 @@
       "objeto": "344905159-2 / 339148026-0 / 336819430-8 / 334093468-0",
       "valor_acordo": 11000.0,
       "honorarios": 4565.0,
-      "status": "pago"
+      "status": "pago",
+      "processo": "5008533-48.2025.8.13.0647",
+      "repasse_cliente": 6435.0
+    },
+    {
+      "mes": "Fev/2026",
+      "data_pagamento": "06/02/2026",
+      "cliente": "MARTA APARECIDA DE PAULA REIS",
+      "reu": "ITAU",
+      "objeto": "ITAU SEG VIDA PF",
+      "valor_acordo": 4000.0,
+      "honorarios": 1660.0,
+      "status": "pago",
+      "processo": "5001194-22.2025.8.13.0329",
+      "repasse_cliente": 2340.0
+    },
+    {
+      "mes": "Fev/2026",
+      "data_pagamento": "12/02/2026",
+      "cliente": "MARTA APARECIDA DE PAULA REIS",
+      "reu": "ITAU",
+      "objeto": "PGTO PROTECAO FAMILIAR",
+      "valor_acordo": 3900.0,
+      "honorarios": 1618.5,
+      "status": "pago",
+      "processo": "5001130-12.2025.8.13.0329",
+      "repasse_cliente": 2281.5
+    },
+    {
+      "mes": "Fev/2026",
+      "data_pagamento": "24/02/2026",
+      "cliente": "ANA MARIA DE OLIVEIRA",
+      "reu": "ITAÚ",
+      "objeto": "MENSAL COMBINAQUI",
+      "valor_acordo": 3300.0,
+      "honorarios": 1369.5,
+      "status": "pago",
+      "processo": "5001143-11.2025.8.13.0329",
+      "repasse_cliente": 1930.5
+    },
+    {
+      "mes": "Jan/2026",
+      "data_pagamento": "21/01/2026",
+      "cliente": "ANA MARIA DE OLIVEIRA",
+      "reu": "ITAÚ",
+      "objeto": "seguro cartão",
+      "valor_acordo": 4638.0,
+      "honorarios": 1924.77,
+      "status": "pago",
+      "processo": "5001218-50.2025.8.13.0329",
+      "repasse_cliente": 2713.23
+    },
+    {
+      "mes": "Jan/2026",
+      "data_pagamento": "21/01/2026",
+      "cliente": "MARTA APARECIDA DE PAULA REIS",
+      "reu": "ITAU",
+      "objeto": "seguro residencial",
+      "valor_acordo": 4155.0,
+      "honorarios": 1724.32,
+      "status": "pago",
+      "processo": "5001241-93.2025.8.13.0329",
+      "repasse_cliente": 2430.68
+    },
+    {
+      "mes": "Jan/2026",
+      "data_pagamento": "29/01/2026",
+      "cliente": "JOSE CARLOS DOS SANTOS",
+      "reu": "ITAU",
+      "objeto": "seguro lis e sisdeb",
+      "valor_acordo": 4770.0,
+      "honorarios": 1979.55,
+      "status": "pago",
+      "processo": "5001339-78.2025.8.13.0329",
+      "repasse_cliente": 2790.45
+    },
+    {
+      "mes": "Jan/2026",
+      "data_pagamento": "29/01/2026",
+      "cliente": "LENITA APARECIDA PAULA SOUSA",
+      "reu": "ITAU",
+      "objeto": "SISDEB ITAUPORTOSEGUR",
+      "valor_acordo": 2900.0,
+      "honorarios": 1203.5,
+      "status": "pago",
+      "processo": "5001329-34.2025.8.13.0329",
+      "repasse_cliente": 1696.5
+    },
+    {
+      "mes": "Jan/2026",
+      "data_pagamento": "30/01/2026",
+      "cliente": "MARTA APARECIDA DE PAULA REIS",
+      "reu": "ITAU",
+      "objeto": "SISDEB ITAUPORTOSEGUR",
+      "valor_acordo": 4000.0,
+      "honorarios": 1660.0,
+      "status": "pago",
+      "processo": "5001131-94.2025.8.13.0329",
+      "repasse_cliente": 2340.0
     },
     {
       "mes": "Mai/2026",
@@ -4400,7 +4472,129 @@
       "objeto": "SEGURO CARTÃO + ITAU SEG VIDA PF + PGTO PROTECAO FAMILIAR",
       "valor_acordo": 4320.68,
       "honorarios": 1793.08,
-      "status": "pago"
+      "status": "pago",
+      "processo": "5000206-64.2026.8.13.0329",
+      "repasse_cliente": 2527.6
+    },
+    {
+      "mes": "Mar/2026",
+      "data_pagamento": "04/03/2026",
+      "cliente": "LENITA APARECIDA PAULA SOUSA",
+      "reu": "ITAU",
+      "objeto": "ITAU SEG AP PF",
+      "valor_acordo": 5000.0,
+      "honorarios": 2075.0,
+      "status": "pago",
+      "processo": "5001330-19.2025.8.13.0329",
+      "repasse_cliente": 2925.0
+    },
+    {
+      "mes": "Mar/2026",
+      "data_pagamento": "04/03/2026",
+      "cliente": "BERNADETE NARDI DE PAULA",
+      "reu": "SANTANDER",
+      "objeto": "PENSAO 145353251 · falta R$ 352,64 em cobrança",
+      "valor_acordo": 3000.0,
+      "honorarios": 1245.0,
+      "status": "pago",
+      "processo": "5001232-34.2025.8.13.0329",
+      "repasse_cliente": 1755.0
+    },
+    {
+      "mes": "Mar/2026",
+      "data_pagamento": "09/03/2026",
+      "cliente": "ROSARIA LOGUERCIOS DOS SANTOS",
+      "reu": "ITAU",
+      "objeto": "MENSAL COMBINAQUI · R$ 4.500,00 recebido · falta R$ 636,68 em cobrança",
+      "valor_acordo": 5000.0,
+      "honorarios": 2075.0,
+      "status": "pago",
+      "processo": "5000000-50.2026.8.13.0329",
+      "repasse_cliente": 2925.0
+    },
+    {
+      "mes": "Mar/2026",
+      "data_pagamento": "10/03/2026",
+      "cliente": "TEREZINHA IVONE DE SOUSA",
+      "reu": "ITAU",
+      "objeto": "MENSAL COMBINAQUI",
+      "valor_acordo": 4000.0,
+      "honorarios": 1660.0,
+      "status": "pago",
+      "processo": "5000013-49.2026.8.13.0329",
+      "repasse_cliente": 2340.0
+    },
+    {
+      "mes": "Mar/2026",
+      "data_pagamento": "10/03/2026",
+      "cliente": "LENITA APARECIDA PAULA SOUSA",
+      "reu": "ITAU",
+      "objeto": "SISDEB",
+      "valor_acordo": 3760.0,
+      "honorarios": 1560.4,
+      "status": "pago",
+      "processo": "5001328-49.2025.8.13.0329",
+      "repasse_cliente": 2199.6
+    },
+    {
+      "mes": "Mar/2026",
+      "data_pagamento": "11/03/2026",
+      "cliente": "CLEIDE DE SOUSA ALVES",
+      "reu": "ITAU",
+      "objeto": "MENSAL COMBINAQUI",
+      "valor_acordo": 5000.0,
+      "honorarios": 2075.0,
+      "status": "pago",
+      "processo": "5001141-41.2025.8.13.0329",
+      "repasse_cliente": 2925.0
+    },
+    {
+      "mes": "Mar/2026",
+      "data_pagamento": "16/03/2026",
+      "cliente": "MARTA APARECIDA DE PAULA REIS",
+      "reu": "ITAU",
+      "objeto": "SISDEB",
+      "valor_acordo": 5000.0,
+      "honorarios": 2075.0,
+      "status": "pago",
+      "processo": "5001331-04.2025.8.13.0329",
+      "repasse_cliente": 2925.0
+    },
+    {
+      "mes": "Mar/2026",
+      "data_pagamento": "23/03/2026",
+      "cliente": "MARTA APARECIDA DE PAULA REIS",
+      "reu": "ITAU",
+      "objeto": "TAR PACOTE",
+      "valor_acordo": 5000.0,
+      "honorarios": 2075.0,
+      "status": "pago",
+      "processo": "5000001-35.2026.8.13.0329",
+      "repasse_cliente": 2925.0
+    },
+    {
+      "mes": "Mar/2026",
+      "data_pagamento": "26/03/2026",
+      "cliente": "MARTA APARECIDA DE PAULA REIS",
+      "reu": "ITAU",
+      "objeto": "CAP PIC",
+      "valor_acordo": 5600.0,
+      "honorarios": 2324.0,
+      "status": "pago",
+      "processo": "5001333-71.2025.8.13.0329",
+      "repasse_cliente": 3276.0
+    },
+    {
+      "mes": "Out/2025",
+      "data_pagamento": "31/10/2025",
+      "cliente": "BERNADETE NARDI DE PAULA",
+      "reu": "SANTANDER",
+      "objeto": "aposentadoria 145353811",
+      "valor_acordo": 5000.0,
+      "honorarios": 2075.0,
+      "status": "pago",
+      "processo": "5001026-20.2025.8.13.0329",
+      "repasse_cliente": 2925.0
     }
   ],
   "acordos_edit": {
