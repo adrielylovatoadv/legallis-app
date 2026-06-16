@@ -1,5 +1,7 @@
 [
   {
+    "subscriptionStatus": "active",
+    "isActive": true,
     "id": "1",
     "name": "Adriely",
     "email": "adriely@legallis",
@@ -8,12 +10,12 @@
     "plan": "admin",
     "avatar": "",
     "createdAt": "2024-01-01T00:00:00.000Z",
-    "subscriptionStatus": "active",
-    "isActive": true,
     "theme": "dark",
     "tenantId": "t_1"
   },
   {
+    "subscriptionStatus": "active",
+    "isActive": true,
     "id": "2",
     "name": "Eduarda",
     "email": "eduarda@legallis",
@@ -22,8 +24,6 @@
     "plan": "admin",
     "avatar": "",
     "createdAt": "2024-01-01T00:00:00.000Z",
-    "subscriptionStatus": "active",
-    "isActive": true,
     "theme": "dark",
     "tenantId": "t_1"
   }

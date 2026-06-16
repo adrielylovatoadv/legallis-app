@@ -35,13 +35,17 @@ export interface Acordo {
   cliente: string; reu: string; objeto: string; processo: string;
   valor_acordo: number; honorarios: number; status: Status;
 }
+export type TipoExecucao = "processo_completo" | "honorarios_somente";
+
 export interface Execucao {
   id: string; mes: string; data_pagamento: string;
   cliente: string; reu: string; processo: string;
-  valor_percebido: number; sucumbencia: number; honorarios: number; status: Status;
+  tipo_execucao?: TipoExecucao;
+  valor_percebido: number; pct_honorarios?: number; sucumbencia: number;
+  honorarios: number; repasse_cliente?: number; status: Status;
 }
 export interface HonorarioInicial {
-  id: string; cliente: string; processo: string;
+  id: string; mes?: string; cliente: string; processo: string;
   valor: number; data_pagamento: string; observacao: string; status: Status;
 }
 export interface Fixa {
@@ -57,7 +61,7 @@ export interface Variavel {
 export interface DashFinanceiro {
   total_recebido: number; total_pendente: number;
   total_fixas: number; total_variaveis: number; saldo: number;
-  resumo_mes: Array<{ mes: string; honorarios: number; fixas: number; variaveis: number; saldo: number }>;
+  resumo_mes: Array<{ mes: string; honorarios: number; honorarios_pendente?: number; fixas: number; variaveis: number; saldo: number }>;
   pendentes: Array<{ tipo: string; cliente: string; mes: string; valor: number; processo?: string; observacao?: string }>;
 }
 

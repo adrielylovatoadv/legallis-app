@@ -118,7 +118,7 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-        {NAV.filter(item => !item.adminOnly || session?.user?.role === "admin").map(item => (
+        {NAV.map(item => (
           <NavItem key={item.href} {...item} collapsed={collapsed} />
         ))}
 

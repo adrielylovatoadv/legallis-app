@@ -1,10 +1,12 @@
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
 export async function fetchAPI(path: string, options?: RequestInit) {
-  const res = await fetch(`${API}${path}`, options);
+  // Rotas internas Next.js em /api — funciona em client e server
+  const base = typeof window === "undefined"
+    ? (process.env.NEXTAUTH_URL || "http://localhost:3001")
+    : "";
+  const res = await fetch(`${base}/api${path}`, options);
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || "Erro na API");
+    throw new Error(err.detail || err.error || "Erro na API");
   }
   return res.json();
 }

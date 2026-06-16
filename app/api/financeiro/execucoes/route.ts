@@ -18,7 +18,15 @@ export async function POST(req: NextRequest) {
   const exec = {
     ...body,
     id: newId(),
-    honorarios: calcExecucao(body.valor_percebido || 0, body.sucumbencia || 0),
+    honorarios: calcExecucao(
+      body.valor_percebido || 0,
+      body.sucumbencia || 0,
+      body.tipo_execucao,
+      body.pct_honorarios
+    ),
+    repasse_cliente: body.tipo_execucao !== "honorarios_somente" && body.valor_percebido > 0
+      ? Math.round(body.valor_percebido * (1 - (body.pct_honorarios ?? 35) / 100) * 100) / 100
+      : 0,
   };
   d.execucoes.push(exec);
   await saveData(d, tid);

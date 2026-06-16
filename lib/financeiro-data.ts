@@ -28,13 +28,17 @@ export interface Acordo {
   cliente: string; reu: string; objeto: string; processo: string;
   valor_acordo: number; honorarios: number; status: Status;
 }
+export type TipoExecucao = "processo_completo" | "honorarios_somente";
+
 export interface Execucao {
   id: string; mes: string; data_pagamento: string;
   cliente: string; reu: string; processo: string;
-  valor_percebido: number; sucumbencia: number; honorarios: number; status: Status;
+  tipo_execucao?: TipoExecucao;
+  valor_percebido: number; pct_honorarios?: number; sucumbencia: number;
+  honorarios: number; repasse_cliente?: number; status: Status;
 }
 export interface HonorarioInicial {
-  id: string; cliente: string; processo: string;
+  id: string; mes?: string; cliente: string; processo: string;
   valor: number; data_pagamento: string; observacao: string; status: Status;
 }
 export interface Variavel {
@@ -68,7 +72,7 @@ function parseRaw(d: Partial<FinanceiroData>): FinanceiroData {
   return {
     acordos: (d.acordos || []).map((a, i) => Object.assign({ objeto: "", reu: "", processo: "", data_pagamento: "", status: "pago" as Status, id: String(i) }, a) as Acordo),
     execucoes: (d.execucoes || []).map((e, i) => Object.assign({ data_pagamento: "", reu: "", processo: "", sucumbencia: 0, status: "pago" as Status, id: String(i) }, e) as Execucao),
-    honorarios_iniciais: (d.honorarios_iniciais || []).map((h, i) => Object.assign({ processo: "", data_pagamento: "", observacao: "", status: "pago" as Status, id: String(i) }, h) as HonorarioInicial),
+    honorarios_iniciais: (d.honorarios_iniciais || []).map((h, i) => Object.assign({ processo: "", data_pagamento: "", observacao: "", status: "pago" as Status, mes: "", id: String(i) }, h) as HonorarioInicial),
     fixas: d.fixas || {},
     fixas_valor_fixo: d.fixas_valor_fixo || {},
     fixas_quem: d.fixas_quem || {},
@@ -139,6 +143,17 @@ export function calcAcordo(valor: number): number {
   return Math.round((valor * 0.10 + valor * 0.90 * 0.35) * 100) / 100;
 }
 
-export function calcExecucao(percebido: number, sucumbencia: number): number {
-  return Math.round((percebido * 0.35 + sucumbencia) * 100) / 100;
+export function calcExecucao(
+  percebido: number,
+  sucumbencia: number,
+  tipo?: TipoExecucao,
+  pct?: number
+): number {
+  if (tipo === "honorarios_somente") {
+    // percebido já é o honorário bruto
+    return Math.round((percebido + sucumbencia) * 100) / 100;
+  }
+  // processo_completo (padrão): pct% do percebido + sucumbência
+  const pctUsado = (pct ?? 35) / 100;
+  return Math.round((percebido * pctUsado + sucumbencia) * 100) / 100;
 }

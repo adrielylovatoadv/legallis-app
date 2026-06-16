@@ -11,10 +11,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const d = await getData(tid);
   const idx = d.execucoes.findIndex(e => e.id === id);
   if (idx === -1) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
-  if (body.valor_percebido !== undefined || body.sucumbencia !== undefined) {
+  if (body.valor_percebido !== undefined || body.sucumbencia !== undefined || body.tipo_execucao !== undefined) {
     const p = body.valor_percebido ?? d.execucoes[idx].valor_percebido;
     const s = body.sucumbencia ?? d.execucoes[idx].sucumbencia;
-    body.honorarios = calcExecucao(p, s);
+    const tipo = body.tipo_execucao ?? d.execucoes[idx].tipo_execucao;
+    const pct = body.pct_honorarios ?? d.execucoes[idx].pct_honorarios;
+    body.honorarios = calcExecucao(p, s, tipo, pct);
+    if (tipo !== "honorarios_somente" && p > 0) {
+      body.repasse_cliente = Math.round(p * (1 - (pct ?? 35) / 100) * 100) / 100;
+    }
   }
   d.execucoes[idx] = { ...d.execucoes[idx], ...body };
   await saveData(d, tid);

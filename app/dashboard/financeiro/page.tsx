@@ -11,7 +11,7 @@ import {
   createVariavel, updateVariavel, deleteVariavel, statusVariavel,
   fmtBRL, MESES, COLS, COL_TO_MES, NEXT_STATUS, NEXT_STATUS2, statusBadge, statusLabel,
   type DashFinanceiro, type Acordo, type Execucao, type HonorarioInicial,
-  type Fixa, type Variavel, type Status, type Socio, type ConfigEscritorio,
+  type Fixa, type Variavel, type Status, type Socio, type ConfigEscritorio, type TipoExecucao,
 } from "@/lib/financeiro";
 
 // ── design tokens ─────────────────────────────────────────────────────────────
@@ -84,7 +84,7 @@ function DashView({ data }: { data: DashFinanceiro }) {
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                  {["Mês","Honorários","Desp. Fixas","Desp. Variáveis","Saldo"].map(h => (
+                  {["Mês","Hon. Recebidos","Hon. Pendentes","Desp. Fixas","Desp. Variáveis","Saldo"].map(h => (
                     <th key={h} className="pb-2 text-left pr-4 text-xs uppercase tracking-wider" style={{ color: "var(--text3)" }}>{h}</th>
                   ))}
                 </tr>
@@ -94,6 +94,9 @@ function DashView({ data }: { data: DashFinanceiro }) {
                   <tr key={r.mes} style={{ borderBottom: "1px solid var(--border)" }}>
                     <td className="py-2 pr-4 font-medium" style={{ color: "var(--text)" }}>{r.mes}</td>
                     <td className="py-2 pr-4 tabular-nums" style={{ color: "#22c55e" }}>{fmtBRL(r.honorarios)}</td>
+                    <td className="py-2 pr-4 tabular-nums" style={{ color: (r.honorarios_pendente ?? 0) > 0 ? "#f87171" : "var(--text3)" }}>
+                      {(r.honorarios_pendente ?? 0) > 0 ? fmtBRL(r.honorarios_pendente!) : "—"}
+                    </td>
                     <td className="py-2 pr-4 tabular-nums" style={{ color: "#f97316" }}>{fmtBRL(r.fixas)}</td>
                     <td className="py-2 pr-4 tabular-nums" style={{ color: "#a78bfa" }}>{fmtBRL(r.variaveis)}</td>
                     <td className="py-2 tabular-nums font-semibold" style={{ color: r.saldo >= 0 ? "#C9A84C" : "#ef4444" }}>
@@ -230,7 +233,7 @@ function AcordoForm({ initial, onSave, onCancel }: {
   onSave: (f: Omit<Acordo,"id"|"honorarios">) => Promise<void>;
   onCancel: () => void;
 }) {
-  const blank = { mes: MESES[0], data_pagamento:"", cliente:"", reu:"", objeto:"", processo:"", valor_acordo:0, status:"pendente" as Status };
+  const blank = { mes: getCurrentMes(), data_pagamento:"", cliente:"", reu:"", objeto:"", processo:"", valor_acordo:0, status:"pendente" as Status };
   const [form, setForm] = useState({ ...blank, ...(initial || {}) });
   const [saving, setSaving] = useState(false);
   const set = (k: string, v: string | number) => setForm(p => ({ ...p, [k]: v }));
@@ -379,33 +382,136 @@ function ExecucaoForm({ initial, onSave, onCancel }: {
   onSave: (f: Omit<Execucao,"id"|"honorarios">) => Promise<void>;
   onCancel: () => void;
 }) {
-  const blank = { mes:MESES[0], data_pagamento:"", cliente:"", reu:"", processo:"", valor_percebido:0, sucumbencia:0, status:"pendente" as Status };
-  const [form, setForm] = useState({ ...blank, ...(initial||{}) });
+  const blank = {
+    mes: getCurrentMes(), data_pagamento: "", cliente: "", reu: "", processo: "",
+    tipo_execucao: "processo_completo" as TipoExecucao,
+    valor_percebido: 0, pct_honorarios: 35, sucumbencia: 0, status: "pago" as Status,
+  };
+  const [form, setForm] = useState({ ...blank, ...(initial || {}) });
   const [saving, setSaving] = useState(false);
   const set = (k: string, v: string | number) => setForm(p => ({ ...p, [k]: v }));
 
+  const isSomente = form.tipo_execucao === "honorarios_somente";
+  const pct = form.pct_honorarios || 35;
+  const honorariosCalc = isSomente
+    ? form.valor_percebido + form.sucumbencia
+    : form.valor_percebido * (pct / 100) + form.sucumbencia;
+  const repasseCalc = isSomente ? 0 : form.valor_percebido * (1 - pct / 100);
+
   return (
     <Card>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Mês</span>
-          <Sel value={form.mes} onChange={e => set("mes",e.target.value)}>{MESES.map(m => <option key={m} value={m}>{m}</option>)}</Sel></div>
-        <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Cliente *</span><Inp value={form.cliente} onChange={e => set("cliente",e.target.value)} /></div>
-        <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Réu</span><Inp value={form.reu} onChange={e => set("reu",e.target.value)} /></div>
-        <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Processo</span><Inp value={form.processo} onChange={e => set("processo",e.target.value)} /></div>
-        <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Valor percebido (R$)</span>
-          <Inp type="number" step="0.01" min="0" value={form.valor_percebido||""} onChange={e => set("valor_percebido", parseFloat(e.target.value)||0)} /></div>
-        <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Sucumbência (R$)</span>
-          <Inp type="number" step="0.01" min="0" value={form.sucumbencia||""} onChange={e => set("sucumbencia", parseFloat(e.target.value)||0)} />
-          <p className="text-xs mt-1 font-medium" style={{ color:"#22c55e" }}>Hon.: {fmtBRL(form.valor_percebido*0.35 + form.sucumbencia)}</p></div>
-        <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Status</span>
-          <Sel value={form.status} onChange={e => set("status",e.target.value as Status)}>
-            <option value="pendente">Pendente</option><option value="pago">Pago</option><option value="repasse">Repasse pendente</option>
-          </Sel></div>
+      {/* Tipo de execução */}
+      <div className="mb-4">
+        <span className="text-xs uppercase tracking-wider mb-2 block" style={{ color:"var(--text3)" }}>Tipo de lançamento</span>
+        <div className="flex gap-2">
+          {([
+            ["processo_completo", "⚖️ Processo completo", "Valor total recebido com % de honorário"],
+            ["honorarios_somente", "💼 Somente honorário", "Só o valor dos honorários (sem repasse)"],
+          ] as const).map(([val, label, desc]) => (
+            <button key={val} type="button"
+              onClick={() => set("tipo_execucao", val)}
+              className="flex-1 px-3 py-2 rounded-lg text-left transition-all"
+              style={{
+                background: form.tipo_execucao === val ? "rgba(201,168,76,0.12)" : "var(--surface2)",
+                border: `1px solid ${form.tipo_execucao === val ? "var(--gold)" : "var(--border)"}`,
+                color: form.tipo_execucao === val ? "var(--gold)" : "var(--text2)",
+              }}>
+              <p className="text-xs font-semibold">{label}</p>
+              <p className="text-xs mt-0.5 opacity-70">{desc}</p>
+            </button>
+          ))}
+        </div>
       </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div>
+          <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Mês de recebimento</span>
+          <Sel value={form.mes} onChange={e => set("mes",e.target.value)}>
+            {MESES.map(m => <option key={m} value={m}>{m}</option>)}
+          </Sel>
+        </div>
+        <div>
+          <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Data do recebimento</span>
+          <Inp type="date" value={form.data_pagamento} onChange={e => set("data_pagamento",e.target.value)} />
+        </div>
+        <div>
+          <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Cliente *</span>
+          <Inp value={form.cliente} onChange={e => set("cliente",e.target.value)} />
+        </div>
+        <div>
+          <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Réu / Banco</span>
+          <Inp value={form.reu} onChange={e => set("reu",e.target.value)} />
+        </div>
+        <div>
+          <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Processo</span>
+          <Inp value={form.processo} onChange={e => set("processo",e.target.value)} />
+        </div>
+
+        {isSomente ? (
+          <div>
+            <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Honorários recebidos (R$)</span>
+            <Inp type="number" step="0.01" min="0" value={form.valor_percebido||""} onChange={e => set("valor_percebido", parseFloat(e.target.value)||0)} />
+            <p className="text-xs mt-1" style={{ color:"var(--text3)" }}>Valor que entrou diretamente para o escritório</p>
+          </div>
+        ) : (
+          <>
+            <div>
+              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Valor total do processo (R$)</span>
+              <Inp type="number" step="0.01" min="0" value={form.valor_percebido||""} onChange={e => set("valor_percebido", parseFloat(e.target.value)||0)} />
+            </div>
+            <div>
+              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>% de honorário</span>
+              <Inp type="number" step="0.5" min="0" max="100" value={form.pct_honorarios||35} onChange={e => set("pct_honorarios", parseFloat(e.target.value)||35)} />
+            </div>
+          </>
+        )}
+
+        <div>
+          <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Sucumbência (R$)</span>
+          <Inp type="number" step="0.01" min="0" value={form.sucumbencia||""} onChange={e => set("sucumbencia", parseFloat(e.target.value)||0)} />
+        </div>
+
+        <div>
+          <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Status</span>
+          <Sel value={form.status} onChange={e => set("status",e.target.value as Status)}>
+            <option value="pago">Pago / Recebido</option>
+            <option value="pendente">Pendente</option>
+            <option value="repasse">Repasse pendente</option>
+          </Sel>
+        </div>
+      </div>
+
+      {/* Preview do cálculo */}
+      {form.valor_percebido > 0 && (
+        <div className="mt-3 p-3 rounded-lg grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs"
+          style={{ background: "rgba(201,168,76,0.07)", border: "1px solid rgba(201,168,76,0.2)" }}>
+          <div>
+            <p style={{ color:"var(--text3)" }}>Honorários do escritório</p>
+            <p className="font-bold tabular-nums" style={{ color:"#22c55e" }}>{fmtBRL(Math.round(honorariosCalc * 100) / 100)}</p>
+          </div>
+          {!isSomente && repasseCalc > 0 && (
+            <div>
+              <p style={{ color:"var(--text3)" }}>Repasse ao cliente</p>
+              <p className="font-bold tabular-nums" style={{ color:"#f59e0b" }}>{fmtBRL(Math.round(repasseCalc * 100) / 100)}</p>
+            </div>
+          )}
+          {form.sucumbencia > 0 && (
+            <div>
+              <p style={{ color:"var(--text3)" }}>Sucumbência</p>
+              <p className="font-bold tabular-nums" style={{ color:"#a78bfa" }}>{fmtBRL(form.sucumbencia)}</p>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="flex gap-3 mt-4">
         <button onClick={async () => { setSaving(true); try { await onSave(form); } finally { setSaving(false); } }}
-          disabled={saving} className="px-5 py-2 rounded-lg font-semibold text-sm" style={{ background:"var(--gold)", color:"#000" }}>{saving?"Salvando...":"Salvar"}</button>
-        <button onClick={onCancel} className="px-5 py-2 rounded-lg text-sm" style={{ background:"var(--surface2)", color:"var(--text2)", border:"1px solid var(--border)" }}>Cancelar</button>
+          disabled={saving} className="px-5 py-2 rounded-lg font-semibold text-sm" style={{ background:"var(--gold)", color:"#000" }}>
+          {saving ? "Salvando..." : "Salvar"}
+        </button>
+        <button onClick={onCancel} className="px-5 py-2 rounded-lg text-sm" style={{ background:"var(--surface2)", color:"var(--text2)", border:"1px solid var(--border)" }}>
+          Cancelar
+        </button>
       </div>
     </Card>
   );
@@ -490,22 +596,29 @@ function HonIniciaisView({ reload }: { reload: () => void }) {
 function HonInicialForm({ initial, onSave, onCancel }: {
   initial?: Partial<HonorarioInicial>; onSave: (f: Omit<HonorarioInicial,"id">) => Promise<void>; onCancel: () => void;
 }) {
-  const blank = { cliente:"", processo:"", valor:0, data_pagamento:"", observacao:"", status:"pendente" as Status };
+  const blank = { mes: getCurrentMes(), cliente:"", processo:"", valor:0, data_pagamento:"", observacao:"", status:"pago" as Status };
   const [form, setForm] = useState({ ...blank, ...(initial||{}) });
   const [saving, setSaving] = useState(false);
   const set = (k: string, v: string | number) => setForm(p => ({ ...p, [k]: v }));
   return (
     <Card>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div>
+          <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Mês de recebimento</span>
+          <Sel value={form.mes || MESES[0]} onChange={e => set("mes",e.target.value)}>
+            {MESES.map(m => <option key={m} value={m}>{m}</option>)}
+          </Sel>
+        </div>
         <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Cliente *</span><Inp value={form.cliente} onChange={e => set("cliente",e.target.value)} /></div>
         <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Processo</span><Inp value={form.processo} onChange={e => set("processo",e.target.value)} /></div>
         <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Valor (R$)</span>
           <Inp type="number" step="0.01" min="0" value={form.valor||""} onChange={e => set("valor", parseFloat(e.target.value)||0)} /></div>
-        <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Data pagamento</span><Inp value={form.data_pagamento} onChange={e => set("data_pagamento",e.target.value)} placeholder="DD/MM/AAAA" /></div>
+        <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Data pagamento</span>
+          <Inp type="date" value={form.data_pagamento} onChange={e => set("data_pagamento",e.target.value)} /></div>
         <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Observação</span><Inp value={form.observacao} onChange={e => set("observacao",e.target.value)} /></div>
         <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Status</span>
           <Sel value={form.status} onChange={e => set("status",e.target.value as Status)}>
-            <option value="pendente">Pendente</option><option value="pago">Pago</option>
+            <option value="pago">Pago / Recebido</option><option value="pendente">Pendente</option>
           </Sel></div>
       </div>
       <div className="flex gap-3 mt-4">
@@ -527,6 +640,23 @@ function getCurrentCol(): string {
 function getColIndex(): number {
   const now = new Date();
   return now.getFullYear() * 12 + now.getMonth() - (2025 * 12 + 9);
+}
+
+// Fatura do cartão fecha no dia 11: compras a partir desse dia caem na fatura do mês seguinte
+function getBillingColIndex(): number {
+  const now = new Date();
+  let year = now.getFullYear();
+  let month = now.getMonth();
+  if (now.getDate() >= 11) {
+    month += 1;
+    if (month > 11) { month = 0; year += 1; }
+  }
+  return year * 12 + month - (2025 * 12 + 9);
+}
+
+function getBillingCol(): string {
+  const idx = getBillingColIndex();
+  return idx >= 0 && idx < COLS.length ? COLS[idx] : "";
 }
 
 function getCurrentMes(): string {
@@ -818,6 +948,35 @@ function varProgress(v: Variavel, mesAtual: string): { pago: number; total: numb
   return { pago, total };
 }
 
+// Converte "DD/MM/AAAA" para o índice em COLS (mesma base de getColIndex)
+// Fatura fecha no dia 11: compra a partir desse dia entra na fatura do mês seguinte
+function colIndexFromData(dataStr: string): number | null {
+  if (!dataStr) return null;
+  const p = dataStr.split("/");
+  if (p.length !== 3) return null;
+  const dia = parseInt(p[0]);
+  let mes = parseInt(p[1]) - 1;
+  let ano = parseInt(p[2]);
+  if (isNaN(dia) || isNaN(mes) || isNaN(ano)) return null;
+  if (dia >= 11) { mes += 1; if (mes > 11) { mes = 0; ano += 1; } }
+  return ano * 12 + mes - (2025 * 12 + 9);
+}
+
+// Distribui o valor total em parcelas mensais a partir do mês da compra (ou do mês atual)
+function distribuirMesesVariavel(valor: number, parcelasStr: string, dataCompra: string): Record<string, number> {
+  const n = parseInt(parcelasStr) || 1;
+  const parcela = n > 0 ? Math.round((valor / n) * 100) / 100 : valor;
+  let startIdx = colIndexFromData(dataCompra);
+  if (startIdx === null || startIdx < 0 || startIdx >= COLS.length) startIdx = getBillingColIndex();
+  startIdx = Math.max(0, Math.min(COLS.length - 1, startIdx));
+  const meses: Record<string, number> = {};
+  for (let i = 0; i < n; i++) {
+    const idx = startIdx + i;
+    if (idx >= 0 && idx < COLS.length) meses[COLS[idx]] = parcela;
+  }
+  return meses;
+}
+
 function varDateRange(v: Variavel): string {
   const mesesKeys = Object.keys(v.meses || {}).filter(k => (v.meses[k] || 0) > 0);
   if (mesesKeys.length === 0) return v.data_compra || "";
@@ -857,6 +1016,10 @@ function VariaveisView() {
 
   const colIdx = getColIndex();
   const nextCol = colIdx + 1 < COLS.length ? COLS[colIdx + 1] : null;
+  const venceEsteMes = ativas.filter(v => (v.meses[mesAtual] || 0) > 0);
+  const venceProxMes = nextCol ? ativas.filter(v => (v.meses[nextCol] || 0) > 0) : [];
+  const totalVenceEsteMes = venceEsteMes.reduce((s, v) => s + (v.meses[mesAtual] || 0), 0);
+  const totalVenceProxMes = nextCol ? venceProxMes.reduce((s, v) => s + (v.meses[nextCol] || 0), 0) : 0;
 
   const renderCard = (v: Variavel) => {
     if (editId === v.id) {
@@ -865,16 +1028,12 @@ function VariaveisView() {
     const parcelaMes = varParcelaMes(v);
     const valorMesAtual = v.meses[mesAtual] || 0;
     const prog = varProgress(v, mesAtual);
-    const hasCurrentMonth = valorMesAtual > 0;
-    const hasNextMonth = nextCol && (v.meses[nextCol] || 0) > 0;
     return (
       <div key={v.id} className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
         <div className="flex items-center gap-3 px-4 py-3" style={{ background: "var(--surface)" }}>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="font-medium text-sm" style={{ color:"var(--text)" }}>{v.descricao}</p>
-              {hasCurrentMonth && <span title="Parcela neste mês" className="text-xs">🔵</span>}
-              {hasNextMonth && <span title="Parcela no próximo mês" className="text-xs">🟠</span>}
               <span className="text-xs px-2 py-0.5 rounded-full font-semibold tabular-nums"
                 style={{ background: prog.pago >= prog.total ? "rgba(34,197,94,0.12)" : "rgba(var(--gold-rgb,212,175,55),0.12)", color: prog.pago >= prog.total ? "#4ade80" : "var(--gold)", border: `1px solid ${prog.pago >= prog.total ? "rgba(34,197,94,0.3)" : "rgba(212,175,55,0.3)"}` }}>
                 {prog.pago}/{prog.total}
@@ -967,6 +1126,50 @@ function VariaveisView() {
         <button onClick={() => setNovo(true)} className="px-3 py-1.5 rounded-lg text-sm font-semibold" style={{ background:"var(--gold)", color:"#000" }}>+ Nova</button>
       </div>
 
+      {/* Resumo de pendências: este mês e próximo mês */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="rounded-xl p-4" style={{ background:"var(--surface)", border:"1px solid var(--border)" }}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs uppercase tracking-wider font-semibold" style={{ color:"var(--text3)" }}>
+              📅 Vencendo este mês {mesAtual ? `(${COL_TO_MES[mesAtual] || mesAtual})` : ""}
+            </span>
+            <span className="font-semibold tabular-nums text-sm" style={{ color:"#22c55e" }}>{fmtBRL(totalVenceEsteMes)}</span>
+          </div>
+          {venceEsteMes.length === 0 ? (
+            <p className="text-xs" style={{ color:"var(--text3)" }}>Nenhuma pendência este mês.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {venceEsteMes.map(v => (
+                <div key={v.id} className="flex items-center justify-between text-xs">
+                  <span style={{ color:"var(--text2)" }}>{v.descricao}</span>
+                  <span className="tabular-nums font-medium" style={{ color:"var(--gold)" }}>{fmtBRL(v.meses[mesAtual] || 0)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="rounded-xl p-4" style={{ background:"var(--surface)", border:"1px solid var(--border)" }}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs uppercase tracking-wider font-semibold" style={{ color:"var(--text3)" }}>
+              ⏭️ Próximo mês {nextCol ? `(${COL_TO_MES[nextCol] || nextCol})` : ""}
+            </span>
+            <span className="font-semibold tabular-nums text-sm" style={{ color:"#f59e0b" }}>{fmtBRL(totalVenceProxMes)}</span>
+          </div>
+          {venceProxMes.length === 0 ? (
+            <p className="text-xs" style={{ color:"var(--text3)" }}>Nenhuma pendência no próximo mês.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {venceProxMes.map(v => (
+                <div key={v.id} className="flex items-center justify-between text-xs">
+                  <span style={{ color:"var(--text2)" }}>{v.descricao}</span>
+                  <span className="tabular-nums font-medium" style={{ color:"var(--gold)" }}>{fmtBRL((nextCol && v.meses[nextCol]) || 0)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       {novo && <VariavelForm onSave={async f => { await createVariavel(f); setNovo(false); load(); }} onCancel={() => setNovo(false)} />}
 
       {/* Ativas */}
@@ -1018,7 +1221,13 @@ function VariavelForm({ initial, onSave, onCancel }: {
           </Sel></div>
       </div>
       <div className="flex gap-3 mt-4">
-        <button onClick={async () => { setSaving(true); try { await onSave(form); } finally { setSaving(false); } }}
+        <button onClick={async () => {
+          setSaving(true);
+          try {
+            const meses = distribuirMesesVariavel(form.valor, form.parcelas, form.data_compra);
+            await onSave({ ...form, meses });
+          } finally { setSaving(false); }
+        }}
           disabled={saving} className="px-5 py-2 rounded-lg font-semibold text-sm" style={{ background:"var(--gold)", color:"#000" }}>{saving?"Salvando...":"Salvar"}</button>
         <button onClick={onCancel} className="px-5 py-2 rounded-lg text-sm" style={{ background:"var(--surface2)", color:"var(--text2)", border:"1px solid var(--border)" }}>Cancelar</button>
       </div>
@@ -1050,7 +1259,6 @@ function ReceitasSociosView() {
 
   const agora = new Date();
 
-  // Corrigido: data no formato DD/MM/AAAA; datas inválidas são EXCLUÍDAS em filtros (não inclusas)
   function parseData(s: string): Date | null {
     if (!s) return null;
     const p = s.split("/");
@@ -1059,10 +1267,22 @@ function ReceitasSociosView() {
     return isNaN(d.getTime()) ? null : d;
   }
 
-  function dentroDoFiltro(data: string): boolean {
+  // Converte "Jun/2026" → Date(2026, 5, 15)
+  function parseMes(mes: string): Date | null {
+    if (!mes) return null;
+    const M = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+    const parts = mes.split("/");
+    if (parts.length !== 2) return null;
+    const month = M.indexOf(parts[0]);
+    if (month === -1) return null;
+    return new Date(parseInt(parts[1]), month, 15);
+  }
+
+  // Usa data_pagamento quando preenchida; cai no campo mes como fallback
+  function dentroDoFiltro(data: string, mes?: string): boolean {
     if (periodo === "todos") return true;
-    const d = parseData(data);
-    if (!d) return false; // corrigido: data inválida = excluir do filtro
+    const d = parseData(data) ?? parseMes(mes || "");
+    if (!d) return false;
     if (periodo === "mes") return d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear();
     if (periodo === "trimestre") {
       const t = Math.floor(agora.getMonth() / 3);
@@ -1109,14 +1329,14 @@ function ReceitasSociosView() {
   }
 
   const totalHonRecebido =
-    acordos.filter(a => a.status === "pago" && dentroDoFiltro(a.data_pagamento)).reduce((s, a) => s + a.honorarios, 0) +
-    execucoes.filter(e => e.status === "pago" && dentroDoFiltro(e.data_pagamento)).reduce((s, e) => s + e.honorarios, 0) +
-    honIniciais.filter(h => h.status === "pago" && dentroDoFiltro(h.data_pagamento)).reduce((s, h) => s + h.valor, 0);
+    acordos.filter(a => a.status === "pago" && dentroDoFiltro(a.data_pagamento, a.mes)).reduce((s, a) => s + a.honorarios, 0) +
+    execucoes.filter(e => e.status === "pago" && dentroDoFiltro(e.data_pagamento, e.mes)).reduce((s, e) => s + e.honorarios, 0) +
+    honIniciais.filter(h => h.status === "pago" && dentroDoFiltro(h.data_pagamento, h.mes)).reduce((s, h) => s + h.valor, 0);
 
   const totalPendente =
-    acordos.filter(a => a.status !== "pago" && dentroDoFiltro(a.data_pagamento)).reduce((s, a) => s + a.honorarios, 0) +
-    execucoes.filter(e => e.status !== "pago" && dentroDoFiltro(e.data_pagamento)).reduce((s, e) => s + e.honorarios, 0) +
-    honIniciais.filter(h => h.status !== "pago" && dentroDoFiltro(h.data_pagamento)).reduce((s, h) => s + h.valor, 0);
+    acordos.filter(a => a.status !== "pago" && dentroDoFiltro(a.data_pagamento, a.mes)).reduce((s, a) => s + a.honorarios, 0) +
+    execucoes.filter(e => e.status !== "pago" && dentroDoFiltro(e.data_pagamento, e.mes)).reduce((s, e) => s + e.honorarios, 0) +
+    honIniciais.filter(h => h.status !== "pago" && dentroDoFiltro(h.data_pagamento, h.mes)).reduce((s, h) => s + h.valor, 0);
 
   const totalDespFixas = calcDespFixas();
   const totalDespVariaveis = calcDespVariaveis();
@@ -1254,9 +1474,9 @@ function ReceitasSociosView() {
             <p className="text-xs uppercase tracking-wider mb-2 font-semibold" style={{ color: "#4ade80" }}>Receitas</p>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { label: "Acordos", val: acordos.filter(a => a.status === "pago" && dentroDoFiltro(a.data_pagamento)).reduce((s,a)=>s+a.honorarios,0) },
-                { label: "Execuções", val: execucoes.filter(e => e.status === "pago" && dentroDoFiltro(e.data_pagamento)).reduce((s,e)=>s+e.honorarios,0) },
-                { label: "Hon. Iniciais", val: honIniciais.filter(h => h.status === "pago" && dentroDoFiltro(h.data_pagamento)).reduce((s,h)=>s+h.valor,0) },
+                { label: "Acordos", val: acordos.filter(a => a.status === "pago" && dentroDoFiltro(a.data_pagamento, a.mes)).reduce((s,a)=>s+a.honorarios,0) },
+                { label: "Execuções", val: execucoes.filter(e => e.status === "pago" && dentroDoFiltro(e.data_pagamento, e.mes)).reduce((s,e)=>s+e.honorarios,0) },
+                { label: "Hon. Iniciais", val: honIniciais.filter(h => h.status === "pago" && dentroDoFiltro(h.data_pagamento, h.mes)).reduce((s,h)=>s+h.valor,0) },
               ].map(item => (
                 <div key={item.label} className="px-3 py-2 rounded-lg" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
                   <p className="text-xs mb-0.5" style={{ color: "var(--text3)" }}>{item.label}</p>
@@ -1457,8 +1677,8 @@ export default function FinanceiroPage() {
           <span className="text-xs" style={{ color: "var(--text3)" }}>Competência:</span>
           {[
             { key: "todos", label: "Todos" },
-            { key: "atual", label: `🔵 ${mesAtualLabel}` },
-            { key: "proximo", label: `🟠 ${mesProximoLabel}` },
+            { key: "atual", label: mesAtualLabel },
+            { key: "proximo", label: mesProximoLabel },
           ].map(f => (
             <button key={f.key} onClick={() => setFiltroMes(f.key)}
               className="px-3 py-1 rounded-lg text-xs font-medium transition-colors"
