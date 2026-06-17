@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 const CARDS = [
   { icon: "⚖️", title: "Controle Processual", desc: "Processos · Prazos · Audiências · Acordos", href: "/dashboard/controle", color: "#C9A84C" },
@@ -7,14 +10,20 @@ const CARDS = [
 ];
 
 export default function DashboardPage() {
+  const { data: session } = useSession();
+  const sexo = session?.user?.sexo;
+  const firstName = session?.user?.name?.split(" ")[0] ?? "";
+  const saudacao = sexo === "feminino" ? "Bem-vinda" : sexo === "masculino" ? "Bem-vindo" : "Bem-vindo(a)";
+  const titulo = sexo === "feminino" ? `Dra. ${firstName}` : sexo === "masculino" ? `Dr. ${firstName}` : firstName;
+
   return (
     <div className="p-8">
       <div
         className="rounded-xl px-8 py-6 mb-8"
         style={{ background: "var(--surface)", border: "1px solid var(--border)", borderLeft: "4px solid var(--gold)" }}
       >
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: "var(--text3)" }}>Bem-vinda</p>
-        <h1 className="font-serif text-2xl font-semibold" style={{ color: "var(--text)" }}>Adriely</h1>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: "var(--text3)" }}>{saudacao}</p>
+        <h1 className="font-serif text-2xl font-semibold" style={{ color: "var(--text)" }}>{titulo || "..."}</h1>
         <p className="text-sm mt-1" style={{ color: "var(--text2)" }}>Selecione um módulo para começar</p>
       </div>
 

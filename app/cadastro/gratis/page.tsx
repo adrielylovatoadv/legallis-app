@@ -10,6 +10,7 @@ export default function CadastroGratisPage() {
   const router = useRouter();
   const [nome, setNome] = useState("");
   const [nomeEscritorio, setNomeEscritorio] = useState("");
+  const [sexo, setSexo] = useState<"feminino" | "masculino" | "">("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
   const [senha, setSenha] = useState("");
@@ -31,7 +32,7 @@ export default function CadastroGratisPage() {
     const res = await fetch("/api/cadastro/gratis", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nome, nomeEscritorio, email, telefone, senha, confirmSenha }),
+      body: JSON.stringify({ nome, nomeEscritorio, sexo, email, telefone, senha, confirmSenha }),
     });
 
     if (!res.ok) {
@@ -95,6 +96,18 @@ export default function CadastroGratisPage() {
                 placeholder="Adriely Lovato" className={inp} style={inpStyle}
                 onFocus={e => (e.target.style.borderColor = "var(--gold)")}
                 onBlur={e => (e.target.style.borderColor = "var(--border)")} />
+            </div>
+
+            <div>
+              <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Sexo *</label>
+              <select required value={sexo} onChange={e => setSexo(e.target.value as "feminino" | "masculino")}
+                className={inp} style={inpStyle}
+                onFocus={e => (e.target.style.borderColor = "var(--gold)")}
+                onBlur={e => (e.target.style.borderColor = "var(--border)")}>
+                <option value="">Selecionar</option>
+                <option value="feminino">Feminino</option>
+                <option value="masculino">Masculino</option>
+              </select>
             </div>
 
             <div>

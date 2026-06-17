@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserByEmail, createUser } from "@/lib/users";
 
 export async function POST(req: NextRequest) {
-  const { nome, nomeEscritorio, email, telefone, senha, confirmSenha } = await req.json();
+  const { nome, nomeEscritorio, sexo, email, telefone, senha, confirmSenha } = await req.json();
 
   if (!nome || !nomeEscritorio || !email || !senha) {
     return NextResponse.json({ error: "Campos obrigatórios faltando." }, { status: 400 });
@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
     subscriptionStatus: "trial",
     trialEndsAt,
     isActive: true,
+    sexo: (sexo === "feminino" || sexo === "masculino") ? sexo : undefined,
   });
 
   // Salva tenantId baseado no ID real do usuário para consistência permanente

@@ -39,6 +39,7 @@ export interface User {
   permissions?: string[];
   isActive: boolean;
   tenantId?: string;
+  sexo?: "feminino" | "masculino";
 }
 
 export interface ResetToken {

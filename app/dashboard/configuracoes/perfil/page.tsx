@@ -12,6 +12,7 @@ export default function PerfilPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [sexo, setSexo] = useState<"feminino" | "masculino" | "">("");
   const [oabs, setOabs] = useState<OABEntry[]>([{ state: "MG", number: "" }]);
   const [currentPass, setCurrentPass] = useState("");
   const [newPass, setNewPass] = useState("");
@@ -30,6 +31,7 @@ export default function PerfilPage() {
         setName(u.name ?? "");
         setEmail(u.email ?? "");
         setPhone(u.phone ?? "");
+        setSexo(u.sexo ?? "");
         setOabs(u.oab?.length ? u.oab : [{ state: "MG", number: "" }]);
         setAvatarUrl(u.avatar ?? "");
       }
@@ -63,7 +65,7 @@ export default function PerfilPage() {
     const res = await fetch(`/api/usuarios/${session?.user?.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, phone, oab: oabs.filter(o => o.number) }),
+      body: JSON.stringify({ name, email, phone, sexo: sexo || undefined, oab: oabs.filter(o => o.number) }),
     });
     setLoading(false);
     if (res.ok) { await update({ name, email }); setMsg({ type: "ok", text: "Perfil salvo com sucesso." }); }
@@ -151,6 +153,17 @@ export default function PerfilPage() {
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className={inp} style={inpStyle}
                 onFocus={e => (e.target.style.borderColor = "var(--gold)")}
                 onBlur={e => (e.target.style.borderColor = "var(--border)")} />
+            </div>
+            <div>
+              <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Sexo</label>
+              <select value={sexo} onChange={e => setSexo(e.target.value as "feminino" | "masculino" | "")}
+                className={inp} style={inpStyle}
+                onFocus={e => (e.target.style.borderColor = "var(--gold)")}
+                onBlur={e => (e.target.style.borderColor = "var(--border)")}>
+                <option value="">Não informado</option>
+                <option value="feminino">Feminino</option>
+                <option value="masculino">Masculino</option>
+              </select>
             </div>
             <div>
               <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Telefone</label>

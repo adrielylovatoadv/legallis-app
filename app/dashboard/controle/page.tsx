@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
 import {
   getDashboard, marcarOk, fmtData, gcalUrl, badgeAndamento,
+  ANDAMENTOS_PROCESSO, RESPONSAVEIS, updateProcesso,
   type DashboardData, type Processo,
 } from "@/lib/controle";
+import { ProcessosTab } from "./_processos";
+import { IniciaisTab } from "./_iniciais";
+import { ClientesTab } from "./_clientes";
+import { FinalizadosTab } from "./_finalizados";
+import { ImportarTab } from "./_importar";
 
 // ── componentes base ──────────────────────────────────────────────────────────
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -40,18 +45,30 @@ function ProcessoCard({ p, onOk, onEdit }: {
         borderLeft: `3px solid ${isAud ? "#ef4444" : p.atencao ? "#ef4444" : "var(--border)"}`,
         border: "1px solid var(--border)",
       }}>
+      {/* Andamento em destaque no topo */}
+      {p.andamento && (
+        <div className="mb-1.5">
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${badgeAndamento(p.andamento)}`}>
+            {p.andamento}
+          </span>
+        </div>
+      )}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="font-medium text-sm truncate" style={{ color: "var(--text)" }}>
             {p.autor} <span style={{ color: "var(--text3)" }}>×</span> {p.reu}
             {p.hora && <span className="ml-1 text-xs" style={{ color: "var(--text3)" }}>· {p.hora}</span>}
-            {p.responsavel && <span className="ml-1 text-xs" style={{ color: "var(--text2)" }}>· {p.responsavel}</span>}
           </p>
-          <p className="text-xs mt-0.5 truncate" style={{ color: "var(--text3)" }}>
-            {p.objeto} {p.objeto && p.andamento ? "·" : ""} <span className={`font-medium ${badgeAndamento(p.andamento)}`}>{p.andamento}</span>
-          </p>
+          {p.responsavel && (
+            <p className="text-xs mt-0.5 font-semibold" style={{ color: "var(--gold)" }}>
+              👤 {p.responsavel}
+            </p>
+          )}
           {p.numero_processo && (
             <p className="text-xs mt-0.5 font-mono" style={{ color: "var(--text3)" }}>{p.numero_processo}</p>
+          )}
+          {p.objeto && (
+            <p className="text-xs mt-0.5 truncate" style={{ color: "var(--text3)", opacity: 0.7 }}>{p.objeto}</p>
           )}
         </div>
         <div className="flex gap-1 shrink-0">
@@ -78,8 +95,16 @@ function ProcessoCard({ p, onOk, onEdit }: {
   );
 }
 
-// ── modal de edição rápida ────────────────────────────────────────────────────
-import { ANDAMENTOS_PROCESSO, RESPONSAVEIS, updateProcesso } from "@/lib/controle";
+function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>{label}</label>
+      <input value={value || ""} onChange={e => onChange(e.target.value)}
+        className="w-full px-3 py-2 rounded-lg text-sm"
+        style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }} />
+    </div>
+  );
+}
 
 function ModalEditar({ p, onClose, onSaved }: {
   p: Processo; onClose: () => void; onSaved: () => void;
@@ -156,43 +181,32 @@ function ModalEditar({ p, onClose, onSaved }: {
   );
 }
 
-function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
-  return (
-    <div>
-      <label className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>{label}</label>
-      <input value={value || ""} onChange={e => onChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg text-sm"
-        style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }} />
-    </div>
-  );
-}
-
-// ── página ────────────────────────────────────────────────────────────────────
-export default function ControleDashboard() {
+// ── Visão Geral ────────────────────────────────────────────────────────────────
+function VisaoGeral() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Processo | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try { setData(await getDashboard()); } finally { setLoading(false); }
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    try { setData(await getDashboard()); } finally { if (!silent) setLoading(false); }
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
   const handleOk = async (id: string) => {
     await marcarOk(id);
-    load();
+    load(true);
   };
 
   if (loading) return (
-    <div className="p-6 flex items-center justify-center min-h-64">
+    <div className="flex items-center justify-center min-h-64">
       <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
         style={{ borderColor: "var(--gold)", borderTopColor: "transparent" }} />
     </div>
   );
 
-  if (!data) return <div className="p-6" style={{ color: "var(--text3)" }}>Erro ao carregar dados.</div>;
+  if (!data) return <div style={{ color: "var(--text3)" }}>Erro ao carregar dados.</div>;
 
   const audiencias_hoje = data.prazos_hoje.filter(p =>
     (p.andamento || "").toUpperCase().includes("AIJ") || (p.andamento || "").toUpperCase().includes("AUDIÊNCIA"));
@@ -202,40 +216,10 @@ export default function ControleDashboard() {
   const outros_3d = data.prazos_3dias.filter(p => !audiencias_3d.includes(p));
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
+    <div className="space-y-6">
       {editing && (
-        <ModalEditar p={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />
+        <ModalEditar p={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(true); }} />
       )}
-
-      {/* Cabeçalho */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="font-serif text-2xl font-semibold" style={{ color: "var(--text)" }}>Controle Processual</h1>
-          <p className="text-sm mt-0.5" style={{ color: "var(--text3)" }}>Direito do Consumidor · Cobranças Indevidas · Fraudes Bancárias</p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/dashboard/controle/processos"
-            className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text2)" }}>
-            ⚖️ Processos
-          </Link>
-          <Link href="/dashboard/controle/iniciais"
-            className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text2)" }}>
-            📝 Iniciais
-          </Link>
-          <Link href="/dashboard/controle/clientes"
-            className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text2)" }}>
-            👥 Clientes
-          </Link>
-          <Link href="/dashboard/controle/importar"
-            className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", color: "var(--gold)" }}>
-            ⬆️ Importar
-          </Link>
-        </div>
-      </div>
 
       {/* Métricas */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -307,8 +291,6 @@ export default function ControleDashboard() {
         <Card>
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold" style={{ color: "var(--text)" }}>📝 Iniciais Pendentes</h2>
-            <Link href="/dashboard/controle/iniciais" className="text-xs"
-              style={{ color: "var(--gold)" }}>Ver todas →</Link>
           </div>
           <div className="space-y-1.5 max-h-48 overflow-y-auto">
             {data.iniciais_pendentes.slice(0, 10).map(i => (
@@ -322,6 +304,57 @@ export default function ControleDashboard() {
           </div>
         </Card>
       )}
+    </div>
+  );
+}
+
+// ── Página principal ───────────────────────────────────────────────────────────
+type Tab = "inicio" | "processos" | "iniciais" | "clientes" | "finalizados" | "importar";
+
+export default function ControlePage() {
+  const [tab, setTab] = useState<Tab>("inicio");
+
+  const TABS = [
+    { id: "inicio", label: "📊 Visão Geral" },
+    { id: "processos", label: "⚖️ Processos" },
+    { id: "iniciais", label: "📝 Iniciais" },
+    { id: "clientes", label: "👥 Clientes" },
+    { id: "finalizados", label: "✅ Finalizados" },
+    { id: "importar", label: "⬆️ Importar" },
+  ] as const;
+
+  const tabStyle = (id: Tab) => ({
+    background: tab === id ? "var(--gold)" : "var(--surface2)",
+    color: tab === id ? "#1a1a1a" : "var(--text2)",
+    border: "1px solid var(--border)",
+  });
+
+  return (
+    <div className="p-6 max-w-7xl mx-auto space-y-5">
+      {/* Header */}
+      <div>
+        <h1 className="font-serif text-2xl font-semibold" style={{ color: "var(--text)" }}>Controle Processual</h1>
+        <p className="text-sm mt-0.5" style={{ color: "var(--text3)" }}>Direito do Consumidor · Cobranças Indevidas · Fraudes Bancárias</p>
+      </div>
+
+      {/* Tab bar */}
+      <div className="flex gap-2 flex-wrap">
+        {TABS.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id as Tab)}
+            className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
+            style={tabStyle(t.id as Tab)}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      {tab === "inicio" && <VisaoGeral />}
+      {tab === "processos" && <ProcessosTab />}
+      {tab === "iniciais" && <IniciaisTab />}
+      {tab === "clientes" && <ClientesTab />}
+      {tab === "finalizados" && <FinalizadosTab />}
+      {tab === "importar" && <ImportarTab />}
     </div>
   );
 }

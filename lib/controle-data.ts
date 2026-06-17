@@ -11,7 +11,7 @@ export interface Processo {
   numero_processo: string; data: string; hora: string;
   andamento: string; responsavel: string; observacoes: string;
   atencao: boolean; finalizado: boolean; criado_em: string;
-  dashboard_ok?: boolean;
+  dashboard_ok?: boolean; vara?: string; tribunal?: string;
 }
 
 export interface Cliente {
@@ -25,10 +25,23 @@ export interface Inicial {
   andamento: string; responsavel: string; observacoes: string; criado_em: string;
 }
 
-interface ControleData {
+export interface FinalizadoSemHonor {
+  cliente: string; reu: string; processo: string; objeto: string;
+  data_fin: string; motivo: string;
+}
+
+export interface FinalizadoAcordo {
+  mes: string; data_pagamento: string; cliente: string; reu: string;
+  objeto: string; valor_acordo: number; honorarios: number; status: string;
+  processo: string; repasse_cliente: number;
+}
+
+export interface ControleData {
   processos: Processo[];
   clientes: Cliente[];
   iniciais: Inicial[];
+  finalizados_externos_sem_honor: FinalizadoSemHonor[];
+  finalizados_externos_acordos: FinalizadoAcordo[];
 }
 
 function parseRaw(d: Partial<ControleData>): ControleData {
@@ -47,11 +60,13 @@ function parseRaw(d: Partial<ControleData>): ControleData {
       ...{ reu: "", objeto: "", responsavel: "", observacoes: "" },
       ...i,
     })),
+    finalizados_externos_sem_honor: d.finalizados_externos_sem_honor || [],
+    finalizados_externos_acordos: d.finalizados_externos_acordos || [],
   };
 }
 
 function emptyData(): ControleData {
-  return { processos: [], clientes: [], iniciais: [] };
+  return { processos: [], clientes: [], iniciais: [], finalizados_externos_sem_honor: [], finalizados_externos_acordos: [] };
 }
 
 function readFromFile(): ControleData {

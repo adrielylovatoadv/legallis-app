@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getDataAsync, saveDataAsync, newId } from "@/lib/controle-data";
+import { getDataAsync, saveDataAsync, newId, type ControleData } from "@/lib/controle-data";
 import * as XLSX from "xlsx";
 
 function clean(v: unknown): string {
@@ -53,7 +53,72 @@ export async function POST(req: NextRequest) {
   const formData = await req.formData();
   const data = await getDataAsync(tid);
 
-  const stats = { processos: 0, iniciais: 0, finalizados_sem: 0, finalizados_acordos: 0 };
+  const stats = { clientes: 0, processos: 0, iniciais: 0, finalizados_sem: 0, finalizados_acordos: 0 };
+  const erros: string[] = [];
+
+  // ── MODELO UNIFICADO CLIENTES + PROCESSOS ────────────────────────────────
+  const fUnificado = formData.get("clientes_processos") as File | null;
+  if (fUnificado) {
+    const rows = parseSheet(await fUnificado.arrayBuffer());
+    const byNomeCpf = new Map(data.clientes.map(c => [`${c.nome.toUpperCase()}|${c.cpf}`, c]));
+    const byNum = new Map(data.processos.map(p => [p.numero_processo, p]));
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const nome = clean(row["Nome do cliente"] ?? row["Nome"] ?? "");
+      if (!nome) { erros.push(`Linha ${i + 2}: Nome do cliente ausente`); continue; }
+
+      const cpf = clean(row["CPF"] ?? "");
+      const telefone = clean(row["Telefone"] ?? "");
+      const email = clean(row["E-mail"] ?? row["Email"] ?? "");
+      const numero = clean(row["Número do processo"] ?? row["Numero do processo"] ?? row["Processo"] ?? "");
+      const vara = clean(row["Vara"] ?? "");
+      const tribunal = clean(row["Tribunal"] ?? "");
+      const status = clean(row["Status"] ?? row["Andamento"] ?? "");
+      const dataDistrib = fmtDate(row["Data de distribuição"] ?? row["Data"] ?? "");
+      const obs = clean(row["Observações"] ?? row["Observacoes"] ?? "");
+
+      // Upsert cliente
+      const chave = `${nome.toUpperCase()}|${cpf}`;
+      let cliente = byNomeCpf.get(chave);
+      if (!cliente) {
+        const novo = { id: newId(), criado_em: new Date().toISOString(), nome, cpf, telefone, email, endereco: "", tipo_aposentadoria: "", informacoes: "", senha_gov: "", senha_serasa: "" };
+        data.clientes.push(novo);
+        byNomeCpf.set(chave, novo);
+        cliente = novo;
+        stats.clientes++;
+      } else {
+        if (telefone) cliente.telefone = telefone;
+        if (email) cliente.email = email;
+      }
+
+      // Upsert processo se número informado
+      if (numero) {
+        const observacoesCompletas = [obs, vara && `Vara: ${vara}`, tribunal && `Tribunal: ${tribunal}`].filter(Boolean).join(" | ");
+        const fields = {
+          autor: nome,
+          reu: "",
+          objeto: "",
+          numero_processo: numero,
+          vara,
+          tribunal,
+          data: dataDistrib,
+          hora: "",
+          andamento: status,
+          responsavel: "",
+          observacoes: observacoesCompletas,
+          atencao: false,
+        };
+        if (byNum.has(numero)) {
+          Object.assign(byNum.get(numero)!, fields);
+        } else {
+          data.processos.push({ id: newId(), criado_em: new Date().toISOString(), finalizado: false, dashboard_ok: false, ...fields });
+          byNum.set(numero, data.processos[data.processos.length - 1]);
+        }
+        stats.processos++;
+      }
+    }
+  }
 
   // ── PROCESSOS ─────────────────────────────────────────────────────────────
   const fProc = formData.get("processos") as File | null;
@@ -138,8 +203,7 @@ export async function POST(req: NextRequest) {
   const fFin = formData.get("finalizados_sem_honorario") as File | null;
   if (fFin) {
     const rows = parseSheet(await fFin.arrayBuffer());
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (data as any).finalizados_externos_sem_honor = rows.map(r => ({
+    (data as ControleData).finalizados_externos_sem_honor = rows.map(r => ({
       cliente:  clean(r["Cliente"]),
       reu:      clean(r["Réu"] ?? r["Reu"] ?? ""),
       processo: clean(r["Processo"]),
@@ -154,8 +218,7 @@ export async function POST(req: NextRequest) {
   const fAcordos = formData.get("finalizados_acordos") as File | null;
   if (fAcordos) {
     const rows = parseSheet(await fAcordos.arrayBuffer());
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (data as any).finalizados_externos_acordos = rows.map(r => ({
+    (data as ControleData).finalizados_externos_acordos = rows.map(r => ({
       mes:             clean(r["Mês"] ?? r["Mes"] ?? ""),
       data_pagamento:  clean(r["Data Pagamento"] ?? ""),
       cliente:         clean(r["Cliente"]),
@@ -171,5 +234,5 @@ export async function POST(req: NextRequest) {
   }
 
   await saveDataAsync(data, tid);
-  return NextResponse.json({ ok: true, stats });
+  return NextResponse.json({ ok: true, stats, erros: erros.length > 0 ? erros : undefined });
 }
