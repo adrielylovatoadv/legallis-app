@@ -10,15 +10,12 @@ function clean(v: unknown): string {
 
 function fmtDate(v: unknown): string {
   if (!v || v === "" || v === "NaN") return "";
-  // xlsx serial date number
   if (typeof v === "number") {
     const d = XLSX.SSF.parse_date_code(v);
     if (d) return `${d.y}-${String(d.m).padStart(2,"0")}-${String(d.d).padStart(2,"0")}`;
   }
   const s = String(v).trim();
-  // already ISO
   if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
-  // DD/MM/YYYY
   const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
   if (m) return `${m[3]}-${m[2]}-${m[1]}`;
   return "";
@@ -27,7 +24,6 @@ function fmtDate(v: unknown): string {
 function fmtHora(v: unknown): string {
   if (!v || v === "") return "";
   if (typeof v === "number") {
-    // fraction of a day
     const total = Math.round(v * 24 * 60);
     const h = Math.floor(total / 60);
     const min = total % 60;
@@ -38,199 +34,162 @@ function fmtHora(v: unknown): string {
   return "";
 }
 
-function parseSheet(buf: ArrayBuffer): Record<string, unknown>[] {
-  const wb = XLSX.read(buf, { type: "array", cellDates: false });
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  return XLSX.utils.sheet_to_json(ws, { defval: "" });
+function getSheet(wb: XLSX.WorkBook, names: string[]): Record<string, unknown>[] {
+  for (const n of names) {
+    const ws = wb.Sheets[n];
+    if (ws) return XLSX.utils.sheet_to_json(ws, { defval: "" });
+  }
+  return [];
 }
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session || session.user.role !== "admin")
-    return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
 
   const tid = session.user.tenantId;
   const formData = await req.formData();
   const data = await getDataAsync(tid);
 
-  const stats = { clientes: 0, processos: 0, iniciais: 0, finalizados_sem: 0, finalizados_acordos: 0 };
+  const stats = { clientes: 0, processos: 0, iniciais: 0, finalizados: 0, acordos: 0 };
   const erros: string[] = [];
 
-  // ── MODELO UNIFICADO CLIENTES + PROCESSOS ────────────────────────────────
-  const fUnificado = formData.get("clientes_processos") as File | null;
-  if (fUnificado) {
-    const rows = parseSheet(await fUnificado.arrayBuffer());
-    const byNomeCpf = new Map(data.clientes.map(c => [`${c.nome.toUpperCase()}|${c.cpf}`, c]));
-    const byNum = new Map(data.processos.map(p => [p.numero_processo, p]));
+  const arquivo = formData.get("arquivo") as File | null;
+  if (!arquivo) return NextResponse.json({ error: "Nenhum arquivo enviado." }, { status: 400 });
 
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
-      const nome = clean(row["Nome do cliente"] ?? row["Nome"] ?? "");
-      if (!nome) { erros.push(`Linha ${i + 2}: Nome do cliente ausente`); continue; }
+  const buf = await arquivo.arrayBuffer();
+  const wb = XLSX.read(buf, { type: "array", cellDates: false });
 
-      const cpf = clean(row["CPF"] ?? "");
-      const telefone = clean(row["Telefone"] ?? "");
-      const email = clean(row["E-mail"] ?? row["Email"] ?? "");
-      const numero = clean(row["Número do processo"] ?? row["Numero do processo"] ?? row["Processo"] ?? "");
-      const vara = clean(row["Vara"] ?? "");
-      const tribunal = clean(row["Tribunal"] ?? "");
-      const status = clean(row["Status"] ?? row["Andamento"] ?? "");
-      const dataDistrib = fmtDate(row["Data de distribuição"] ?? row["Data"] ?? "");
-      const obs = clean(row["Observações"] ?? row["Observacoes"] ?? "");
+  // ── Clientes ──────────────────────────────────────────────────────────────
+  const rowsClientes = getSheet(wb, ["Clientes", "clientes", "CLIENTES"]);
+  const byNomeCpf = new Map(data.clientes.map(c => [`${c.nome.toUpperCase().trim()}|${c.cpf.replace(/\D/g,"")}`, c]));
 
-      // Upsert cliente
-      const chave = `${nome.toUpperCase()}|${cpf}`;
-      let cliente = byNomeCpf.get(chave);
-      if (!cliente) {
-        const novo = { id: newId(), criado_em: new Date().toISOString(), nome, cpf, telefone, email, endereco: "", tipo_aposentadoria: "", informacoes: "", senha_gov: "", senha_serasa: "" };
-        data.clientes.push(novo);
-        byNomeCpf.set(chave, novo);
-        cliente = novo;
-        stats.clientes++;
-      } else {
-        if (telefone) cliente.telefone = telefone;
-        if (email) cliente.email = email;
-      }
-
-      // Upsert processo se número informado
-      if (numero) {
-        const observacoesCompletas = [obs, vara && `Vara: ${vara}`, tribunal && `Tribunal: ${tribunal}`].filter(Boolean).join(" | ");
-        const fields = {
-          autor: nome,
-          reu: "",
-          objeto: "",
-          numero_processo: numero,
-          vara,
-          tribunal,
-          data: dataDistrib,
-          hora: "",
-          andamento: status,
-          responsavel: "",
-          observacoes: observacoesCompletas,
-          atencao: false,
-        };
-        if (byNum.has(numero)) {
-          Object.assign(byNum.get(numero)!, fields);
-        } else {
-          data.processos.push({ id: newId(), criado_em: new Date().toISOString(), finalizado: false, dashboard_ok: false, ...fields });
-          byNum.set(numero, data.processos[data.processos.length - 1]);
-        }
-        stats.processos++;
-      }
+  for (let i = 0; i < rowsClientes.length; i++) {
+    const r = rowsClientes[i];
+    const nome = clean(r["Nome *"] ?? r["Nome"] ?? "");
+    if (!nome) { erros.push(`Clientes linha ${i + 2}: Nome ausente`); continue; }
+    const cpf = clean(r["CPF"] ?? "");
+    const chave = `${nome.toUpperCase().trim()}|${cpf.replace(/\D/g,"")}`;
+    const fields = {
+      nome,
+      cpf,
+      telefone:          clean(r["Telefone"] ?? ""),
+      email:             clean(r["E-mail"] ?? r["Email"] ?? ""),
+      endereco:          clean(r["Endereço"] ?? r["Endereco"] ?? ""),
+      tipo_aposentadoria: clean(r["Tipo Aposentadoria"] ?? ""),
+      informacoes:       clean(r["Informações"] ?? r["Informacoes"] ?? ""),
+    };
+    if (byNomeCpf.has(chave)) {
+      Object.assign(byNomeCpf.get(chave)!, fields);
+    } else {
+      const novo = { id: newId(), criado_em: new Date().toISOString(), senha_gov: "", senha_serasa: "", ...fields };
+      data.clientes.push(novo);
+      byNomeCpf.set(chave, novo);
+      stats.clientes++;
     }
   }
 
-  // ── PROCESSOS ─────────────────────────────────────────────────────────────
-  const fProc = formData.get("processos") as File | null;
-  if (fProc) {
-    const rows = parseSheet(await fProc.arrayBuffer());
-    const byNum = new Map(data.processos.map(p => [p.numero_processo, p]));
+  // ── Processos Ativos ─────────────────────────────────────────────────────
+  const rowsProcessos = getSheet(wb, ["Processos Ativos", "Processos", "processos", "PROCESSOS"]);
+  const byNum = new Map(data.processos.map(p => [p.numero_processo, p]));
 
-    for (const row of rows) {
-      const num = clean(row["Processo"] ?? row["Nº Processo"] ?? row["numero_processo"] ?? "");
-      if (!num) continue;
-      const atencao = clean(row["Atenção"] ?? row["Atencao"] ?? "").toUpperCase() === "SIM";
-      const fields = {
-        autor:           clean(row["Autor"]),
-        reu:             clean(row["Réu"] ?? row["Reu"]),
-        objeto:          clean(row["Objeto"]),
-        numero_processo: num,
-        data:            fmtDate(row["Data"]),
-        hora:            fmtHora(row["Hora"]),
-        andamento:       clean(row["Andamento"]),
-        observacoes:     clean(row["Observações"] ?? row["Observacoes"]),
-        responsavel:     clean(row["Responsável"] ?? row["Responsavel"]),
-        atencao,
-      };
-      if (byNum.has(num)) {
-        Object.assign(byNum.get(num)!, fields);
-      } else {
-        data.processos.push({ id: newId(), criado_em: new Date().toISOString(), finalizado: false, dashboard_ok: false, ...fields });
-      }
-      stats.processos++;
-    }
-  }
-
-  // ── INICIAIS ──────────────────────────────────────────────────────────────
-  const fIni = formData.get("iniciais") as File | null;
-  if (fIni) {
-    const rows = parseSheet(await fIni.arrayBuffer());
-    type IniKey = { cliente: string; reu: string; objeto: string };
-    const norm = (s: string) => s.toUpperCase().trim();
-    const byKey = new Map<string, (typeof data.iniciais)[0]>();
-    for (const i of data.iniciais) {
-      byKey.set(`${norm(i.cliente)}|${norm(i.reu)}|${norm(i.objeto)}`, i);
-    }
-
-    const seen = new Set<string>();
-    for (const row of rows) {
-      const cli = clean(row["Cliente"]);
-      const reu = clean(row["Réu"] ?? row["Reu"] ?? "");
-      const obj = clean(row["Objeto"]);
-      const key = `${norm(cli)}|${norm(reu)}|${norm(obj)}`;
-      const fields = {
-        cliente:     cli,
-        reu,
-        objeto:      obj,
-        andamento:   clean(row["Status"] ?? row["Andamento"]),
-        responsavel: clean(row["Responsável"] ?? row["Responsavel"] ?? ""),
-        observacoes: clean(row["Observações"] ?? row["Observacoes"] ?? ""),
-      };
-      seen.add(key);
-      if (byKey.has(key)) {
-        Object.assign(byKey.get(key)!, fields);
-      } else {
-        const novo = { id: newId(), criado_em: new Date().toISOString(), ...fields };
-        data.iniciais.push(novo);
-        byKey.set(key, novo);
-      }
-      stats.iniciais++;
-    }
-
-    // Mark as PROTOCOLADO entries not in the uploaded sheet (they were completed)
-    // Only for non-already-protocolado/arquivado entries
-    for (const [key, ini] of byKey.entries()) {
-      if (!seen.has(key)) {
-        const a = (ini.andamento || "").toUpperCase();
-        if (a !== "PROTOCOLADO" && a !== "ARQUIVADO") {
-          ini.andamento = "PROTOCOLADO";
-        }
-      }
-    }
-  }
-
-  // ── FINALIZADOS SEM HONORÁRIO ─────────────────────────────────────────────
-  const fFin = formData.get("finalizados_sem_honorario") as File | null;
-  if (fFin) {
-    const rows = parseSheet(await fFin.arrayBuffer());
-    (data as ControleData).finalizados_externos_sem_honor = rows.map(r => ({
-      cliente:  clean(r["Cliente"]),
-      reu:      clean(r["Réu"] ?? r["Reu"] ?? ""),
-      processo: clean(r["Processo"]),
-      objeto:   clean(r["Objeto"]),
-      data_fin: fmtDate(r["Data Finalização"] ?? r["Data Finalizacao"] ?? ""),
-      motivo:   clean(r["Motivo"]),
-    }));
-    stats.finalizados_sem = rows.length;
-  }
-
-  // ── FINALIZADOS COM ACORDO ────────────────────────────────────────────────
-  const fAcordos = formData.get("finalizados_acordos") as File | null;
-  if (fAcordos) {
-    const rows = parseSheet(await fAcordos.arrayBuffer());
-    (data as ControleData).finalizados_externos_acordos = rows.map(r => ({
-      mes:             clean(r["Mês"] ?? r["Mes"] ?? ""),
-      data_pagamento:  clean(r["Data Pagamento"] ?? ""),
-      cliente:         clean(r["Cliente"]),
+  for (let i = 0; i < rowsProcessos.length; i++) {
+    const r = rowsProcessos[i];
+    const autor = clean(r["Autor *"] ?? r["Autor"] ?? "");
+    if (!autor) { erros.push(`Processos linha ${i + 2}: Autor ausente`); continue; }
+    const num = clean(r["Nº Processo"] ?? r["Processo"] ?? r["numero_processo"] ?? "");
+    const atencao = clean(r["Atenção (SIM/NÃO)"] ?? r["Atencao"] ?? "").toUpperCase() === "SIM";
+    const fields = {
+      autor,
       reu:             clean(r["Réu"] ?? r["Reu"] ?? ""),
-      objeto:          clean(r["Objeto"]),
+      objeto:          clean(r["Objeto"] ?? ""),
+      numero_processo: num,
+      data:            fmtDate(r["Data (DD/MM/AAAA)"] ?? r["Data"] ?? ""),
+      hora:            fmtHora(r["Hora (HH:MM)"] ?? r["Hora"] ?? ""),
+      andamento:       clean(r["Andamento"] ?? ""),
+      responsavel:     clean(r["Responsável"] ?? r["Responsavel"] ?? ""),
+      observacoes:     clean(r["Observações"] ?? r["Observacoes"] ?? ""),
+      atencao,
+      finalizado:      false,
+    };
+    if (num && byNum.has(num)) {
+      Object.assign(byNum.get(num)!, fields);
+    } else {
+      const novo = { id: newId(), criado_em: new Date().toISOString(), dashboard_ok: false, ...fields };
+      data.processos.push(novo);
+      if (num) byNum.set(num, novo);
+    }
+    stats.processos++;
+  }
+
+  // ── Iniciais ─────────────────────────────────────────────────────────────
+  const rowsIniciais = getSheet(wb, ["Iniciais", "iniciais", "INICIAIS"]);
+  const norm = (s: string) => s.toUpperCase().trim();
+  const byIniKey = new Map<string, (typeof data.iniciais)[0]>();
+  for (const i of data.iniciais) byIniKey.set(`${norm(i.cliente)}|${norm(i.reu)}`, i);
+
+  for (let i = 0; i < rowsIniciais.length; i++) {
+    const r = rowsIniciais[i];
+    const cliente = clean(r["Cliente *"] ?? r["Cliente"] ?? "");
+    if (!cliente) { erros.push(`Iniciais linha ${i + 2}: Cliente ausente`); continue; }
+    const reu = clean(r["Réu"] ?? r["Reu"] ?? "");
+    const key = `${norm(cliente)}|${norm(reu)}`;
+    const fields = {
+      cliente,
+      reu,
+      objeto:      clean(r["Objeto"] ?? ""),
+      andamento:   clean(r["Andamento"] ?? "FAZER INICIAL"),
+      responsavel: clean(r["Responsável"] ?? r["Responsavel"] ?? ""),
+      observacoes: clean(r["Observações"] ?? r["Observacoes"] ?? ""),
+    };
+    if (byIniKey.has(key)) {
+      Object.assign(byIniKey.get(key)!, fields);
+    } else {
+      const novo = { id: newId(), criado_em: new Date().toISOString(), ...fields };
+      data.iniciais.push(novo);
+      byIniKey.set(key, novo);
+    }
+    stats.iniciais++;
+  }
+
+  // ── Finalizados ───────────────────────────────────────────────────────────
+  // Tipo: Execução | Improcedente | Desistência | Outros → vão para finalizados_externos_sem_honor
+  const rowsFinalizados = getSheet(wb, ["Finalizados", "finalizados", "FINALIZADOS"]);
+  if (rowsFinalizados.length > 0) {
+    (data as ControleData).finalizados_externos_sem_honor = rowsFinalizados
+      .filter(r => {
+        const tipo = clean(r["Tipo * (Execução / Improcedente / Desistência / Outros)"] ?? r["Tipo"] ?? "").toUpperCase();
+        return tipo !== "ACORDO";
+      })
+      .map(r => ({
+        cliente:  clean(r["Cliente *"] ?? r["Cliente"] ?? ""),
+        reu:      clean(r["Réu"] ?? r["Reu"] ?? ""),
+        processo: clean(r["Nº Processo"] ?? r["Processo"] ?? ""),
+        objeto:   clean(r["Objeto"] ?? ""),
+        data_fin: fmtDate(r["Data Finalização (DD/MM/AAAA)"] ?? r["Data Finalização"] ?? ""),
+        motivo:   [
+          clean(r["Tipo * (Execução / Improcedente / Desistência / Outros)"] ?? r["Tipo"] ?? ""),
+          clean(r["Motivo / Observações"] ?? r["Motivo"] ?? ""),
+        ].filter(Boolean).join(" — "),
+      }));
+    stats.finalizados = rowsFinalizados.length;
+  }
+
+  // ── Acordos ───────────────────────────────────────────────────────────────
+  const rowsAcordos = getSheet(wb, ["Acordos", "acordos", "ACORDOS"]);
+  if (rowsAcordos.length > 0) {
+    (data as ControleData).finalizados_externos_acordos = rowsAcordos.map(r => ({
+      mes:             clean(r["Mês"] ?? r["Mes"] ?? ""),
+      data_pagamento:  clean(r["Data Pagamento (DD/MM/AAAA)"] ?? r["Data Pagamento"] ?? ""),
+      cliente:         clean(r["Cliente *"] ?? r["Cliente"] ?? ""),
+      reu:             clean(r["Réu"] ?? r["Reu"] ?? ""),
+      processo:        clean(r["Nº Processo"] ?? r["Processo"] ?? ""),
+      objeto:          clean(r["Objeto"] ?? ""),
       valor_acordo:    Number(r["Valor Acordo (R$)"] ?? 0) || 0,
       honorarios:      Number(r["Honorários (R$)"] ?? r["Honorarios (R$)"] ?? 0) || 0,
-      status:          clean(r["Status"]),
-      processo:        clean(r["Processo"]),
       repasse_cliente: Number(r["Repasse ao Cliente (R$)"] ?? 0) || 0,
+      status:          clean(r["Status (Pago / Pendente)"] ?? r["Status"] ?? ""),
     }));
-    stats.finalizados_acordos = rows.length;
+    stats.acordos = rowsAcordos.length;
   }
 
   await saveDataAsync(data, tid);
