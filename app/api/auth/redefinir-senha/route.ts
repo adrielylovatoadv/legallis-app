@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { consumeResetToken, getUserByEmail, updateUser } from "@/lib/users";
+import { consumeResetToken, getUserByEmailAsync, updateUserAsync } from "@/lib/users";
 
 export async function POST(req: NextRequest) {
   const { token, password } = await req.json();
@@ -10,8 +10,8 @@ export async function POST(req: NextRequest) {
   if (!email) {
     return NextResponse.json({ error: "Link inválido ou expirado" }, { status: 400 });
   }
-  const user = getUserByEmail(email);
+  const user = await getUserByEmailAsync(email);
   if (!user) return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
-  updateUser(user.id, { password });
+  await updateUserAsync(user.id, { password });
   return NextResponse.json({ ok: true });
 }

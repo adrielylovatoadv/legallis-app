@@ -4,6 +4,9 @@ import crypto from "crypto";
 export type { Plan, Role } from "./plans";
 export { PLAN_FEATURES, canAccess, canExport } from "./plans";
 import type { Plan, Role } from "./plans";
+import { dbGet, dbSet, dbInit, hasDb } from "./db";
+
+const USERS_DB_KEY = "users_global";
 
 export type SubscriptionStatus = "trial" | "active" | "expired" | "cancelled" | "pending";
 
@@ -104,6 +107,75 @@ export function deleteUser(id: string): boolean {
   const next = users.filter(u => u.id !== id);
   if (next.length === users.length) return false;
   saveUsers(next);
+  return true;
+}
+
+// ── Async versions (usam Neon em produção, arquivo em dev) ───────────────────
+
+function migrateUser(u: Partial<User> & { id: string }): User {
+  return { subscriptionStatus: "active" as SubscriptionStatus, isActive: true, ...u } as User;
+}
+
+export async function getUsersAsync(): Promise<User[]> {
+  if (hasDb()) {
+    await dbInit();
+    try {
+      const d = await dbGet<User[]>(USERS_DB_KEY);
+      if (d) return d.map(migrateUser);
+      // Primeira vez: semeia com os usuários do arquivo (admins criados no setup)
+      const fromFile = getUsers();
+      await dbSet(USERS_DB_KEY, fromFile);
+      return fromFile;
+    } catch (e) {
+      console.error(`[users] Erro ao ler banco, usando fallback: ${e}`);
+      return getUsers();
+    }
+  }
+  return getUsers();
+}
+
+export async function saveUsersAsync(users: User[]): Promise<void> {
+  if (hasDb()) {
+    await dbInit();
+    const ok = await dbSet(USERS_DB_KEY, users);
+    if (!ok) console.error("[users] FALHA ao salvar no banco");
+    return;
+  }
+  saveUsers(users);
+}
+
+export async function getUserByIdAsync(id: string): Promise<User | null> {
+  const users = await getUsersAsync();
+  return users.find(u => u.id === id) ?? null;
+}
+
+export async function getUserByEmailAsync(email: string): Promise<User | null> {
+  const users = await getUsersAsync();
+  return users.find(u => u.email === email) ?? null;
+}
+
+export async function updateUserAsync(id: string, data: Partial<Omit<User, "id">>): Promise<User | null> {
+  const users = await getUsersAsync();
+  const idx = users.findIndex(u => u.id === id);
+  if (idx === -1) return null;
+  users[idx] = { ...users[idx], ...data };
+  await saveUsersAsync(users);
+  return users[idx];
+}
+
+export async function createUserAsync(data: Omit<User, "id" | "createdAt">): Promise<User> {
+  const users = await getUsersAsync();
+  const user: User = { ...data, id: String(Date.now()), createdAt: new Date().toISOString() };
+  users.push(user);
+  await saveUsersAsync(users);
+  return user;
+}
+
+export async function deleteUserAsync(id: string): Promise<boolean> {
+  const users = await getUsersAsync();
+  const next = users.filter(u => u.id !== id);
+  if (next.length === users.length) return false;
+  await saveUsersAsync(next);
   return true;
 }
 

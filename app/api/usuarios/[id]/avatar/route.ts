@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { updateUser } from "@/lib/users";
+import { updateUserAsync } from "@/lib/users";
 import { writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
 
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const avatarUrl = `/avatars/${filename}`;
-  updateUser(id, { avatar: avatarUrl });
+  await updateUserAsync(id, { avatar: avatarUrl });
 
   return NextResponse.json({ avatarUrl });
 }

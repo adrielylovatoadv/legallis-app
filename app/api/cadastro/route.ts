@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserByEmail, createUser } from "@/lib/users";
+import { getUserByEmailAsync, createUserAsync, updateUserAsync } from "@/lib/users";
 
 const PLAN_MAP: Record<string, { role: "user"; plan: "basic" | "pro" | "profissional" }> = {
   basic:         { role: "user", plan: "basic" },
@@ -16,14 +16,14 @@ export async function POST(req: NextRequest) {
   if (senha.length < 6) {
     return NextResponse.json({ error: "Senha mínima de 6 caracteres." }, { status: 400 });
   }
-  if (getUserByEmail(email)) {
+  if (await getUserByEmailAsync(email)) {
     return NextResponse.json({ error: "Este e-mail já está cadastrado." }, { status: 409 });
   }
 
   const planConfig = PLAN_MAP[plan] ?? { role: "user" as const, plan: "basic" as const };
 
   // Cria como "pending" — será ativado pelo webhook após pagamento
-  const user = createUser({
+  const user = await createUserAsync({
     name: nome,
     email,
     password: senha,
@@ -37,8 +37,7 @@ export async function POST(req: NextRequest) {
   });
 
   // Salva tenantId baseado no ID real do usuário para consistência permanente
-  const { updateUser } = await import("@/lib/users");
-  updateUser(user.id, { tenantId: `t_${user.id}` });
+  await updateUserAsync(user.id, { tenantId: `t_${user.id}` });
 
   return NextResponse.json({ userId: user.id }, { status: 201 });
 }

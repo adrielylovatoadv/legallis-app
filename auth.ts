@@ -11,8 +11,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: "Senha", type: "password" },
       },
       async authorize(credentials) {
-        const { getUserByEmail } = await import("@/lib/users");
-        const user = getUserByEmail(credentials.email as string);
+        const { getUserByEmailAsync } = await import("@/lib/users");
+        const user = await getUserByEmailAsync(credentials.email as string);
         if (!user || user.password !== credentials.password) return null;
         if (user.isActive === false) return null;
         return {

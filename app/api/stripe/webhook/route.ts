@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserById, getUserByEmail, updateUser } from "@/lib/users";
+import { getUserByIdAsync, getUserByEmailAsync, updateUserAsync } from "@/lib/users";
 import type { Plan, SubscriptionStatus } from "@/lib/users";
 
 // Mapeamento de Payment Link suffix → plano
@@ -68,11 +68,11 @@ export async function POST(req: NextRequest) {
       const linkSuffix = Object.keys(LINK_TO_PLAN).find(k => paymentLink.includes(k));
       const plan: Plan = linkSuffix ? LINK_TO_PLAN[linkSuffix] : "basic";
 
-      let user = session.client_reference_id ? getUserById(session.client_reference_id) : null;
-      if (!user && session.customer_email) user = getUserByEmail(session.customer_email);
+      let user = session.client_reference_id ? await getUserByIdAsync(session.client_reference_id) : null;
+      if (!user && session.customer_email) user = await getUserByEmailAsync(session.customer_email);
 
       if (user) {
-        updateUser(user.id, {
+        await updateUserAsync(user.id, {
           plan,
           subscriptionStatus: "active",
           stripeCustomerId: session.customer as string,
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
         const user = users.find(u => u.stripeCustomerId === sub.customer) ?? null;
         if (user) {
           const subscriptionStatus: SubscriptionStatus = sub.status === "trialing" ? "trial" : "active";
-          updateUser(user.id, { subscriptionStatus, stripeSubscriptionId: sub.id });
+          await updateUserAsync(user.id, { subscriptionStatus, stripeSubscriptionId: sub.id });
           console.log(`[Stripe] Assinatura criada: ${user.email} → ${subscriptionStatus}`);
         }
       }
@@ -122,13 +122,13 @@ export async function POST(req: NextRequest) {
       };
 
       if (invoice.billing_reason === "subscription_cycle") {
-        let user = invoice.customer_email ? getUserByEmail(invoice.customer_email) : null;
+        let user = invoice.customer_email ? await getUserByEmailAsync(invoice.customer_email) : null;
         if (!user && invoice.customer) {
           const users = (await import("@/lib/users")).getUsers();
           user = users.find(u => u.stripeCustomerId === invoice.customer) ?? null;
         }
         if (user) {
-          updateUser(user.id, { subscriptionStatus: "active" });
+          await updateUserAsync(user.id, { subscriptionStatus: "active" });
           console.log(`[Stripe] Renovação: ${user.email}`);
         }
       }
@@ -142,14 +142,14 @@ export async function POST(req: NextRequest) {
         customer_email?: string;
       };
 
-      let user = invoice.customer_email ? getUserByEmail(invoice.customer_email) : null;
+      let user = invoice.customer_email ? await getUserByEmailAsync(invoice.customer_email) : null;
       if (!user && invoice.customer) {
         const users = (await import("@/lib/users")).getUsers();
         user = users.find(u => u.stripeCustomerId === invoice.customer) ?? null;
       }
 
       if (user) {
-        updateUser(user.id, { subscriptionStatus: "pending" });
+        await updateUserAsync(user.id, { subscriptionStatus: "pending" });
         console.log(`[Stripe] Pagamento falhou: ${user.email}`);
         await sendEmail(
           user.email,
@@ -174,7 +174,7 @@ export async function POST(req: NextRequest) {
       const user = users.find(u => u.stripeCustomerId === sub.customer) ?? null;
 
       if (user) {
-        updateUser(user.id, { subscriptionStatus: "cancelled" as SubscriptionStatus });
+        await updateUserAsync(user.id, { subscriptionStatus: "cancelled" as SubscriptionStatus });
         console.log(`[Stripe] Assinatura cancelada: ${user.email}`);
         await sendEmail(
           user.email,
@@ -206,7 +206,7 @@ export async function POST(req: NextRequest) {
       const user = users.find(u => u.stripeCustomerId === sub.customer) ?? null;
 
       if (user) {
-        updateUser(user.id, { subscriptionStatus });
+        await updateUserAsync(user.id, { subscriptionStatus });
         console.log(`[Stripe] Assinatura atualizada: ${user.email} → ${subscriptionStatus}`);
       }
       break;

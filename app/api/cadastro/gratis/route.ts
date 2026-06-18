@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserByEmail, createUser } from "@/lib/users";
+import { getUserByEmailAsync, createUserAsync, updateUserAsync } from "@/lib/users";
 
 export async function POST(req: NextRequest) {
   const { nome, nomeEscritorio, sexo, email, telefone, senha, confirmSenha } = await req.json();
@@ -13,13 +13,13 @@ export async function POST(req: NextRequest) {
   if (senha !== confirmSenha) {
     return NextResponse.json({ error: "Senhas não conferem." }, { status: 400 });
   }
-  if (getUserByEmail(email)) {
+  if (await getUserByEmailAsync(email)) {
     return NextResponse.json({ error: "Este e-mail já está cadastrado." }, { status: 409 });
   }
 
   const trialEndsAt = new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString();
 
-  const user = createUser({
+  const user = await createUserAsync({
     name: nome,
     email,
     password: senha,
@@ -35,8 +35,7 @@ export async function POST(req: NextRequest) {
   });
 
   // Salva tenantId baseado no ID real do usuário para consistência permanente
-  const { updateUser } = await import("@/lib/users");
-  updateUser(user.id, { tenantId: `t_${user.id}` });
+  await updateUserAsync(user.id, { tenantId: `t_${user.id}` });
 
   // Send welcome email (non-blocking)
   import("@/lib/email").then(({ sendWelcomeTrial }) =>
