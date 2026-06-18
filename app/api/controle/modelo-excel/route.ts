@@ -36,15 +36,21 @@ export async function GET() {
   XLSX.utils.book_append_sheet(wb, wsIniciais, "Iniciais");
 
   // ── Finalizados ──────────────────────────────────────────────────────────
-  // Tipo: Execução | Improcedente | Desistência | Outros
+  // Execução: preencher colunas financeiras (H-M). Outros tipos: deixar em branco.
   const wsFinalizados = XLSX.utils.aoa_to_sheet([
-    ["Tipo * (Execução / Improcedente / Desistência / Outros)", "Cliente *", "Réu", "Nº Processo", "Objeto", "Data Finalização (DD/MM/AAAA)", "Motivo / Observações"],
-    ["Improcedente", "Ana Costa", "BANCO DO BRASIL", "0000010-00.2023.8.13.0024", "Revisional Contrato", "10/05/2024", "Pedido julgado improcedente"],
-    ["Desistência", "Carlos Melo", "SANTANDER", "0000011-00.2023.8.13.0024", "Cobrança Indevida", "15/06/2024", "Cliente desistiu"],
-    ["Execução", "Rita Braga", "CASAS BAHIA", "0000012-00.2023.8.13.0024", "Fraude", "20/07/2024", "Execução de sentença"],
-    ["Outros", "Marcos Paulo", "VIVO", "0000013-00.2023.8.13.0024", "Cancelamento", "01/08/2024", "Acordo extrajudicial"],
+    [
+      "Tipo * (Execução / Improcedente / Desistência / Outros)",
+      "Cliente *", "Réu", "Nº Processo", "Objeto",
+      "Data Finalização (DD/MM/AAAA)", "Motivo / Observações",
+      "Valor Execução (R$)", "Honorários (R$)", "Repasse ao Cliente (R$)",
+      "Mês", "Data Pagamento (DD/MM/AAAA)", "Status (Pago / Pendente)",
+    ],
+    ["Improcedente", "Ana Costa",    "BANCO DO BRASIL", "0000010-00.2023.8.13.0024", "Revisional Contrato",  "10/05/2024", "Pedido julgado improcedente", "", "", "", "", "", ""],
+    ["Desistência",  "Carlos Melo",  "SANTANDER",       "0000011-00.2023.8.13.0024", "Cobrança Indevida",    "15/06/2024", "Cliente desistiu",            "", "", "", "", "", ""],
+    ["Execução",     "Rita Braga",   "CASAS BAHIA",     "0000012-00.2023.8.13.0024", "Cobrança Indevida",    "",           "Execução de sentença",        8500, 3527.5, 4972.5, "Jun/2024", "20/06/2024", "Pago"],
+    ["Outros",       "Marcos Paulo", "VIVO",            "0000013-00.2023.8.13.0024", "Cancelamento",         "01/08/2024", "Acordo extrajudicial",        "", "", "", "", "", ""],
   ]);
-  estilizarCabecalho(wsFinalizados, 7);
+  estilizarCabecalho(wsFinalizados, 13);
   XLSX.utils.book_append_sheet(wb, wsFinalizados, "Finalizados");
 
   // ── Acordos ──────────────────────────────────────────────────────────────

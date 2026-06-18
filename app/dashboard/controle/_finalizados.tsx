@@ -17,6 +17,12 @@ interface FinalizadoAcordo {
   processo: string; repasse_cliente: number;
 }
 
+interface FinalizadoExecucao {
+  mes: string; data_pagamento: string; cliente: string; reu: string;
+  processo: string; objeto: string; valor_execucao: number;
+  honorarios: number; repasse_cliente: number; status: string; observacoes?: string;
+}
+
 function fmtDate(s: string) {
   if (!s || s.length < 10) return "—";
   const [y, m, d] = s.split("-");
@@ -113,11 +119,12 @@ function ModalEditar({ p, onClose, onSaved }: {
   );
 }
 
-type Aba = "sem_honor" | "acordos" | "processos";
+type Aba = "sem_honor" | "acordos" | "execucao" | "processos";
 
 export function FinalizadosTab() {
   const [semHonor, setSemHonor] = useState<FinalizadoSemHonor[]>([]);
   const [acordos, setAcordos] = useState<FinalizadoAcordo[]>([]);
+  const [execucao, setExecucao] = useState<FinalizadoExecucao[]>([]);
   const [processos, setProcessos] = useState<Processo[]>([]);
   const [loading, setLoading] = useState(true);
   const [aba, setAba] = useState<Aba>("sem_honor");
@@ -135,6 +142,7 @@ export function FinalizadosTab() {
         const d = await res.json();
         setSemHonor(d.sem_honor || []);
         setAcordos(d.acordos || []);
+        setExecucao(d.execucao || []);
       }
       setProcessos(procs);
     } finally { setLoading(false); }
@@ -164,11 +172,15 @@ export function FinalizadosTab() {
 
   const semHonorFilt = filtrar(semHonor);
   const acordosFilt = filtrar(acordos);
+  const execucaoFilt = filtrar(execucao);
   const processosFilt = filtrarProc(processos);
 
   const totalHonorarios = acordos.reduce((s, a) => s + (a.honorarios || 0), 0);
   const totalAcordos = acordos.reduce((s, a) => s + (a.valor_acordo || 0), 0);
   const acordosPendentes = acordos.filter(a => (a.status || "").toUpperCase() === "PENDENTE").length;
+  const totalExecucao = execucao.reduce((s, e) => s + (e.valor_execucao || 0), 0);
+  const totalHonExecucao = execucao.reduce((s, e) => s + (e.honorarios || 0), 0);
+  const execucaoPendentes = execucao.filter(e => (e.status || "").toUpperCase() !== "PAGO").length;
 
   const tabStyle = (t: Aba) => ({
     background: aba === t ? "var(--gold)" : "var(--surface2)",
@@ -183,11 +195,11 @@ export function FinalizadosTab() {
           onSaved={() => { setEditando(null); load(); }} />
       )}
 
-      {/* Métricas de acordos */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Métricas */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="rounded-xl p-4 flex flex-col gap-1"
-          style={{ background: "var(--surface)", borderLeft: "4px solid #22c55e", border: "1px solid var(--border)" }}>
-          <span className="text-2xl font-bold tabular-nums" style={{ color: "#22c55e" }}>{semHonor.length}</span>
+          style={{ background: "var(--surface)", borderLeft: "4px solid #6b7280", border: "1px solid var(--border)" }}>
+          <span className="text-2xl font-bold tabular-nums" style={{ color: "#9ca3af" }}>{semHonor.length}</span>
           <span className="text-xs" style={{ color: "var(--text3)" }}>Sem honorário</span>
         </div>
         <div className="rounded-xl p-4 flex flex-col gap-1"
@@ -196,14 +208,16 @@ export function FinalizadosTab() {
           <span className="text-xs" style={{ color: "var(--text3)" }}>Com acordo</span>
         </div>
         <div className="rounded-xl p-4 flex flex-col gap-1"
-          style={{ background: "var(--surface)", borderLeft: "4px solid #818cf8", border: "1px solid var(--border)" }}>
-          <span className="text-lg font-bold tabular-nums" style={{ color: "#818cf8" }}>{fmtVal(totalAcordos)}</span>
-          <span className="text-xs" style={{ color: "var(--text3)" }}>Total acordos</span>
+          style={{ background: "var(--surface)", borderLeft: "4px solid #60a5fa", border: "1px solid var(--border)" }}>
+          <span className="text-2xl font-bold tabular-nums" style={{ color: "#60a5fa" }}>{execucao.length}</span>
+          <span className="text-xs" style={{ color: "var(--text3)" }}>Execução</span>
         </div>
         <div className="rounded-xl p-4 flex flex-col gap-1"
           style={{ background: "var(--surface)", borderLeft: "4px solid #f97316", border: "1px solid var(--border)" }}>
-          <span className="text-lg font-bold tabular-nums" style={{ color: "#f97316" }}>{fmtVal(totalHonorarios)}</span>
-          <span className="text-xs" style={{ color: "var(--text3)" }}>Honorários recebidos</span>
+          <span className="text-sm font-bold tabular-nums" style={{ color: "#f97316" }}>
+            {fmtVal(totalHonorarios + totalHonExecucao)}
+          </span>
+          <span className="text-xs" style={{ color: "var(--text3)" }}>Total honorários</span>
         </div>
       </div>
 
@@ -215,11 +229,15 @@ export function FinalizadosTab() {
         </button>
         <button onClick={() => setAba("acordos")} className="px-4 py-1.5 rounded-lg text-sm font-medium"
           style={tabStyle("acordos")}>
-          Com Acordo ({acordos.length}) {acordosPendentes > 0 && `· ${acordosPendentes} pendente${acordosPendentes > 1 ? "s" : ""}`}
+          Com Acordo ({acordos.length}){acordosPendentes > 0 ? ` · ${acordosPendentes} pend.` : ""}
+        </button>
+        <button onClick={() => setAba("execucao")} className="px-4 py-1.5 rounded-lg text-sm font-medium"
+          style={tabStyle("execucao")}>
+          ⚖️ Execução ({execucao.length}){execucaoPendentes > 0 ? ` · ${execucaoPendentes} pend.` : ""}
         </button>
         <button onClick={() => setAba("processos")} className="px-4 py-1.5 rounded-lg text-sm font-medium"
           style={tabStyle("processos")}>
-          ⚖️ Processos ({processos.length})
+          📁 Processos ({processos.length})
         </button>
       </div>
 
@@ -321,7 +339,7 @@ export function FinalizadosTab() {
               </div>
             ))
           }
-          {/* Totais */}
+          {/* Totais acordos */}
           {acordosFilt.length > 0 && (
             <div className="rounded-xl p-4 mt-4 grid grid-cols-3 gap-4"
               style={{ background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.2)" }}>
@@ -341,6 +359,81 @@ export function FinalizadosTab() {
                 <p className="text-xs mb-1" style={{ color: "var(--text3)" }}>Repasse clientes</p>
                 <p className="font-bold" style={{ color: "var(--gold)" }}>
                   {fmtVal(acordosFilt.reduce((s, a) => s + (a.repasse_cliente || 0), 0))}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : aba === "execucao" ? (
+        <div className="space-y-2">
+          {execucaoFilt.length === 0
+            ? <p className="py-8 text-center text-sm" style={{ color: "var(--text3)" }}>Nenhuma execução encontrada.</p>
+            : execucaoFilt.map((e, idx) => (
+              <div key={idx} className="rounded-lg px-4 py-3"
+                style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-medium text-sm" style={{ color: "var(--text)" }}>{e.cliente}</p>
+                      {e.reu && <span className="text-xs" style={{ color: "var(--text3)" }}>× {e.reu}</span>}
+                    </div>
+                    {e.objeto && <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>{e.objeto}</p>}
+                    {e.processo && <p className="text-xs mt-0.5 font-mono" style={{ color: "var(--text3)" }}>{e.processo}</p>}
+                    {e.observacoes && <p className="text-xs mt-0.5 italic" style={{ color: "var(--text3)" }}>{e.observacoes}</p>}
+                  </div>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                      {e.valor_execucao > 0 && (
+                        <span className="text-sm font-semibold" style={{ color: "#60a5fa" }}>
+                          {fmtVal(e.valor_execucao)}
+                        </span>
+                      )}
+                      {e.honorarios > 0 && (
+                        <span className="text-xs px-2 py-0.5 rounded"
+                          style={{ background: "rgba(201,168,76,0.12)", color: "var(--gold)" }}>
+                          Hon. {fmtVal(e.honorarios)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {e.data_pagamento && (
+                        <span className="text-xs" style={{ color: "var(--text3)" }}>{e.data_pagamento}</span>
+                      )}
+                      {e.status && (
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          e.status.toUpperCase() === "PAGO"
+                            ? "bg-green-500/15 text-green-400"
+                            : "bg-yellow-500/15 text-yellow-400"
+                        }`}>
+                          {e.status}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          }
+          {/* Totais execução */}
+          {execucaoFilt.length > 0 && (
+            <div className="rounded-xl p-4 mt-4 grid grid-cols-3 gap-4"
+              style={{ background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.2)" }}>
+              <div>
+                <p className="text-xs mb-1" style={{ color: "var(--text3)" }}>Total execução</p>
+                <p className="font-bold" style={{ color: "#60a5fa" }}>
+                  {fmtVal(execucaoFilt.reduce((s, e) => s + (e.valor_execucao || 0), 0))}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs mb-1" style={{ color: "var(--text3)" }}>Honorários</p>
+                <p className="font-bold" style={{ color: "var(--gold)" }}>
+                  {fmtVal(execucaoFilt.reduce((s, e) => s + (e.honorarios || 0), 0))}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs mb-1" style={{ color: "var(--text3)" }}>Repasse clientes</p>
+                <p className="font-bold" style={{ color: "var(--gold)" }}>
+                  {fmtVal(execucaoFilt.reduce((s, e) => s + (e.repasse_cliente || 0), 0))}
                 </p>
               </div>
             </div>

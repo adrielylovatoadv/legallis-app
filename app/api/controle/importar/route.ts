@@ -152,29 +152,52 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Finalizados ───────────────────────────────────────────────────────────
+  // Execução → finalizados_execucao (com valor); demais → finalizados_externos_sem_honor
   const rowsFinalizados = getSheet(wb, ["Finalizados", "finalizados", "FINALIZADOS"]);
   if (rowsFinalizados.length > 0) {
-    const existing = (data as ControleData).finalizados_externos_sem_honor ?? [];
-    const byKey = new Map(existing.map(f => [`${f.processo}|${f.cliente.toUpperCase()}|${f.reu.toUpperCase()}`, f]));
+    const existingSem = (data as ControleData).finalizados_externos_sem_honor ?? [];
+    const existingExec = (data as ControleData).finalizados_execucao ?? [];
+    const bySem = new Map(existingSem.map(f => [`${f.processo}|${f.cliente.toUpperCase()}|${f.reu.toUpperCase()}`, f]));
+    const byExec = new Map(existingExec.map(f => [`${f.processo}|${f.cliente.toUpperCase()}|${f.reu.toUpperCase()}`, f]));
+
     for (const r of rowsFinalizados) {
       const tipo = clean(r["Tipo * (Execução / Improcedente / Desistência / Outros)"] ?? r["Tipo"] ?? "").toUpperCase();
       if (tipo === "ACORDO") continue;
-      const novo = {
-        cliente:  clean(r["Cliente *"] ?? r["Cliente"] ?? ""),
-        reu:      clean(r["Réu"] ?? r["Reu"] ?? ""),
-        processo: clean(r["Nº Processo"] ?? r["Processo"] ?? ""),
-        objeto:   clean(r["Objeto"] ?? ""),
-        data_fin: fmtDate(r["Data Finalização (DD/MM/AAAA)"] ?? r["Data Finalização"] ?? ""),
-        motivo:   [
-          clean(r["Tipo * (Execução / Improcedente / Desistência / Outros)"] ?? r["Tipo"] ?? ""),
-          clean(r["Motivo / Observações"] ?? r["Motivo"] ?? ""),
-        ].filter(Boolean).join(" — "),
-      };
-      const key = `${novo.processo}|${novo.cliente.toUpperCase()}|${novo.reu.toUpperCase()}`;
-      if (byKey.has(key)) Object.assign(byKey.get(key)!, novo);
-      else { existing.push(novo); byKey.set(key, novo); stats.finalizados++; }
+      const cliente  = clean(r["Cliente *"] ?? r["Cliente"] ?? "");
+      const reu      = clean(r["Réu"] ?? r["Reu"] ?? "");
+      const processo = clean(r["Nº Processo"] ?? r["Processo"] ?? "");
+      const key = `${processo}|${cliente.toUpperCase()}|${reu.toUpperCase()}`;
+
+      if (tipo === "EXECUÇÃO" || tipo === "EXECUCAO") {
+        const novo = {
+          mes:             clean(r["Mês"] ?? r["Mes"] ?? ""),
+          data_pagamento:  clean(r["Data Pagamento (DD/MM/AAAA)"] ?? r["Data Pagamento"] ?? ""),
+          cliente, reu, processo,
+          objeto:          clean(r["Objeto"] ?? ""),
+          valor_execucao:  Number(r["Valor Execução (R$)"] ?? r["Valor Execucao (R$)"] ?? 0) || 0,
+          honorarios:      Number(r["Honorários (R$)"] ?? r["Honorarios (R$)"] ?? 0) || 0,
+          repasse_cliente: Number(r["Repasse ao Cliente (R$)"] ?? 0) || 0,
+          status:          clean(r["Status (Pago / Pendente)"] ?? r["Status"] ?? ""),
+          observacoes:     clean(r["Motivo / Observações"] ?? r["Motivo"] ?? ""),
+        };
+        if (byExec.has(key)) Object.assign(byExec.get(key)!, novo);
+        else { existingExec.push(novo); byExec.set(key, novo); stats.finalizados++; }
+      } else {
+        const novo = {
+          cliente, reu, processo,
+          objeto:   clean(r["Objeto"] ?? ""),
+          data_fin: fmtDate(r["Data Finalização (DD/MM/AAAA)"] ?? r["Data Finalização"] ?? ""),
+          motivo:   [
+            clean(r["Tipo * (Execução / Improcedente / Desistência / Outros)"] ?? r["Tipo"] ?? ""),
+            clean(r["Motivo / Observações"] ?? r["Motivo"] ?? ""),
+          ].filter(Boolean).join(" — "),
+        };
+        if (bySem.has(key)) Object.assign(bySem.get(key)!, novo);
+        else { existingSem.push(novo); bySem.set(key, novo); stats.finalizados++; }
+      }
     }
-    (data as ControleData).finalizados_externos_sem_honor = existing;
+    (data as ControleData).finalizados_externos_sem_honor = existingSem;
+    (data as ControleData).finalizados_execucao = existingExec;
   }
 
   // ── Acordos ───────────────────────────────────────────────────────────────

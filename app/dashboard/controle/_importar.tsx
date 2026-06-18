@@ -8,7 +8,7 @@ const ABAS_MODELO = [
   { nome: "Clientes", campos: "Nome *, CPF, Telefone, E-mail, Endereço, Tipo Aposentadoria, Informações" },
   { nome: "Processos Ativos", campos: "Autor *, Réu, Objeto, Nº Processo, Data, Hora, Andamento, Responsável, Observações, Atenção" },
   { nome: "Iniciais", campos: "Cliente *, Réu, Objeto, Andamento, Responsável, Observações" },
-  { nome: "Finalizados", campos: "Tipo * (Execução / Improcedente / Desistência / Outros), Cliente *, Réu, Nº Processo, Objeto, Data Finalização, Motivo" },
+  { nome: "Finalizados", campos: "Tipo *, Cliente *, Réu, Nº Processo, Objeto, Data Finalização, Motivo — se Execução: também Valor Execução, Honorários, Repasse, Mês, Data Pagamento, Status" },
   { nome: "Acordos", campos: "Mês, Data Pagamento, Cliente *, Réu, Nº Processo, Objeto, Valor Acordo, Honorários, Repasse ao Cliente, Status" },
 ];
 

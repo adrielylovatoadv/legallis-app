@@ -36,12 +36,19 @@ export interface FinalizadoAcordo {
   processo: string; repasse_cliente: number;
 }
 
+export interface FinalizadoExecucao {
+  mes: string; data_pagamento: string; cliente: string; reu: string;
+  processo: string; objeto: string; valor_execucao: number;
+  honorarios: number; repasse_cliente: number; status: string; observacoes?: string;
+}
+
 export interface ControleData {
   processos: Processo[];
   clientes: Cliente[];
   iniciais: Inicial[];
   finalizados_externos_sem_honor: FinalizadoSemHonor[];
   finalizados_externos_acordos: FinalizadoAcordo[];
+  finalizados_execucao: FinalizadoExecucao[];
 }
 
 function parseRaw(d: Partial<ControleData>): ControleData {
@@ -62,11 +69,12 @@ function parseRaw(d: Partial<ControleData>): ControleData {
     })),
     finalizados_externos_sem_honor: d.finalizados_externos_sem_honor || [],
     finalizados_externos_acordos: d.finalizados_externos_acordos || [],
+    finalizados_execucao: (d as ControleData).finalizados_execucao || [],
   };
 }
 
 function emptyData(): ControleData {
-  return { processos: [], clientes: [], iniciais: [], finalizados_externos_sem_honor: [], finalizados_externos_acordos: [] };
+  return { processos: [], clientes: [], iniciais: [], finalizados_externos_sem_honor: [], finalizados_externos_acordos: [], finalizados_execucao: [] };
 }
 
 function readFromFile(): ControleData {

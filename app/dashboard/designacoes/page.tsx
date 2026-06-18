@@ -235,8 +235,10 @@ export default function DesignacoesPage() {
     return true;
   });
 
+  const CONCLUIDOS_INICIAL = ["PROTOCOLADO", "ARQUIVADO"];
   const minhasIniciais = iniciais.filter(i => {
     if (!i.responsavel) return false;
+    if (CONCLUIDOS_INICIAL.includes((i.andamento || "").toUpperCase().trim())) return false;
     return responsavelFiltro
       ? i.responsavel.toLowerCase().includes(responsavelFiltro.toLowerCase())
       : true;
