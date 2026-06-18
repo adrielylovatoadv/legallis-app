@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { normText } from "@/lib/controle";
+import { ConfirmModal } from "@/components/ConfirmModal";
 
 interface Finalizado {
   cliente: string;
@@ -9,6 +11,7 @@ interface Finalizado {
   objeto: string;
   data_fin: string;
   motivo: string;
+  _migrado?: boolean;
 }
 
 const MOTIVOS = ["Acordo", "Desistência", "Improcedência", "Arquivado"] as const;
@@ -124,6 +127,7 @@ export function FinalizadosTab() {
   const [busca, setBusca] = useState("");
   const [filtroMotivo, setFiltroMotivo] = useState<string>("");
   const [modal, setModal] = useState<{ entry?: Finalizado; index?: number } | null>(null);
+  const [confirmIdx, setConfirmIdx] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -157,22 +161,22 @@ export function FinalizadosTab() {
   };
 
   const handleDelete = async (index: number) => {
-    if (!confirm("Excluir este registro?")) return;
     await fetch("/api/controle/finalizados", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ index }),
     });
+    setConfirmIdx(null);
     load();
   };
 
   const filtered = finalizados.filter(f => {
-    const b = busca.toLowerCase();
+    const b = normText(busca);
     const matchBusca = !busca ||
-      f.cliente.toLowerCase().includes(b) ||
-      f.reu.toLowerCase().includes(b) ||
-      f.objeto.toLowerCase().includes(b) ||
-      f.processo.toLowerCase().includes(b);
+      normText(f.cliente).includes(b) ||
+      normText(f.reu).includes(b) ||
+      normText(f.objeto).includes(b) ||
+      normText(f.processo).includes(b);
     const matchMotivo = !filtroMotivo || f.motivo === filtroMotivo;
     return matchBusca && matchMotivo;
   });
@@ -191,6 +195,16 @@ export function FinalizadosTab() {
             : undefined}
           onSave={handleSave}
           onClose={() => setModal(null)}
+        />
+      )}
+
+      {confirmIdx !== null && (
+        <ConfirmModal
+          title="Excluir finalizado"
+          message="Tem certeza que deseja excluir este registro?"
+          confirmLabel="Excluir"
+          onConfirm={() => handleDelete(confirmIdx)}
+          onCancel={() => setConfirmIdx(null)}
         />
       )}
 
@@ -276,16 +290,25 @@ export function FinalizadosTab() {
                       style={{ background: c.bg, color: c.color, border: `1px solid ${c.color}` }}>
                       {f.motivo}
                     </span>
-                    <button onClick={() => setModal({ entry: f, index: realIdx })}
-                      className="text-xs px-2 py-1 rounded"
-                      style={{ background: "var(--surface2)", color: "var(--text2)", border: "1px solid var(--border)" }}>
-                      ✏️
-                    </button>
-                    <button onClick={() => handleDelete(realIdx)}
-                      className="text-xs px-2 py-1 rounded"
-                      style={{ background: "var(--surface2)", color: "var(--text3)", border: "1px solid var(--border)" }}>
-                      🗑
-                    </button>
+                    {f._migrado ? (
+                      <span className="text-xs px-2 py-0.5 rounded" title="Registro do Financeiro — edite lá"
+                        style={{ background: "var(--surface2)", color: "var(--text3)", border: "1px solid var(--border)" }}>
+                        Financeiro
+                      </span>
+                    ) : (
+                      <>
+                        <button onClick={() => setModal({ entry: f, index: realIdx })}
+                          className="text-xs px-2 py-1 rounded"
+                          style={{ background: "var(--surface2)", color: "var(--text2)", border: "1px solid var(--border)" }}>
+                          ✏️
+                        </button>
+                        <button onClick={() => setConfirmIdx(realIdx)}
+                          className="text-xs px-2 py-1 rounded"
+                          style={{ background: "var(--surface2)", color: "var(--text3)", border: "1px solid var(--border)" }}>
+                          🗑
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

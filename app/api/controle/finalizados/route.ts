@@ -9,13 +9,14 @@ export async function GET() {
   const data = await getDataAsync(tid);
 
   // Migra acordos antigos (com dados financeiros) para o novo formato simples
-  const acordosMigrados: FinalizadoSemHonor[] = (data.finalizados_externos_acordos || []).map((a) => ({
+  const acordosMigrados = (data.finalizados_externos_acordos || []).map((a) => ({
     cliente: a.cliente || "",
     reu: a.reu || "",
     processo: a.processo || "",
     objeto: a.objeto || "",
     data_fin: a.data_pagamento || "",
     motivo: "Acordo",
+    _migrado: true, // somente leitura — edição/exclusão via aba Financeiro
   }));
 
   const finalizados = [...(data.finalizados_externos_sem_honor || []), ...acordosMigrados];
