@@ -23,7 +23,9 @@ const MOTIVO_COLORS: Record<Motivo, { bg: string; color: string }> = {
 
 function fmtDate(s: string) {
   if (!s || s.length < 10) return "—";
+  if (s.includes("/")) return s; // já em DD/MM/AAAA
   const [y, m, d] = s.split("-");
+  if (!d || !m) return s;
   return `${d}/${m}/${y}`;
 }
 
