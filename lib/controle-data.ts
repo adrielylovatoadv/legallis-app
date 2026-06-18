@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { dbGet, dbSet, dbInit, hasDb } from "./db";
+import { encryptField, decryptField } from "./crypto";
 
 const DATA_FILE = path.join(process.cwd(), "data", "controle_data.json");
 const TMP_CONTROLE = "/tmp/legallis_controle.json";
@@ -62,6 +63,8 @@ function parseRaw(d: Partial<ControleData>): ControleData {
       ...{ telefone: "", cpf: "", email: "", endereco: "",
         tipo_aposentadoria: "", informacoes: "", senha_gov: "", senha_serasa: "" },
       ...c,
+      senha_gov: decryptField(c.senha_gov || ""),
+      senha_serasa: decryptField(c.senha_serasa || ""),
     })),
     iniciais: (d.iniciais || []).map((i: Inicial) => ({
       ...{ reu: "", objeto: "", responsavel: "", observacoes: "" },
@@ -81,6 +84,17 @@ function readFromFile(): ControleData {
   const file = fs.existsSync(TMP_CONTROLE) ? TMP_CONTROLE : DATA_FILE;
   if (!fs.existsSync(file)) return emptyData();
   return parseRaw(JSON.parse(fs.readFileSync(file, "utf-8")));
+}
+
+function encryptClientes(data: ControleData): ControleData {
+  return {
+    ...data,
+    clientes: data.clientes.map(c => ({
+      ...c,
+      senha_gov: encryptField(c.senha_gov || ""),
+      senha_serasa: encryptField(c.senha_serasa || ""),
+    })),
+  };
 }
 
 export async function getDataAsync(tenantId = "default"): Promise<ControleData> {
@@ -104,12 +118,13 @@ export async function getDataAsync(tenantId = "default"): Promise<ControleData> 
 
 export async function saveDataAsync(data: ControleData, tenantId = "default"): Promise<void> {
   const key = `${DB_KEY_PREFIX}_${tenantId}`;
+  const encrypted = encryptClientes(data);
   if (hasDb()) {
-    const ok = await dbSet(key, data);
+    const ok = await dbSet(key, encrypted);
     if (!ok) console.error(`[controle] FALHA ao salvar no banco: chave=${key}`);
     return;
   }
-  const content = JSON.stringify(data, null, 2);
+  const content = JSON.stringify(encrypted, null, 2);
   try { fs.writeFileSync(DATA_FILE, content, "utf-8"); }
   catch { fs.writeFileSync(TMP_CONTROLE, content, "utf-8"); }
 }
@@ -120,7 +135,8 @@ export function getData(): ControleData {
 }
 
 export function saveData(data: ControleData) {
-  const content = JSON.stringify(data, null, 2);
+  const encrypted = encryptClientes(data);
+  const content = JSON.stringify(encrypted, null, 2);
   try { fs.writeFileSync(DATA_FILE, content, "utf-8"); }
   catch { fs.writeFileSync(TMP_CONTROLE, content, "utf-8"); }
 }
