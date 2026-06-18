@@ -152,15 +152,14 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Finalizados ───────────────────────────────────────────────────────────
-  // Tipo: Execução | Improcedente | Desistência | Outros → vão para finalizados_externos_sem_honor
   const rowsFinalizados = getSheet(wb, ["Finalizados", "finalizados", "FINALIZADOS"]);
   if (rowsFinalizados.length > 0) {
-    (data as ControleData).finalizados_externos_sem_honor = rowsFinalizados
-      .filter(r => {
-        const tipo = clean(r["Tipo * (Execução / Improcedente / Desistência / Outros)"] ?? r["Tipo"] ?? "").toUpperCase();
-        return tipo !== "ACORDO";
-      })
-      .map(r => ({
+    const existing = (data as ControleData).finalizados_externos_sem_honor ?? [];
+    const byKey = new Map(existing.map(f => [`${f.processo}|${f.cliente.toUpperCase()}|${f.reu.toUpperCase()}`, f]));
+    for (const r of rowsFinalizados) {
+      const tipo = clean(r["Tipo * (Execução / Improcedente / Desistência / Outros)"] ?? r["Tipo"] ?? "").toUpperCase();
+      if (tipo === "ACORDO") continue;
+      const novo = {
         cliente:  clean(r["Cliente *"] ?? r["Cliente"] ?? ""),
         reu:      clean(r["Réu"] ?? r["Reu"] ?? ""),
         processo: clean(r["Nº Processo"] ?? r["Processo"] ?? ""),
@@ -170,26 +169,37 @@ export async function POST(req: NextRequest) {
           clean(r["Tipo * (Execução / Improcedente / Desistência / Outros)"] ?? r["Tipo"] ?? ""),
           clean(r["Motivo / Observações"] ?? r["Motivo"] ?? ""),
         ].filter(Boolean).join(" — "),
-      }));
-    stats.finalizados = rowsFinalizados.length;
+      };
+      const key = `${novo.processo}|${novo.cliente.toUpperCase()}|${novo.reu.toUpperCase()}`;
+      if (byKey.has(key)) Object.assign(byKey.get(key)!, novo);
+      else { existing.push(novo); byKey.set(key, novo); stats.finalizados++; }
+    }
+    (data as ControleData).finalizados_externos_sem_honor = existing;
   }
 
   // ── Acordos ───────────────────────────────────────────────────────────────
   const rowsAcordos = getSheet(wb, ["Acordos", "acordos", "ACORDOS"]);
   if (rowsAcordos.length > 0) {
-    (data as ControleData).finalizados_externos_acordos = rowsAcordos.map(r => ({
-      mes:             clean(r["Mês"] ?? r["Mes"] ?? ""),
-      data_pagamento:  clean(r["Data Pagamento (DD/MM/AAAA)"] ?? r["Data Pagamento"] ?? ""),
-      cliente:         clean(r["Cliente *"] ?? r["Cliente"] ?? ""),
-      reu:             clean(r["Réu"] ?? r["Reu"] ?? ""),
-      processo:        clean(r["Nº Processo"] ?? r["Processo"] ?? ""),
-      objeto:          clean(r["Objeto"] ?? ""),
-      valor_acordo:    Number(r["Valor Acordo (R$)"] ?? 0) || 0,
-      honorarios:      Number(r["Honorários (R$)"] ?? r["Honorarios (R$)"] ?? 0) || 0,
-      repasse_cliente: Number(r["Repasse ao Cliente (R$)"] ?? 0) || 0,
-      status:          clean(r["Status (Pago / Pendente)"] ?? r["Status"] ?? ""),
-    }));
-    stats.acordos = rowsAcordos.length;
+    const existingAc = (data as ControleData).finalizados_externos_acordos ?? [];
+    const byAcKey = new Map(existingAc.map(a => [`${a.processo}|${a.cliente.toUpperCase()}|${a.mes}`, a]));
+    for (const r of rowsAcordos) {
+      const novo = {
+        mes:             clean(r["Mês"] ?? r["Mes"] ?? ""),
+        data_pagamento:  clean(r["Data Pagamento (DD/MM/AAAA)"] ?? r["Data Pagamento"] ?? ""),
+        cliente:         clean(r["Cliente *"] ?? r["Cliente"] ?? ""),
+        reu:             clean(r["Réu"] ?? r["Reu"] ?? ""),
+        processo:        clean(r["Nº Processo"] ?? r["Processo"] ?? ""),
+        objeto:          clean(r["Objeto"] ?? ""),
+        valor_acordo:    Number(r["Valor Acordo (R$)"] ?? 0) || 0,
+        honorarios:      Number(r["Honorários (R$)"] ?? r["Honorarios (R$)"] ?? 0) || 0,
+        repasse_cliente: Number(r["Repasse ao Cliente (R$)"] ?? 0) || 0,
+        status:          clean(r["Status (Pago / Pendente)"] ?? r["Status"] ?? ""),
+      };
+      const key = `${novo.processo}|${novo.cliente.toUpperCase()}|${novo.mes}`;
+      if (byAcKey.has(key)) Object.assign(byAcKey.get(key)!, novo);
+      else { existingAc.push(novo); byAcKey.set(key, novo); stats.acordos++; }
+    }
+    (data as ControleData).finalizados_externos_acordos = existingAc;
   }
 
   await saveDataAsync(data, tid);
