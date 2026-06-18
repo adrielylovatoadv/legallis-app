@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import {
-  getProcessos, updateProcesso, ANDAMENTOS_PROCESSO, RESPONSAVEIS,
-  fmtData, badgeAndamento, type Processo,
+  updateProcesso, ANDAMENTOS_PROCESSO, RESPONSAVEIS,
+  type Processo,
 } from "@/lib/controle";
 
 interface FinalizadoSemHonor {
@@ -119,13 +119,12 @@ function ModalEditar({ p, onClose, onSaved }: {
   );
 }
 
-type Aba = "sem_honor" | "acordos" | "execucao" | "processos";
+type Aba = "sem_honor" | "acordos" | "execucao";
 
 export function FinalizadosTab() {
   const [semHonor, setSemHonor] = useState<FinalizadoSemHonor[]>([]);
   const [acordos, setAcordos] = useState<FinalizadoAcordo[]>([]);
   const [execucao, setExecucao] = useState<FinalizadoExecucao[]>([]);
-  const [processos, setProcessos] = useState<Processo[]>([]);
   const [loading, setLoading] = useState(true);
   const [aba, setAba] = useState<Aba>("sem_honor");
   const [busca, setBusca] = useState("");
@@ -134,17 +133,13 @@ export function FinalizadosTab() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [res, procs] = await Promise.all([
-        fetch("/api/controle/finalizados"),
-        getProcessos({ tipo: "finalizados" }),
-      ]);
+      const res = await fetch("/api/controle/finalizados");
       if (res.ok) {
         const d = await res.json();
         setSemHonor(d.sem_honor || []);
         setAcordos(d.acordos || []);
         setExecucao(d.execucao || []);
       }
-      setProcessos(procs);
     } finally { setLoading(false); }
   }, []);
 
@@ -160,20 +155,9 @@ export function FinalizadosTab() {
     );
   };
 
-  const filtrarProc = (list: Processo[]) => {
-    if (!busca) return list;
-    const b = busca.toLowerCase();
-    return list.filter(p =>
-      (p.autor||"").toLowerCase().includes(b) ||
-      (p.reu||"").toLowerCase().includes(b) ||
-      (p.numero_processo||"").toLowerCase().includes(b)
-    );
-  };
-
   const semHonorFilt = filtrar(semHonor);
   const acordosFilt = filtrar(acordos);
   const execucaoFilt = filtrar(execucao);
-  const processosFilt = filtrarProc(processos);
 
   const totalHonorarios = acordos.reduce((s, a) => s + (a.honorarios || 0), 0);
   const totalAcordos = acordos.reduce((s, a) => s + (a.valor_acordo || 0), 0);
@@ -234,10 +218,6 @@ export function FinalizadosTab() {
         <button onClick={() => setAba("execucao")} className="px-4 py-1.5 rounded-lg text-sm font-medium"
           style={tabStyle("execucao")}>
           ⚖️ Execução ({execucao.length}){execucaoPendentes > 0 ? ` · ${execucaoPendentes} pend.` : ""}
-        </button>
-        <button onClick={() => setAba("processos")} className="px-4 py-1.5 rounded-lg text-sm font-medium"
-          style={tabStyle("processos")}>
-          📁 Processos ({processos.length})
         </button>
       </div>
 
@@ -364,7 +344,7 @@ export function FinalizadosTab() {
             </div>
           )}
         </div>
-      ) : aba === "execucao" ? (
+      ) : (
         <div className="space-y-2">
           {execucaoFilt.length === 0
             ? <p className="py-8 text-center text-sm" style={{ color: "var(--text3)" }}>Nenhuma execução encontrada.</p>
@@ -438,51 +418,6 @@ export function FinalizadosTab() {
               </div>
             </div>
           )}
-        </div>
-      ) : (
-        /* Aba processos finalizados com edição */
-        <div className="space-y-2">
-          {processosFilt.length === 0
-            ? <p className="py-8 text-center text-sm" style={{ color: "var(--text3)" }}>Nenhum processo finalizado.</p>
-            : processosFilt.map(p => (
-              <div key={p.id} className="rounded-lg px-4 py-3"
-                style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-                <div className="flex items-start justify-between gap-3 flex-wrap">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      {p.andamento && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${badgeAndamento(p.andamento)}`}>
-                          {p.andamento}
-                        </span>
-                      )}
-                    </div>
-                    <p className="font-medium text-sm" style={{ color: "var(--text)" }}>
-                      {p.autor} <span style={{ color: "var(--text3)" }}>×</span> {p.reu}
-                    </p>
-                    {p.responsavel && (
-                      <p className="text-xs mt-0.5 font-semibold" style={{ color: "var(--gold)" }}>👤 {p.responsavel}</p>
-                    )}
-                    {p.numero_processo && (
-                      <p className="text-xs mt-0.5 font-mono" style={{ color: "var(--text3)" }}>{p.numero_processo}</p>
-                    )}
-                    {p.objeto && (
-                      <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>{p.objeto}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {p.data && (
-                      <span className="text-xs" style={{ color: "var(--text3)" }}>{fmtData(p.data)}</span>
-                    )}
-                    <button onClick={() => setEditando(p)}
-                      className="text-xs px-3 py-1.5 rounded-lg font-medium"
-                      style={{ background: "var(--surface2)", color: "var(--text2)", border: "1px solid var(--border)" }}>
-                      ✏️ Editar Processo
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
-          }
         </div>
       )}
     </div>
