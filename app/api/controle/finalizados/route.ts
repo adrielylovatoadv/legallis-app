@@ -7,7 +7,19 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   const tid = session.user.tenantId;
   const data = await getDataAsync(tid);
-  return NextResponse.json({ finalizados: data.finalizados_externos_sem_honor || [] });
+
+  // Migra acordos antigos (com dados financeiros) para o novo formato simples
+  const acordosMigrados: FinalizadoSemHonor[] = (data.finalizados_externos_acordos || []).map((a) => ({
+    cliente: a.cliente || "",
+    reu: a.reu || "",
+    processo: a.processo || "",
+    objeto: a.objeto || "",
+    data_fin: a.data_pagamento || "",
+    motivo: "Acordo",
+  }));
+
+  const finalizados = [...(data.finalizados_externos_sem_honor || []), ...acordosMigrados];
+  return NextResponse.json({ finalizados });
 }
 
 export async function POST(req: NextRequest) {
