@@ -77,7 +77,8 @@ function ClienteCard({ c, onEdit, onDelete }: {
   const finalizados = c._finalizados || [];
   const iniciais = c._iniciais || [];
 
-  const badge = [
+  const semProcessos = ativos.length === 0 && finalizados.length === 0 && iniciais.length === 0;
+  const badge = semProcessos ? null : [
     ativos.length > 0 ? `${ativos.length} ativo${ativos.length > 1?"s":""}` : null,
     finalizados.length > 0 ? `${finalizados.length} finalizado${finalizados.length > 1?"s":""}` : null,
     iniciais.length > 0 ? `${iniciais.length} inicial${iniciais.length > 1?"is":""}` : null,
@@ -106,7 +107,10 @@ function ClienteCard({ c, onEdit, onDelete }: {
             {c.telefone && <span>{c.telefone}</span>}
             {c.cpf && <span className="select-text ml-1" style={{ cursor:"text" }} onClick={e => e.stopPropagation()}>· {c.cpf}</span>}
             {c.tipo_aposentadoria && <span> · {c.tipo_aposentadoria}</span>}
-            {badge && <span className="ml-2 text-[var(--gold)]">{badge}</span>}
+            {badge
+              ? <span className="ml-2 text-[var(--gold)]">{badge}</span>
+              : <span className="ml-2 text-xs px-1.5 py-0.5 rounded" style={{ background:"rgba(107,114,128,0.12)", color:"#9ca3af" }}>sem processos</span>
+            }
           </p>
         </div>
         <div className="flex items-center gap-2">

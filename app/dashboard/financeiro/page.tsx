@@ -243,8 +243,24 @@ function AcordoForm({ initial, onSave, onCancel }: {
     try { await onSave(form); } finally { setSaving(false); }
   };
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") submit();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  });
+
   return (
     <Card>
+      <div className="mb-3 text-xs px-3 py-2 rounded-lg" style={{ background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.2)", color:"var(--text2)" }}>
+        📐 Honorários = 10% do valor + 35% do restante <span style={{ color:"var(--gold)", fontWeight:600 }}>= 41,5% do acordo</span>
+        {form.valor_acordo > 0 && (
+          <span className="ml-3 font-semibold" style={{ color:"#22c55e" }}>
+            → {fmtBRL(form.valor_acordo * 0.415)}
+          </span>
+        )}
+      </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <div>
           <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Mês</span>
@@ -266,11 +282,6 @@ function AcordoForm({ initial, onSave, onCancel }: {
           <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Valor do Acordo (R$)</span>
           <Inp value={form.valor_acordo || ""} type="number" step="0.01" min="0"
             onChange={e => set("valor_acordo", parseFloat(e.target.value) || 0)} />
-          {form.valor_acordo > 0 && (
-            <p className="text-xs mt-1 font-medium" style={{ color: "#22c55e" }}>
-              Honorários: {fmtBRL(form.valor_acordo * 0.415)}
-            </p>
-          )}
         </div>
         <div>
           <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Status</span>
@@ -284,6 +295,7 @@ function AcordoForm({ initial, onSave, onCancel }: {
       <div className="flex gap-3 mt-4">
         <button onClick={submit} disabled={saving} className="px-5 py-2 rounded-lg font-semibold text-sm" style={{ background:"var(--gold)", color:"#000" }}>{saving?"Salvando...":"Salvar"}</button>
         <button onClick={onCancel} className="px-5 py-2 rounded-lg text-sm" style={{ background:"var(--surface2)", color:"var(--text2)", border:"1px solid var(--border)" }}>Cancelar</button>
+        <span className="text-xs self-center" style={{ color:"var(--text3)" }}>Ctrl+Enter para salvar</span>
       </div>
     </Card>
   );
@@ -1202,13 +1214,29 @@ function VariavelForm({ initial, onSave, onCancel }: {
   const [form, setForm] = useState({ ...blank, ...(initial||{}) });
   const [saving, setSaving] = useState(false);
   const set = (k: string, v: string | number) => setForm(p => ({ ...p, [k]: v }));
+
+  const n = parseInt(form.parcelas) || 1;
+  const startIdx = (() => {
+    const i = colIndexFromData(form.data_compra);
+    return (i !== null && i >= 0) ? i : getBillingColIndex();
+  })();
+  const parcelasForaDoPeriodo = Math.max(0, startIdx + n - COLS.length);
+
   return (
     <Card>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Descrição *</span><Inp value={form.descricao} onChange={e => set("descricao",e.target.value)} /></div>
         <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Valor Total (R$)</span>
           <Inp type="number" step="0.01" min="0" value={form.valor||""} onChange={e => set("valor",parseFloat(e.target.value)||0)} /></div>
-        <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Parcelas</span><Inp value={form.parcelas} onChange={e => set("parcelas",e.target.value)} placeholder="ex: 3x" /></div>
+        <div>
+          <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Parcelas</span>
+          <Inp value={form.parcelas} onChange={e => set("parcelas",e.target.value)} placeholder="ex: 3x" />
+          {parcelasForaDoPeriodo > 0 && (
+            <p className="text-xs mt-1" style={{ color:"#f97316" }}>
+              ⚠ {parcelasForaDoPeriodo} parcela{parcelasForaDoPeriodo > 1?"s":""} ultrapassam Dez/2027 e não serão registradas.
+            </p>
+          )}
+        </div>
         <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Responsável</span>
           <Sel value={form.quem} onChange={e => set("quem",e.target.value)}>
             <option value="dividido">Dividido</option><option value="Adriely">Adriely</option><option value="Eduarda">Eduarda</option>

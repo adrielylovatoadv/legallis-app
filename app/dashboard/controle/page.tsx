@@ -254,7 +254,11 @@ function VisaoGeral() {
             </>
           )}
           {audiencias_hoje.length === 0 && audiencias_3d.length === 0 && (
-            <p className="text-sm" style={{ color: "var(--text3)" }}>Nenhuma audiência nos próximos dias.</p>
+            <div className="py-6 text-center">
+              <p className="text-2xl mb-1">📅</p>
+              <p className="text-sm font-medium" style={{ color: "var(--text2)" }}>Sem audiências nos próximos dias</p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>Bom momento para focar nas iniciais pendentes.</p>
+            </div>
           )}
         </Card>
 
@@ -281,7 +285,11 @@ function VisaoGeral() {
             </>
           )}
           {outros_hoje.length === 0 && outros_3d.length === 0 && (
-            <p className="text-sm" style={{ color: "var(--text3)" }}>Nenhum prazo nos próximos dias.</p>
+            <div className="py-6 text-center">
+              <p className="text-2xl mb-1">✅</p>
+              <p className="text-sm font-medium" style={{ color: "var(--text2)" }}>Nenhum prazo nos próximos dias</p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>Agenda limpa por aqui.</p>
+            </div>
           )}
         </Card>
       </div>

@@ -3,9 +3,11 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   getProcessos, createProcesso, updateProcesso, deleteProcesso, marcarOk,
-  ANDAMENTOS_PROCESSO, RESPONSAVEIS, fmtData, badgeAndamento, gcalUrl,
+  ANDAMENTOS_PROCESSO, RESPONSAVEIS, fmtData, badgeAndamento, gcalUrl, normText,
   type Processo,
 } from "@/lib/controle";
+
+const POR_PAGINA = 50;
 
 type Aba = "ativos" | "audiencias" | "prazos" | "standby" | "novo";
 
@@ -43,6 +45,13 @@ function ProcessoForm({ initial, onSave, onCancel }: {
     setSaving(true);
     try { await onSave(form as Omit<Processo,"id"|"criado_em">); } finally { setSaving(false); }
   };
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") submit();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  });
   return (
     <div className="rounded-xl p-5 space-y-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -147,11 +156,15 @@ function ProcessoRow({ p, onEdit, onDelete, onOk, onToggleAtencao }: {
             {p.andamento}
           </span>
         )}
-        {url && (
-          <a href={url} target="_blank" rel="noopener noreferrer"
-            className="mt-1 flex items-center gap-1 text-xs"
-            style={{ color:"#60a5fa" }}>📅 Calendar</a>
-        )}
+        {url
+          ? <a href={url} target="_blank" rel="noopener noreferrer"
+              className="mt-1 flex items-center gap-1 text-xs"
+              style={{ color:"#60a5fa" }}>📅 Calendar</a>
+          : (p.andamento || "").toUpperCase().match(/AIJ|^AC/) && (
+              <span className="mt-1 text-xs" title="Adicione data e hora para gerar link"
+                style={{ color:"var(--text3)", cursor:"help" }}>📅 sem data/hora</span>
+            )
+        }
       </td>
       <td className="py-2">
         <div className="flex flex-wrap gap-1">
@@ -186,11 +199,15 @@ export function ProcessosTab() {
   const [aba, setAba] = useState<Aba>("ativos");
   const [editando, setEditando] = useState<Processo | null>(null);
   const [soAtencao, setSoAtencao] = useState(false);
+  const [pagina, setPagina] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
     try { setProcessos(await getProcessos()); } finally { setLoading(false); }
   }, []);
+
+  // Reseta paginação ao mudar filtro ou aba
+  useEffect(() => { setPagina(0); }, [busca, filtroAnd, filtroResp, soAtencao, aba]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -203,11 +220,14 @@ export function ProcessosTab() {
   const filtrar = useCallback((lista: Processo[]) => {
     let r = lista;
     if (busca) {
-      const b = busca.toLowerCase();
-      r = r.filter(p => (p.autor||"").toLowerCase().includes(b) || (p.reu||"").toLowerCase().includes(b)
-        || (p.numero_processo||"").toLowerCase().includes(b) || (p.objeto||"").toLowerCase().includes(b));
+      const b = normText(busca);
+      r = r.filter(p =>
+        normText(p.autor).includes(b) || normText(p.reu).includes(b) ||
+        normText(p.numero_processo).includes(b) || normText(p.objeto).includes(b) ||
+        normText(p.observacoes).includes(b)
+      );
     }
-    if (filtroAnd !== "Todos") r = r.filter(p => (p.andamento||"").toUpperCase().includes(filtroAnd.toUpperCase()));
+    if (filtroAnd !== "Todos") r = r.filter(p => normText(p.andamento).includes(normText(filtroAnd)));
     if (filtroResp !== "Todos") r = r.filter(p => (p.responsavel||"") === filtroResp);
     if (soAtencao) r = r.filter(p => p.atencao);
     return r.sort((a, b) => {
@@ -258,13 +278,18 @@ export function ProcessosTab() {
 
   const renderTable = (lista: Processo[]) => {
     const nAtencao = lista.filter(p => p.atencao).length;
+    const totalPaginas = Math.ceil(lista.length / POR_PAGINA);
+    const paginaSegura = Math.min(pagina, Math.max(0, totalPaginas - 1));
+    const paginada = lista.slice(paginaSegura * POR_PAGINA, (paginaSegura + 1) * POR_PAGINA);
+
     return lista.length === 0
       ? <p className="py-6 text-center text-sm" style={{ color:"var(--text3)" }}>Nenhum processo encontrado.</p>
       : (
         <>
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
             <p className="text-sm" style={{ color:"var(--text2)" }}>
               <strong style={{ color:"var(--text)" }}>{lista.length}</strong> processo{lista.length !== 1 ? "s" : ""}
+              {lista.length > POR_PAGINA && <span className="ml-2" style={{ color:"var(--text3)" }}>· página {paginaSegura + 1}/{totalPaginas}</span>}
               {nAtencao > 0 && <span className="ml-2 text-red-400 font-semibold">🚨 {nAtencao} em atenção</span>}
             </p>
             <button onClick={() => exportCSV(lista)} className="text-xs px-3 py-1 rounded-lg"
@@ -283,7 +308,7 @@ export function ProcessosTab() {
                 </tr>
               </thead>
               <tbody>
-                {lista.map(p =>
+                {paginada.map(p =>
                   editando?.id === p.id
                     ? <tr key={p.id}><td colSpan={7} className="py-2">
                         <ProcessoForm initial={editando} onSave={handleSave} onCancel={() => setEditando(null)} />
@@ -294,6 +319,31 @@ export function ProcessosTab() {
               </tbody>
             </table>
           </div>
+          {totalPaginas > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <button onClick={() => setPagina(p => Math.max(0, p - 1))} disabled={paginaSegura === 0}
+                className="px-3 py-1.5 rounded-lg text-sm disabled:opacity-40"
+                style={{ background:"var(--surface2)", color:"var(--text2)", border:"1px solid var(--border)" }}>
+                ← Anterior
+              </button>
+              {Array.from({ length: totalPaginas }, (_, i) => (
+                <button key={i} onClick={() => setPagina(i)}
+                  className="px-3 py-1.5 rounded-lg text-sm min-w-9"
+                  style={{
+                    background: i === paginaSegura ? "var(--gold)" : "var(--surface2)",
+                    color: i === paginaSegura ? "#000" : "var(--text2)",
+                    border: "1px solid var(--border)",
+                  }}>
+                  {i + 1}
+                </button>
+              ))}
+              <button onClick={() => setPagina(p => Math.min(totalPaginas - 1, p + 1))} disabled={paginaSegura === totalPaginas - 1}
+                className="px-3 py-1.5 rounded-lg text-sm disabled:opacity-40"
+                style={{ background:"var(--surface2)", color:"var(--text2)", border:"1px solid var(--border)" }}>
+                Próxima →
+              </button>
+            </div>
+          )}
         </>
       );
   };
@@ -339,8 +389,7 @@ export function ProcessosTab() {
           </Sel>
           <Sel value={filtroResp} onChange={e => setFiltroResp(e.target.value)}>
             <option value="Todos">Responsável: Todos</option>
-            <option value="Adriely">Adriely</option>
-            <option value="Eduarda">Eduarda</option>
+            {RESPONSAVEIS.filter(r => r).map(r => <option key={r} value={r}>{r}</option>)}
           </Sel>
           <label className="flex items-center gap-2 cursor-pointer whitespace-nowrap">
             <input type="checkbox" checked={soAtencao} onChange={e => setSoAtencao(e.target.checked)} className="accent-red-500" />
