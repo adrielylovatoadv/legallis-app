@@ -33,16 +33,25 @@ function ProcessoForm({ initial, onSave, onCancel }: {
   const blank = { autor:"",reu:"",objeto:"",numero_processo:"",data:"",hora:"",andamento:"",responsavel:"",observacoes:"",atencao:false,finalizado:false };
   const [form, setForm] = useState({ ...blank, ...(initial || {}) });
   const [saving, setSaving] = useState(false);
-  const set = (k: string, v: string | boolean) => setForm(prev => ({ ...prev, [k]: v }));
+  const [erroAutor, setErroAutor] = useState(false);
+  const set = (k: string, v: string | boolean) => {
+    setForm(prev => ({ ...prev, [k]: v }));
+    if (k === "autor") setErroAutor(false);
+  };
   const submit = async () => {
-    if (!form.autor.trim()) return;
+    if (!form.autor.trim()) { setErroAutor(true); return; }
     setSaving(true);
     try { await onSave(form as Omit<Processo,"id"|"criado_em">); } finally { setSaving(false); }
   };
   return (
     <div className="rounded-xl p-5 space-y-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div><Lbl>Autor *</Lbl><Inp value={form.autor} onChange={e => set("autor",e.target.value)} /></div>
+        <div>
+          <Lbl>Autor *</Lbl>
+          <Inp value={form.autor} onChange={e => set("autor",e.target.value)}
+            style={erroAutor ? { background:"rgba(239,68,68,0.08)", border:"1px solid #ef4444", color:"var(--text)" } : undefined} />
+          {erroAutor && <p className="text-xs mt-1" style={{ color:"#f87171" }}>Campo obrigatório</p>}
+        </div>
         <div><Lbl>Réu</Lbl><Inp value={form.reu} onChange={e => set("reu",e.target.value)} /></div>
         <div><Lbl>Objeto</Lbl><Inp value={form.objeto} onChange={e => set("objeto",e.target.value)} /></div>
         <div><Lbl>Nº Processo</Lbl><Inp value={form.numero_processo} onChange={e => set("numero_processo",e.target.value)} /></div>

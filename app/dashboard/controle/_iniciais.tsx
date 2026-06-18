@@ -6,6 +6,7 @@ import {
   ANDAMENTOS_INICIAL, RESPONSAVEIS, badgeAndamento,
   type Inicial,
 } from "@/lib/controle";
+import { ConfirmModal } from "@/components/ConfirmModal";
 
 const ANDAMENTOS_PENDENTES = ["FAZER INICIAL","EM ANDAMENTO","AGUARDAR","AGUARDAR DOCS","AGUARDAR CONTRATO","AGUARDAR LIMINAR","ENVIAR NOTIFICAÇÃO","AGUARDAR NOTIFICAÇÃO","ASSINAR PROCURAÇÃO"];
 const ANDAMENTOS_CONCLUIDOS = ["PROTOCOLADO","ARQUIVADO"];
@@ -93,6 +94,7 @@ export function IniciaisTab() {
   const [protocolando, setProtocolando] = useState<Inicial | null>(null);
   const [protForm, setProtForm] = useState({ numero_processo: "", data_protocolo: "", observacoes: "" });
   const [protSaving, setProtSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<Inicial | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -179,7 +181,7 @@ export function IniciaisTab() {
                     )}
                     <button onClick={() => setEditando(i)} className="text-xs px-2 py-1 rounded"
                       style={{ background:"var(--surface)", color:"var(--text2)", border:"1px solid var(--border)" }}>✏️</button>
-                    <button onClick={() => { if(confirm("Excluir?")) handleDelete(i.id); }}
+                    <button onClick={() => setConfirmDelete(i)}
                       className="text-xs px-2 py-1 rounded"
                       style={{ background:"var(--surface)", color:"var(--text3)", border:"1px solid var(--border)" }}>🗑</button>
                   </div>
@@ -192,6 +194,15 @@ export function IniciaisTab() {
 
   return (
     <div className="space-y-5">
+      {confirmDelete && (
+        <ConfirmModal
+          title="Excluir inicial"
+          message={`Excluir a inicial de "${confirmDelete.cliente}"?`}
+          confirmLabel="Excluir"
+          onConfirm={() => { handleDelete(confirmDelete.id); setConfirmDelete(null); }}
+          onCancel={() => setConfirmDelete(null)}
+        />
+      )}
       {/* Modal protocolo */}
       {protocolando && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>

@@ -6,6 +6,7 @@ import {
   fmtData, badgeAndamento,
   type Cliente, type Processo, type Inicial,
 } from "@/lib/controle";
+import { ConfirmModal } from "@/components/ConfirmModal";
 
 type ClienteComProcs = Cliente & { _ativos?: Processo[]; _finalizados?: Processo[]; _iniciais?: Inicial[] };
 
@@ -71,6 +72,7 @@ function ClienteCard({ c, onEdit, onDelete }: {
 }) {
   const [aberto, setAberto] = useState(false);
   const [mostraSenhas, setMostraSenhas] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const ativos = c._ativos || [];
   const finalizados = c._finalizados || [];
   const iniciais = c._iniciais || [];
@@ -83,6 +85,15 @@ function ClienteCard({ c, onEdit, onDelete }: {
 
   return (
     <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border)" }}>
+      {confirmDelete && (
+        <ConfirmModal
+          title="Excluir cliente"
+          message={`Tem certeza que deseja excluir "${c.nome}"? Todos os dados do cliente serão removidos.`}
+          confirmLabel="Excluir"
+          onConfirm={() => { setConfirmDelete(false); onDelete(c.id); }}
+          onCancel={() => setConfirmDelete(false)}
+        />
+      )}
       {/* Cabeçalho */}
       <div className="flex items-center justify-between p-4 cursor-pointer select-none"
         onClick={() => setAberto(!aberto)}>
@@ -102,7 +113,7 @@ function ClienteCard({ c, onEdit, onDelete }: {
           <button onClick={e => { e.stopPropagation(); onEdit(c); }}
             className="text-xs px-2 py-1 rounded"
             style={{ background:"var(--surface2)", color:"var(--text2)", border:"1px solid var(--border)" }}>✏️</button>
-          <button onClick={e => { e.stopPropagation(); if(confirm("Excluir cliente?")) onDelete(c.id); }}
+          <button onClick={e => { e.stopPropagation(); setConfirmDelete(true); }}
             className="text-xs px-2 py-1 rounded"
             style={{ background:"var(--surface2)", color:"var(--text3)", border:"1px solid var(--border)" }}>🗑</button>
           <span className="text-xs" style={{ color:"var(--text3)" }}>{aberto ? "▲" : "▼"}</span>
