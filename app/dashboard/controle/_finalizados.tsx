@@ -1,27 +1,25 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import {
-  updateProcesso, ANDAMENTOS_PROCESSO, RESPONSAVEIS,
-  type Processo,
-} from "@/lib/controle";
 
-interface FinalizadoSemHonor {
-  cliente: string; reu: string; processo: string; objeto: string;
-  data_fin: string; motivo: string;
+interface Finalizado {
+  cliente: string;
+  reu: string;
+  processo: string;
+  objeto: string;
+  data_fin: string;
+  motivo: string;
 }
 
-interface FinalizadoAcordo {
-  mes: string; data_pagamento: string; cliente: string; reu: string;
-  objeto: string; valor_acordo: number; honorarios: number; status: string;
-  processo: string; repasse_cliente: number;
-}
+const MOTIVOS = ["Acordo", "Desistência", "Improcedência", "Arquivado"] as const;
+type Motivo = typeof MOTIVOS[number];
 
-interface FinalizadoExecucao {
-  mes: string; data_pagamento: string; cliente: string; reu: string;
-  processo: string; objeto: string; valor_execucao: number;
-  honorarios: number; repasse_cliente: number; status: string; observacoes?: string;
-}
+const MOTIVO_COLORS: Record<Motivo, { bg: string; color: string }> = {
+  "Acordo":        { bg: "rgba(201,168,76,0.12)",  color: "var(--gold)" },
+  "Desistência":   { bg: "rgba(107,114,128,0.12)", color: "#9ca3af" },
+  "Improcedência": { bg: "rgba(239,68,68,0.10)",   color: "#f87171" },
+  "Arquivado":     { bg: "rgba(96,165,250,0.10)",  color: "#60a5fa" },
+};
 
 function fmtDate(s: string) {
   if (!s || s.length < 10) return "—";
@@ -29,22 +27,21 @@ function fmtDate(s: string) {
   return `${d}/${m}/${y}`;
 }
 
-function fmtVal(n: number) {
-  if (!n) return "—";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
-}
-
-function ModalEditar({ p, onClose, onSaved }: {
-  p: Processo; onClose: () => void; onSaved: () => void;
+function ModalForm({ initial, onSave, onClose }: {
+  initial?: { entry: Finalizado; index: number };
+  onSave: (entry: Finalizado, index?: number) => Promise<void>;
+  onClose: () => void;
 }) {
-  const [form, setForm] = useState({ ...p });
+  const blank: Finalizado = { cliente: "", reu: "", processo: "", objeto: "", data_fin: "", motivo: "Acordo" };
+  const [form, setForm] = useState<Finalizado>(initial ? { ...initial.entry } : { ...blank });
   const [saving, setSaving] = useState(false);
-  const set = (k: keyof Processo, v: string | boolean) =>
-    setForm(prev => ({ ...prev, [k]: v }));
 
-  const save = async () => {
+  const set = (k: keyof Finalizado, v: string) => setForm(p => ({ ...p, [k]: v }));
+
+  const submit = async () => {
+    if (!form.cliente.trim()) return;
     setSaving(true);
-    try { await updateProcesso(p.id, form); onSaved(); }
+    try { await onSave(form, initial?.index); }
     finally { setSaving(false); }
   };
 
@@ -55,80 +52,76 @@ function ModalEditar({ p, onClose, onSaved }: {
         style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
         onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between">
-          <h2 className="font-serif text-lg font-semibold" style={{ color: "var(--text)" }}>Editar processo</h2>
+          <h2 className="font-serif text-lg font-semibold" style={{ color: "var(--text)" }}>
+            {initial ? "Editar finalizado" : "Registrar finalizado"}
+          </h2>
           <button onClick={onClose} style={{ color: "var(--text3)" }}>✕</button>
         </div>
+
         <div className="grid grid-cols-2 gap-3">
-          {(["autor","reu","objeto","numero_processo"] as const).map(k => (
+          <div className="col-span-2">
+            <label className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Tipo de finalização *</label>
+            <div className="flex gap-2 flex-wrap">
+              {MOTIVOS.map(m => {
+                const c = MOTIVO_COLORS[m];
+                const sel = form.motivo === m;
+                return (
+                  <button key={m} type="button" onClick={() => set("motivo", m)}
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+                    style={{
+                      background: sel ? c.bg : "var(--surface2)",
+                      color: sel ? c.color : "var(--text3)",
+                      border: `1px solid ${sel ? c.color : "var(--border)"}`,
+                    }}>
+                    {m}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {(["cliente", "reu", "objeto", "processo"] as const).map(k => (
             <div key={k}>
               <label className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>
-                {k === "autor" ? "Autor" : k === "reu" ? "Réu" : k === "objeto" ? "Objeto" : "Nº Processo"}
+                {k === "cliente" ? "Cliente *" : k === "reu" ? "Réu" : k === "objeto" ? "Objeto" : "Nº Processo"}
               </label>
-              <input value={(form[k] as string) || ""} onChange={e => set(k, e.target.value)}
+              <input value={form[k]} onChange={e => set(k, e.target.value)}
                 className="w-full px-3 py-2 rounded-lg text-sm"
                 style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }} />
             </div>
           ))}
+
           <div>
-            <label className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Data</label>
-            <input type="date" value={form.data || ""} onChange={e => set("data", e.target.value)}
+            <label className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Data de finalização</label>
+            <input type="date" value={form.data_fin} onChange={e => set("data_fin", e.target.value)}
               className="w-full px-3 py-2 rounded-lg text-sm"
               style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }} />
           </div>
-          <div>
-            <label className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Andamento</label>
-            <select value={form.andamento} onChange={e => set("andamento", e.target.value)}
-              className="w-full px-3 py-2 rounded-lg text-sm"
-              style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
-              <option value="">Selecionar</option>
-              {ANDAMENTOS_PROCESSO.map(a => <option key={a} value={a}>{a}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Responsável</label>
-            <select value={form.responsavel} onChange={e => set("responsavel", e.target.value)}
-              className="w-full px-3 py-2 rounded-lg text-sm"
-              style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
-              {RESPONSAVEIS.map(r => <option key={r} value={r}>{r || "—"}</option>)}
-            </select>
-          </div>
         </div>
-        <div>
-          <label className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Observações</label>
-          <textarea rows={2} value={form.observacoes || ""} onChange={e => set("observacoes", e.target.value)}
-            className="w-full px-3 py-2 rounded-lg text-sm resize-none"
-            style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }} />
+
+        <div className="flex gap-3 pt-1">
+          <button onClick={submit} disabled={saving || !form.cliente.trim()}
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm disabled:opacity-50"
+            style={{ background: "var(--gold)", color: "#000" }}>
+            {saving ? "Salvando..." : "Salvar"}
+          </button>
+          <button onClick={onClose}
+            className="px-5 py-2.5 rounded-xl text-sm"
+            style={{ background: "var(--surface2)", color: "var(--text2)", border: "1px solid var(--border)" }}>
+            Cancelar
+          </button>
         </div>
-        <div className="flex gap-3">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={!!form.atencao} onChange={e => set("atencao", e.target.checked)} className="accent-red-500" />
-            <span className="text-sm" style={{ color: "var(--text2)" }}>🚨 Atenção</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={!!form.finalizado} onChange={e => set("finalizado", e.target.checked)} />
-            <span className="text-sm" style={{ color: "var(--text2)" }}>Finalizado</span>
-          </label>
-        </div>
-        <button onClick={save} disabled={saving}
-          className="w-full py-2.5 rounded-xl font-semibold text-sm"
-          style={{ background: "var(--gold)", color: "#000" }}>
-          {saving ? "Salvando..." : "Salvar"}
-        </button>
       </div>
     </div>
   );
 }
 
-type Aba = "sem_honor" | "acordos" | "execucao";
-
 export function FinalizadosTab() {
-  const [semHonor, setSemHonor] = useState<FinalizadoSemHonor[]>([]);
-  const [acordos, setAcordos] = useState<FinalizadoAcordo[]>([]);
-  const [execucao, setExecucao] = useState<FinalizadoExecucao[]>([]);
+  const [finalizados, setFinalizados] = useState<Finalizado[]>([]);
   const [loading, setLoading] = useState(true);
-  const [aba, setAba] = useState<Aba>("sem_honor");
   const [busca, setBusca] = useState("");
-  const [editando, setEditando] = useState<Processo | null>(null);
+  const [filtroMotivo, setFiltroMotivo] = useState<string>("");
+  const [modal, setModal] = useState<{ entry?: Finalizado; index?: number } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -136,288 +129,169 @@ export function FinalizadosTab() {
       const res = await fetch("/api/controle/finalizados");
       if (res.ok) {
         const d = await res.json();
-        setSemHonor(d.sem_honor || []);
-        setAcordos(d.acordos || []);
-        setExecucao(d.execucao || []);
+        setFinalizados(d.finalizados || []);
       }
     } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  const filtrar = <T extends { cliente: string; reu: string; objeto: string }>(list: T[]) => {
-    if (!busca) return list;
-    const b = busca.toLowerCase();
-    return list.filter(i =>
-      i.cliente.toLowerCase().includes(b) ||
-      i.reu.toLowerCase().includes(b) ||
-      i.objeto.toLowerCase().includes(b)
-    );
+  const handleSave = async (entry: Finalizado, index?: number) => {
+    if (index !== undefined) {
+      await fetch("/api/controle/finalizados", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ index, entry }),
+      });
+    } else {
+      await fetch("/api/controle/finalizados", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(entry),
+      });
+    }
+    setModal(null);
+    load();
   };
 
-  const semHonorFilt = filtrar(semHonor);
-  const acordosFilt = filtrar(acordos);
-  const execucaoFilt = filtrar(execucao);
+  const handleDelete = async (index: number) => {
+    if (!confirm("Excluir este registro?")) return;
+    await fetch("/api/controle/finalizados", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ index }),
+    });
+    load();
+  };
 
-  const totalHonorarios = acordos.reduce((s, a) => s + (a.honorarios || 0), 0);
-  const totalAcordos = acordos.reduce((s, a) => s + (a.valor_acordo || 0), 0);
-  const acordosPendentes = acordos.filter(a => (a.status || "").toUpperCase() === "PENDENTE").length;
-  const totalExecucao = execucao.reduce((s, e) => s + (e.valor_execucao || 0), 0);
-  const totalHonExecucao = execucao.reduce((s, e) => s + (e.honorarios || 0), 0);
-  const execucaoPendentes = execucao.filter(e => (e.status || "").toUpperCase() !== "PAGO").length;
-
-  const tabStyle = (t: Aba) => ({
-    background: aba === t ? "var(--gold)" : "var(--surface2)",
-    color: aba === t ? "#000" : "var(--text2)",
-    border: "1px solid var(--border)",
+  const filtered = finalizados.filter(f => {
+    const b = busca.toLowerCase();
+    const matchBusca = !busca ||
+      f.cliente.toLowerCase().includes(b) ||
+      f.reu.toLowerCase().includes(b) ||
+      f.objeto.toLowerCase().includes(b) ||
+      f.processo.toLowerCase().includes(b);
+    const matchMotivo = !filtroMotivo || f.motivo === filtroMotivo;
+    return matchBusca && matchMotivo;
   });
+
+  const counts = MOTIVOS.reduce((acc, m) => {
+    acc[m] = finalizados.filter(f => f.motivo === m).length;
+    return acc;
+  }, {} as Record<string, number>);
 
   return (
     <div className="space-y-5">
-      {editando && (
-        <ModalEditar p={editando} onClose={() => setEditando(null)}
-          onSaved={() => { setEditando(null); load(); }} />
+      {modal !== null && (
+        <ModalForm
+          initial={modal.entry !== undefined && modal.index !== undefined
+            ? { entry: modal.entry, index: modal.index }
+            : undefined}
+          onSave={handleSave}
+          onClose={() => setModal(null)}
+        />
       )}
 
       {/* Métricas */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="rounded-xl p-4 flex flex-col gap-1"
-          style={{ background: "var(--surface)", borderLeft: "4px solid #6b7280", border: "1px solid var(--border)" }}>
-          <span className="text-2xl font-bold tabular-nums" style={{ color: "#9ca3af" }}>{semHonor.length}</span>
-          <span className="text-xs" style={{ color: "var(--text3)" }}>Sem honorário</span>
-        </div>
-        <div className="rounded-xl p-4 flex flex-col gap-1"
-          style={{ background: "var(--surface)", borderLeft: "4px solid #C9A84C", border: "1px solid var(--border)" }}>
-          <span className="text-2xl font-bold tabular-nums" style={{ color: "var(--gold)" }}>{acordos.length}</span>
-          <span className="text-xs" style={{ color: "var(--text3)" }}>Com acordo</span>
-        </div>
-        <div className="rounded-xl p-4 flex flex-col gap-1"
-          style={{ background: "var(--surface)", borderLeft: "4px solid #60a5fa", border: "1px solid var(--border)" }}>
-          <span className="text-2xl font-bold tabular-nums" style={{ color: "#60a5fa" }}>{execucao.length}</span>
-          <span className="text-xs" style={{ color: "var(--text3)" }}>Execução</span>
-        </div>
-        <div className="rounded-xl p-4 flex flex-col gap-1"
-          style={{ background: "var(--surface)", borderLeft: "4px solid #f97316", border: "1px solid var(--border)" }}>
-          <span className="text-sm font-bold tabular-nums" style={{ color: "#f97316" }}>
-            {fmtVal(totalHonorarios + totalHonExecucao)}
+        {MOTIVOS.map(m => {
+          const c = MOTIVO_COLORS[m];
+          return (
+            <div key={m} className="rounded-xl p-4 flex flex-col gap-1 cursor-pointer transition-all"
+              style={{
+                background: "var(--surface)",
+                borderLeft: `4px solid ${c.color}`,
+                border: `1px solid ${filtroMotivo === m ? c.color : "var(--border)"}`,
+                opacity: filtroMotivo && filtroMotivo !== m ? 0.6 : 1,
+              }}
+              onClick={() => setFiltroMotivo(prev => prev === m ? "" : m)}>
+              <span className="text-2xl font-bold tabular-nums" style={{ color: c.color }}>{counts[m]}</span>
+              <span className="text-xs" style={{ color: "var(--text3)" }}>{m}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Busca + botão */}
+      <div className="flex gap-2">
+        <input value={busca} onChange={e => setBusca(e.target.value)}
+          placeholder="🔍 Buscar por cliente, réu, objeto ou processo..."
+          className="flex-1 px-3 py-2 rounded-lg text-sm"
+          style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }} />
+        <button onClick={() => setModal({})}
+          className="px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap"
+          style={{ background: "var(--gold)", color: "#000" }}>
+          + Registrar
+        </button>
+      </div>
+
+      {filtroMotivo && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs" style={{ color: "var(--text3)" }}>Filtro ativo:</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+            style={{ background: MOTIVO_COLORS[filtroMotivo as Motivo]?.bg, color: MOTIVO_COLORS[filtroMotivo as Motivo]?.color, border: `1px solid ${MOTIVO_COLORS[filtroMotivo as Motivo]?.color}` }}>
+            {filtroMotivo}
           </span>
-          <span className="text-xs" style={{ color: "var(--text3)" }}>Total honorários</span>
+          <button onClick={() => setFiltroMotivo("")} className="text-xs" style={{ color: "var(--text3)" }}>✕ Limpar</button>
         </div>
-      </div>
-
-      {/* Abas */}
-      <div className="flex gap-2 flex-wrap">
-        <button onClick={() => setAba("sem_honor")} className="px-4 py-1.5 rounded-lg text-sm font-medium"
-          style={tabStyle("sem_honor")}>
-          Sem Honorário ({semHonor.length})
-        </button>
-        <button onClick={() => setAba("acordos")} className="px-4 py-1.5 rounded-lg text-sm font-medium"
-          style={tabStyle("acordos")}>
-          Com Acordo ({acordos.length}){acordosPendentes > 0 ? ` · ${acordosPendentes} pend.` : ""}
-        </button>
-        <button onClick={() => setAba("execucao")} className="px-4 py-1.5 rounded-lg text-sm font-medium"
-          style={tabStyle("execucao")}>
-          ⚖️ Execução ({execucao.length}){execucaoPendentes > 0 ? ` · ${execucaoPendentes} pend.` : ""}
-        </button>
-      </div>
-
-      {/* Busca */}
-      <input value={busca} onChange={e => setBusca(e.target.value)}
-        placeholder="🔍 Buscar..."
-        className="w-full px-3 py-2 rounded-lg text-sm"
-        style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }} />
+      )}
 
       {loading ? (
         <div className="py-12 flex justify-center">
-          <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
+          <div className="w-8 h-8 rounded-full border-2 animate-spin"
             style={{ borderColor: "var(--gold)", borderTopColor: "transparent" }} />
         </div>
-      ) : aba === "sem_honor" ? (
-        <div className="space-y-2">
-          {semHonorFilt.length === 0
-            ? <p className="py-8 text-center text-sm" style={{ color: "var(--text3)" }}>Nenhum registro encontrado.</p>
-            : semHonorFilt.map((i, idx) => (
-              <div key={idx} className="rounded-lg px-4 py-3"
-                style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-                <div className="flex items-start justify-between gap-3 flex-wrap">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-sm" style={{ color: "var(--text)" }}>{i.cliente}</p>
-                    <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>
-                      {i.reu && <span>{i.reu}</span>}
-                      {i.objeto && <span className="ml-2">· {i.objeto}</span>}
-                    </p>
-                    {i.processo && (
-                      <p className="text-xs mt-0.5 font-mono" style={{ color: "var(--text3)" }}>{i.processo}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                    {i.data_fin && (
-                      <span className="text-xs" style={{ color: "var(--text3)" }}>{fmtDate(i.data_fin)}</span>
-                    )}
-                    {i.motivo && (
-                      <span className="text-xs px-2 py-0.5 rounded-full"
-                        style={{ background: "rgba(107,114,128,0.15)", color: "var(--text3)" }}>
-                        {i.motivo}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))
-          }
-        </div>
-      ) : aba === "acordos" ? (
-        <div className="space-y-2">
-          {acordosFilt.length === 0
-            ? <p className="py-8 text-center text-sm" style={{ color: "var(--text3)" }}>Nenhum acordo encontrado.</p>
-            : acordosFilt.map((a, idx) => (
-              <div key={idx} className="rounded-lg px-4 py-3"
-                style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-                <div className="flex items-start justify-between gap-3 flex-wrap">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-medium text-sm" style={{ color: "var(--text)" }}>{a.cliente}</p>
-                      {a.reu && <span className="text-xs" style={{ color: "var(--text3)" }}>× {a.reu}</span>}
-                    </div>
-                    {a.objeto && (
-                      <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>{a.objeto}</p>
-                    )}
-                    {a.processo && (
-                      <p className="text-xs mt-0.5 font-mono" style={{ color: "var(--text3)" }}>{a.processo}</p>
-                    )}
-                  </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    <div className="flex items-center gap-2 flex-wrap justify-end">
-                      {a.valor_acordo > 0 && (
-                        <span className="text-sm font-semibold" style={{ color: "#22c55e" }}>
-                          {fmtVal(a.valor_acordo)}
-                        </span>
-                      )}
-                      {a.honorarios > 0 && (
-                        <span className="text-xs px-2 py-0.5 rounded"
-                          style={{ background: "rgba(201,168,76,0.12)", color: "var(--gold)" }}>
-                          Hon. {fmtVal(a.honorarios)}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {a.data_pagamento && (
-                        <span className="text-xs" style={{ color: "var(--text3)" }}>{a.data_pagamento}</span>
-                      )}
-                      {a.status && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          a.status.toUpperCase() === "PAGO"
-                            ? "bg-green-500/15 text-green-400"
-                            : "bg-yellow-500/15 text-yellow-400"
-                        }`}>
-                          {a.status}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))
-          }
-          {/* Totais acordos */}
-          {acordosFilt.length > 0 && (
-            <div className="rounded-xl p-4 mt-4 grid grid-cols-3 gap-4"
-              style={{ background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.2)" }}>
-              <div>
-                <p className="text-xs mb-1" style={{ color: "var(--text3)" }}>Total acordos</p>
-                <p className="font-bold" style={{ color: "var(--gold)" }}>
-                  {fmtVal(acordosFilt.reduce((s, a) => s + (a.valor_acordo || 0), 0))}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs mb-1" style={{ color: "var(--text3)" }}>Honorários</p>
-                <p className="font-bold" style={{ color: "var(--gold)" }}>
-                  {fmtVal(acordosFilt.reduce((s, a) => s + (a.honorarios || 0), 0))}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs mb-1" style={{ color: "var(--text3)" }}>Repasse clientes</p>
-                <p className="font-bold" style={{ color: "var(--gold)" }}>
-                  {fmtVal(acordosFilt.reduce((s, a) => s + (a.repasse_cliente || 0), 0))}
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
+      ) : filtered.length === 0 ? (
+        <p className="py-10 text-center text-sm" style={{ color: "var(--text3)" }}>
+          {busca || filtroMotivo ? "Nenhum resultado encontrado." : "Nenhum processo finalizado registrado."}
+        </p>
       ) : (
         <div className="space-y-2">
-          {execucaoFilt.length === 0
-            ? <p className="py-8 text-center text-sm" style={{ color: "var(--text3)" }}>Nenhuma execução encontrada.</p>
-            : execucaoFilt.map((e, idx) => (
+          {filtered.map((f, idx) => {
+            const realIdx = finalizados.indexOf(f);
+            const c = MOTIVO_COLORS[f.motivo as Motivo] || { bg: "rgba(107,114,128,0.1)", color: "#9ca3af" };
+            return (
               <div key={idx} className="rounded-lg px-4 py-3"
                 style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-medium text-sm" style={{ color: "var(--text)" }}>{e.cliente}</p>
-                      {e.reu && <span className="text-xs" style={{ color: "var(--text3)" }}>× {e.reu}</span>}
+                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                      <p className="font-medium text-sm" style={{ color: "var(--text)" }}>{f.cliente}</p>
+                      {f.reu && <span className="text-xs" style={{ color: "var(--text3)" }}>× {f.reu}</span>}
                     </div>
-                    {e.objeto && <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>{e.objeto}</p>}
-                    {e.processo && <p className="text-xs mt-0.5 font-mono" style={{ color: "var(--text3)" }}>{e.processo}</p>}
-                    {e.observacoes && <p className="text-xs mt-0.5 italic" style={{ color: "var(--text3)" }}>{e.observacoes}</p>}
+                    {f.objeto && (
+                      <p className="text-xs" style={{ color: "var(--text3)" }}>{f.objeto}</p>
+                    )}
+                    {f.processo && (
+                      <p className="text-xs font-mono mt-0.5" style={{ color: "var(--text3)" }}>{f.processo}</p>
+                    )}
                   </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    <div className="flex items-center gap-2 flex-wrap justify-end">
-                      {e.valor_execucao > 0 && (
-                        <span className="text-sm font-semibold" style={{ color: "#60a5fa" }}>
-                          {fmtVal(e.valor_execucao)}
-                        </span>
-                      )}
-                      {e.honorarios > 0 && (
-                        <span className="text-xs px-2 py-0.5 rounded"
-                          style={{ background: "rgba(201,168,76,0.12)", color: "var(--gold)" }}>
-                          Hon. {fmtVal(e.honorarios)}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {e.data_pagamento && (
-                        <span className="text-xs" style={{ color: "var(--text3)" }}>{e.data_pagamento}</span>
-                      )}
-                      {e.status && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          e.status.toUpperCase() === "PAGO"
-                            ? "bg-green-500/15 text-green-400"
-                            : "bg-yellow-500/15 text-yellow-400"
-                        }`}>
-                          {e.status}
-                        </span>
-                      )}
-                    </div>
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                    {f.data_fin && (
+                      <span className="text-xs" style={{ color: "var(--text3)" }}>{fmtDate(f.data_fin)}</span>
+                    )}
+                    <span className="text-xs px-2.5 py-0.5 rounded-full font-medium"
+                      style={{ background: c.bg, color: c.color, border: `1px solid ${c.color}` }}>
+                      {f.motivo}
+                    </span>
+                    <button onClick={() => setModal({ entry: f, index: realIdx })}
+                      className="text-xs px-2 py-1 rounded"
+                      style={{ background: "var(--surface2)", color: "var(--text2)", border: "1px solid var(--border)" }}>
+                      ✏️
+                    </button>
+                    <button onClick={() => handleDelete(realIdx)}
+                      className="text-xs px-2 py-1 rounded"
+                      style={{ background: "var(--surface2)", color: "var(--text3)", border: "1px solid var(--border)" }}>
+                      🗑
+                    </button>
                   </div>
                 </div>
               </div>
-            ))
-          }
-          {/* Totais execução */}
-          {execucaoFilt.length > 0 && (
-            <div className="rounded-xl p-4 mt-4 grid grid-cols-3 gap-4"
-              style={{ background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.2)" }}>
-              <div>
-                <p className="text-xs mb-1" style={{ color: "var(--text3)" }}>Total execução</p>
-                <p className="font-bold" style={{ color: "#60a5fa" }}>
-                  {fmtVal(execucaoFilt.reduce((s, e) => s + (e.valor_execucao || 0), 0))}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs mb-1" style={{ color: "var(--text3)" }}>Honorários</p>
-                <p className="font-bold" style={{ color: "var(--gold)" }}>
-                  {fmtVal(execucaoFilt.reduce((s, e) => s + (e.honorarios || 0), 0))}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs mb-1" style={{ color: "var(--text3)" }}>Repasse clientes</p>
-                <p className="font-bold" style={{ color: "var(--gold)" }}>
-                  {fmtVal(execucaoFilt.reduce((s, e) => s + (e.repasse_cliente || 0), 0))}
-                </p>
-              </div>
-            </div>
-          )}
+            );
+          })}
+          <p className="text-xs text-center pt-2" style={{ color: "var(--text3)" }}>
+            {filtered.length} registro{filtered.length !== 1 ? "s" : ""}{filtroMotivo || busca ? " encontrado" + (filtered.length !== 1 ? "s" : "") : ""}
+          </p>
         </div>
       )}
     </div>
