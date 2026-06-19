@@ -28,6 +28,12 @@ export interface ExportDoc {
   }>;
 }
 
+// ── Paleta Legallis ────────────────────────────────────────────────────────────
+// #C9A84C → dourado principal
+// #1A1714 → preto-quente (quase preto)
+// #F5F3EF → off-white cremoso
+// #FAF7ED → dourado claro (fundo sutil)
+
 function isoToBR(d: string): string {
   const m = (d ?? "").match(/^(\d{4})-(\d{2})-(\d{2})/);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : (d ?? "");
@@ -96,72 +102,109 @@ export async function exportarPDF(doc: ExportDoc, nomeArquivo: string) {
   const { default: autoTable } = await import("jspdf-autotable");
 
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const margem = 15;
-  const pageWidth = 210;
-  const contentWidth = pageWidth - 2 * margem;
+  const PW = 210;
+  const M = 15;                 // margem lateral
+  const CW = PW - 2 * M;       // largura útil
 
-  const NAVY: [number, number, number] = [26, 58, 100];
-  const WHITE: [number, number, number] = [255, 255, 255];
-  const BLACK: [number, number, number] = [30, 30, 30];
-  const GRAY_BG: [number, number, number] = [240, 242, 245];
+  // ── Paleta ──
+  const GOLD:       [number,number,number] = [201, 168,  76];
+  const DARK:       [number,number,number] = [ 26,  23,  20];
+  const OFF_WHITE:  [number,number,number] = [245, 243, 239];
+  const GOLD_LIGHT: [number,number,number] = [250, 247, 237];
+  const ROW_ALT:    [number,number,number] = [248, 247, 244];
+  const GRAY_TEXT:  [number,number,number] = [110, 105,  98];
 
-  type LastAutoTable = { lastAutoTable: { finalY: number } };
+  type LastAT = { lastAutoTable: { finalY: number } };
 
-  let y = margem;
+  // ══════════════════════════════════════════════════════════════
+  // CABEÇALHO ESCURO
+  // ══════════════════════════════════════════════════════════════
+  const HDR_H = 32;
+  pdf.setFillColor(...DARK);
+  pdf.rect(0, 0, PW, HDR_H, "F");
 
-  // ── Título principal ──
+  // Linha dourada no topo do cabeçalho
+  pdf.setFillColor(...GOLD);
+  pdf.rect(0, 0, PW, 1.2, "F");
+
+  // Título principal em dourado
   pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(16);
-  pdf.setTextColor(...BLACK);
-  pdf.text("PLANILHA DE DÉBITOS JUDICIAIS", pageWidth / 2, y, { align: "center" });
-  y += 8;
+  pdf.setFontSize(15);
+  pdf.setTextColor(...GOLD);
+  pdf.text("PLANILHA DE DÉBITOS JUDICIAIS", PW / 2, 13, { align: "center" });
 
-  // ── Subtítulo por modo ──
+  // Subtítulo por modo em off-white
   let subtitulo = "";
-  if (doc.modo === "inicial") subtitulo = "PETIÇÃO INICIAL — DIREITO DO CONSUMIDOR";
+  if (doc.modo === "inicial")  subtitulo = "PETIÇÃO INICIAL — DIREITO DO CONSUMIDOR";
   else if (doc.modo === "execucao") subtitulo = "CUMPRIMENTO DE SENTENÇA";
-  else if (doc.subtitulo) subtitulo = doc.subtitulo;
+  else subtitulo = doc.subtitulo ?? doc.titulo;
 
-  if (subtitulo) {
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(11);
-    pdf.setTextColor(...NAVY);
-    pdf.text(subtitulo, pageWidth / 2, y, { align: "center" });
-    y += 7;
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(8.5);
+  pdf.setTextColor(...OFF_WHITE);
+  pdf.text(subtitulo, PW / 2, 21, { align: "center" });
+
+  // Nome do escritório / advogado (pequeno, na base do cabeçalho)
+  const adv = doc.advogado;
+  if (adv?.escritorio || adv?.nome) {
+    const firmLine = [adv.escritorio, adv.nome].filter(Boolean).join(" — ");
+    pdf.setFontSize(7.5);
+    pdf.setTextColor(...GRAY_TEXT);
+    pdf.text(firmLine, PW / 2, 28.5, { align: "center" });
   }
 
-  // ── Linha separadora ──
-  pdf.setDrawColor(...NAVY);
-  pdf.setLineWidth(0.6);
-  pdf.line(margem, y, pageWidth - margem, y);
-  y += 5;
+  let y = HDR_H + 8;
 
-  // ── Data do cálculo e processo ──
+  // ══════════════════════════════════════════════════════════════
+  // BARRA DE INFO (data / tribunal / processo)
+  // ══════════════════════════════════════════════════════════════
   const infos: string[] = [];
   if (doc.data_calculo) infos.push(`Data do Cálculo: ${isoToBR(doc.data_calculo)}`);
-  if (doc.processo) infos.push(`Processo: ${doc.processo}`);
-  if (doc.tribunal) infos.push(`Tribunal: ${doc.tribunal}`);
+  if (doc.tribunal)    infos.push(`Tribunal: ${doc.tribunal}`);
+  if (doc.processo)    infos.push(`Processo: ${doc.processo}`);
 
   if (infos.length > 0) {
-    pdf.setFillColor(...GRAY_BG);
-    pdf.rect(margem, y, contentWidth, 7, "F");
+    pdf.setFillColor(...GOLD_LIGHT);
+    pdf.setDrawColor(...GOLD);
+    pdf.setLineWidth(0.3);
+    pdf.rect(M, y, CW, 7.5, "FD");
+    // borda esquerda dourada grossa
+    pdf.setFillColor(...GOLD);
+    pdf.rect(M, y, 1.5, 7.5, "F");
+
     pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(9);
-    pdf.setTextColor(...BLACK);
-    pdf.text(infos.join("   |   "), margem + 3, y + 4.8);
-    y += 12;
+    pdf.setFontSize(8.5);
+    pdf.setTextColor(...DARK);
+    pdf.text(infos.join("   ·   "), M + 5, y + 4.8);
+    y += 13;
   }
 
-  // ── Seções (tabelas e resumos) ──
-  for (const secao of doc.secoes) {
-    if (y > 250) { pdf.addPage(); y = margem; }
-
+  // ══════════════════════════════════════════════════════════════
+  // SEÇÕES
+  // ══════════════════════════════════════════════════════════════
+  function drawSectionHeading(label: string) {
+    if (y > 250) { pdf.addPage(); y = 15; }
     y += 3;
+
+    // pastilha dourada + texto
+    pdf.setFillColor(...GOLD);
+    pdf.rect(M, y - 3.5, 2.5, 5.5, "F");
+
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(10);
-    pdf.setTextColor(...NAVY);
-    pdf.text(secao.nome.toUpperCase(), margem, y);
-    y += 4;
+    pdf.setFontSize(9);
+    pdf.setTextColor(...GOLD);
+    pdf.text(label.toUpperCase(), M + 5, y);
+
+    // linha fina dourada
+    pdf.setDrawColor(...GOLD);
+    pdf.setLineWidth(0.25);
+    pdf.line(M, y + 2, M + CW, y + 2);
+
+    y += 6;
+  }
+
+  for (const secao of doc.secoes) {
+    drawSectionHeading(secao.nome);
 
     if (secao.tipo === "tabela" && secao.colunas && secao.dados) {
       const body = secao.dados.map(row =>
@@ -173,58 +216,62 @@ export async function exportarPDF(doc: ExportDoc, nomeArquivo: string) {
 
       autoTable(pdf, {
         startY: y,
-        margin: { left: margem, right: margem },
+        margin: { left: M, right: M },
         head: [secao.colunas],
         body,
-        styles: { fontSize: 8, cellPadding: 2, textColor: BLACK },
-        headStyles: { fillColor: NAVY, textColor: WHITE, fontStyle: "bold", fontSize: 8 },
-        alternateRowStyles: { fillColor: [247, 248, 250] },
+        styles: { fontSize: 7.5, cellPadding: 2.2, textColor: DARK, font: "helvetica" },
+        headStyles: {
+          fillColor: DARK, textColor: GOLD, fontStyle: "bold", fontSize: 7.5,
+          cellPadding: 2.8,
+        },
+        alternateRowStyles: { fillColor: ROW_ALT },
+        tableLineColor: [220, 217, 210],
+        tableLineWidth: 0.2,
         theme: "grid",
       });
-      y = (pdf as unknown as LastAutoTable).lastAutoTable.finalY + 6;
+      y = (pdf as unknown as LastAT).lastAutoTable.finalY + 8;
 
     } else if (secao.tipo === "resumo" && secao.linhas) {
       const lastIdx = secao.linhas.length - 1;
 
       autoTable(pdf, {
         startY: y,
-        margin: { left: margem, right: margem },
+        margin: { left: M, right: M },
         head: [],
         body: secao.linhas.map(l => [l.label, l.valor]),
-        styles: { fontSize: 9, cellPadding: 2.5 },
+        styles: { fontSize: 8.5, cellPadding: 2.8, font: "helvetica" },
         columnStyles: {
-          0: { cellWidth: contentWidth * 0.68, textColor: [60, 60, 60] },
-          1: { cellWidth: contentWidth * 0.32, halign: "right", fontStyle: "bold", textColor: BLACK },
+          0: { cellWidth: CW * 0.66, textColor: GRAY_TEXT },
+          1: { cellWidth: CW * 0.34, halign: "right", fontStyle: "bold", textColor: DARK },
         },
         theme: "plain",
+        tableLineColor: [230, 228, 222],
+        tableLineWidth: 0.15,
         didParseCell: (data) => {
           if (data.row.index === lastIdx) {
-            data.cell.styles.fillColor = NAVY;
-            data.cell.styles.textColor = WHITE;
+            data.cell.styles.fillColor = GOLD;
+            data.cell.styles.textColor = DARK;
             data.cell.styles.fontStyle = "bold";
-            data.cell.styles.fontSize = 10;
-            data.cell.styles.cellPadding = 3;
+            data.cell.styles.fontSize = 9.5;
+            data.cell.styles.cellPadding = 3.5;
+          } else if (data.row.index % 2 === 0) {
+            data.cell.styles.fillColor = ROW_ALT;
           }
         },
       });
-      y = (pdf as unknown as LastAutoTable).lastAutoTable.finalY + 6;
+      y = (pdf as unknown as LastAT).lastAutoTable.finalY + 8;
     }
   }
 
-  // ── Critérios utilizados (apenas inicial/execucao) ──
+  // ══════════════════════════════════════════════════════════════
+  // CRITÉRIOS UTILIZADOS
+  // ══════════════════════════════════════════════════════════════
   if (doc.modo === "inicial" || doc.modo === "execucao") {
-    if (y > 235) { pdf.addPage(); y = margem; }
-
-    y += 4;
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(10);
-    pdf.setTextColor(...NAVY);
-    pdf.text("CRITÉRIOS UTILIZADOS", margem, y);
-    y += 5;
+    drawSectionHeading("Critérios Utilizados");
 
     pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(8.5);
-    pdf.setTextColor(...BLACK);
+    pdf.setFontSize(8);
+    pdf.setTextColor(...DARK);
 
     const isTJSP = doc.tribunal?.includes("TJSP");
     const siglaTribunal = doc.tribunal ?? "TJMG";
@@ -232,22 +279,15 @@ export async function exportarPDF(doc: ExportDoc, nomeArquivo: string) {
 
     const criterios: string[] = [];
 
-    if (isTJSP) {
-      criterios.push(
-        "Atualização Monetária: Tabela Prática do TJSP (atualizada mensalmente pelo Tribunal de Justiça de São Paulo)."
-      );
-    } else {
-      criterios.push(
-        "Atualização Monetária: INPC (IBGE, série BCB 188) de julho/1995 a agosto/2024; IPCAe (série BCB 10764) de setembro/2024 em diante."
-      );
-    }
-
+    criterios.push(
+      isTJSP
+        ? "Atualização Monetária: Tabela Prática do TJSP (atualizada mensalmente pelo Tribunal de Justiça de São Paulo)."
+        : "Atualização Monetária: INPC (IBGE, série BCB 188) de julho/1995 a agosto/2024; IPCAe (série BCB 10764) de setembro/2024 em diante."
+    );
     criterios.push(
       "Juros de Mora: 0,5% ao mês até dezembro/2002; 1% ao mês de janeiro/2003 a agosto/2024; Taxa Selic mensal (BCB, série 4390) de setembro/2024 em diante (Lei 14.905/2024)."
     );
-    criterios.push(
-      "Juros calculados sobre o débito corrigido — regime de juros simples (não composto)."
-    );
+    criterios.push("Juros calculados sobre o débito corrigido — regime de juros simples (não composto).");
     criterios.push(`Tribunal: ${siglaTribunal} (CGJ/${uf}).`);
 
     if (doc.modo === "inicial" && doc.aplicar_dobro) {
@@ -257,42 +297,63 @@ export async function exportarPDF(doc: ExportDoc, nomeArquivo: string) {
     }
 
     for (const crit of criterios) {
-      const lines = pdf.splitTextToSize(`• ${crit}`, contentWidth - 4);
-      if (y + lines.length * 4.8 > 268) { pdf.addPage(); y = margem; }
-      pdf.text(lines, margem + 2, y);
-      y += lines.length * 4.8 + 1.5;
+      const lines = pdf.splitTextToSize(crit, CW - 8);
+      if (y + lines.length * 4.6 > 268) { pdf.addPage(); y = 15; }
+
+      // bullet dourado
+      pdf.setFillColor(...GOLD);
+      pdf.circle(M + 2, y - 0.8, 0.9, "F");
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8);
+      pdf.setTextColor(...DARK);
+      pdf.text(lines, M + 6, y);
+      y += lines.length * 4.6 + 2.5;
     }
   }
 
-  // ── Assinatura ──
-  const adv = doc.advogado;
+  // ══════════════════════════════════════════════════════════════
+  // ASSINATURA
+  // ══════════════════════════════════════════════════════════════
   if (adv?.nome || (adv && oabString(adv))) {
-    const oab = oabString(adv);
-    const blocoAltura = (adv.nome ? 5 : 0) + (oab ? 5 : 0) + 15;
-    if (y + blocoAltura > 280) { pdf.addPage(); y = margem; }
+    const oab = oabString(adv!);
+    if (y + 22 > 280) { pdf.addPage(); y = 20; }
 
     y += 14;
-    const lx1 = pageWidth / 2 - 38;
-    const lx2 = pageWidth / 2 + 38;
-    pdf.setDrawColor(...BLACK);
-    pdf.setLineWidth(0.35);
+
+    // Linha dourada
+    pdf.setDrawColor(...GOLD);
+    pdf.setLineWidth(0.6);
+    const lx1 = PW / 2 - 40;
+    const lx2 = PW / 2 + 40;
     pdf.line(lx1, y, lx2, y);
     y += 5;
 
-    if (adv.nome) {
+    if (adv!.nome) {
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(9);
-      pdf.setTextColor(...BLACK);
-      pdf.text(adv.nome, pageWidth / 2, y, { align: "center" });
+      pdf.setTextColor(...DARK);
+      pdf.text(adv!.nome, PW / 2, y, { align: "center" });
       y += 5;
     }
 
     if (oab) {
       pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(8.5);
-      pdf.setTextColor(70, 70, 70);
-      pdf.text(oab, pageWidth / 2, y, { align: "center" });
+      pdf.setFontSize(8);
+      pdf.setTextColor(...GRAY_TEXT);
+      pdf.text(oab, PW / 2, y, { align: "center" });
     }
+  }
+
+  // Rodapé com marca d'água sutil
+  const pageCount = (pdf as unknown as { internal: { getNumberOfPages: () => number } }).internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    pdf.setPage(i);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(6.5);
+    pdf.setTextColor(...GRAY_TEXT);
+    pdf.text("Legallis · Calculadora Jurídica", M, 293);
+    if (pageCount > 1) pdf.text(`Página ${i} / ${pageCount}`, PW - M, 293, { align: "right" });
   }
 
   pdf.save(`${nomeArquivo}.pdf`);
