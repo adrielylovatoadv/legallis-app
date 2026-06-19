@@ -6,7 +6,6 @@ import {
   ANDAMENTOS_PROCESSO, RESPONSAVEIS, updateProcesso,
   type DashboardData, type Processo,
 } from "@/lib/controle";
-import { exportControle } from "@/lib/export-excel";
 import { ProcessosTab } from "./_processos";
 import { IniciaisTab } from "./_iniciais";
 import { ClientesTab } from "./_clientes";
@@ -320,21 +319,6 @@ function VisaoGeral() {
 // ── Página principal ───────────────────────────────────────────────────────────
 type Tab = "inicio" | "processos" | "iniciais" | "clientes" | "finalizados" | "importar";
 
-function ExportarExcelBtn({ onExport }: { onExport: () => Promise<void> }) {
-  const [loading, setLoading] = useState(false);
-  const handle = async () => {
-    setLoading(true);
-    try { await onExport(); } finally { setLoading(false); }
-  };
-  return (
-    <button onClick={handle} disabled={loading}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-      style={{ background: "var(--surface2)", color: "var(--text2)", border: "1px solid var(--border)" }}>
-      {loading ? "⏳ Exportando..." : "⬇️ Exportar Excel"}
-    </button>
-  );
-}
-
 export default function ControlePage() {
   const [tab, setTab] = useState<Tab>("inicio");
 
@@ -356,12 +340,9 @@ export default function ControlePage() {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-5">
       {/* Header */}
-      <div className="flex items-start justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="font-serif text-2xl font-semibold" style={{ color: "var(--text)" }}>Controle Processual</h1>
-          <p className="text-sm mt-0.5" style={{ color: "var(--text3)" }}>Direito do Consumidor · Cobranças Indevidas · Fraudes Bancárias</p>
-        </div>
-        <ExportarExcelBtn onExport={exportControle} />
+      <div>
+        <h1 className="font-serif text-2xl font-semibold" style={{ color: "var(--text)" }}>Controle Processual</h1>
+        <p className="text-sm mt-0.5" style={{ color: "var(--text3)" }}>Direito do Consumidor · Cobranças Indevidas · Fraudes Bancárias</p>
       </div>
 
       {/* Tab bar */}

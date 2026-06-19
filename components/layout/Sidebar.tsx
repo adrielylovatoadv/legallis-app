@@ -2,10 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useSidebar } from "./SidebarContext";
 import { useTheme } from "./ThemeContext";
+import { exportTudo } from "@/lib/export-excel";
 
 const NAV = [
   {
@@ -92,6 +94,12 @@ export default function Sidebar() {
   const { collapsed, toggle } = useSidebar();
   const { data: session } = useSession();
   const { theme, toggle: toggleTheme } = useTheme();
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try { await exportTudo(); } finally { setExporting(false); }
+  };
 
   return (
     <aside
@@ -121,6 +129,24 @@ export default function Sidebar() {
         {NAV.map(item => (
           <NavItem key={item.href} {...item} collapsed={collapsed} />
         ))}
+
+        {/* Exportar dados */}
+        {!collapsed && <div className="my-2" style={{ borderTop: "1px solid var(--border)" }} />}
+        {collapsed && <div className="my-2" style={{ borderTop: "1px solid var(--border)" }} />}
+        <button onClick={handleExport} disabled={exporting}
+          title={collapsed ? "Exportar todos os dados" : undefined}
+          className="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg transition-colors group relative hover:bg-white/5"
+          style={{ color: "var(--text2)" }}>
+          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          {!collapsed && <span className="text-sm font-medium">{exporting ? "Exportando..." : "Exportar dados (Excel)"}</span>}
+          {collapsed && (
+            <span className="absolute left-full ml-3 px-2.5 py-1.5 bg-[#2A2A2A] border border-[#3A3A3A] text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
+              Exportar dados (Excel)
+            </span>
+          )}
+        </button>
 
         {/* Divider */}
         {!collapsed && (
