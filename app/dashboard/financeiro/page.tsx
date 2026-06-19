@@ -13,6 +13,7 @@ import {
   type DashFinanceiro, type Acordo, type Execucao, type HonorarioInicial,
   type Fixa, type Variavel, type Status, type Socio, type ConfigEscritorio, type TipoExecucao,
 } from "@/lib/financeiro";
+import { exportFinanceiro } from "@/lib/export-excel";
 
 // ── design tokens ─────────────────────────────────────────────────────────────
 const S = {
@@ -1666,6 +1667,21 @@ function ConfiguracaoView() {
   );
 }
 
+function ExportarExcelBtn({ onExport }: { onExport: () => Promise<void> }) {
+  const [loading, setLoading] = useState(false);
+  const handle = async () => {
+    setLoading(true);
+    try { await onExport(); } finally { setLoading(false); }
+  };
+  return (
+    <button onClick={handle} disabled={loading}
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+      style={{ background: "var(--surface2)", color: "var(--text2)", border: "1px solid var(--border)" }}>
+      {loading ? "⏳ Exportando..." : "⬇️ Exportar Excel"}
+    </button>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // PÁGINA PRINCIPAL
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1700,7 +1716,9 @@ export default function FinanceiroPage() {
             <span className="font-semibold" style={{ color: "var(--gold)" }}>{mesAtualLabel}</span>
           </p>
         </div>
-        {/* Filtro por competência */}
+        {/* Filtro por competência + exportar */}
+        <div className="flex items-center gap-3 flex-wrap">
+        <ExportarExcelBtn onExport={exportFinanceiro} />
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="text-xs" style={{ color: "var(--text3)" }}>Competência:</span>
           {[
@@ -1718,6 +1736,7 @@ export default function FinanceiroPage() {
               {f.label}
             </button>
           ))}
+        </div>
         </div>
       </div>
 
