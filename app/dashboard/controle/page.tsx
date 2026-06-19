@@ -10,7 +10,6 @@ import { ProcessosTab } from "./_processos";
 import { IniciaisTab } from "./_iniciais";
 import { ClientesTab } from "./_clientes";
 import { FinalizadosTab } from "./_finalizados";
-import { ImportarTab } from "./_importar";
 
 // ── componentes base ──────────────────────────────────────────────────────────
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -317,7 +316,7 @@ function VisaoGeral() {
 }
 
 // ── Página principal ───────────────────────────────────────────────────────────
-type Tab = "inicio" | "processos" | "iniciais" | "clientes" | "finalizados" | "importar";
+type Tab = "inicio" | "processos" | "iniciais" | "clientes" | "finalizados";
 
 export default function ControlePage() {
   const [tab, setTab] = useState<Tab>("inicio");
@@ -328,7 +327,6 @@ export default function ControlePage() {
     { id: "iniciais", label: "📝 Iniciais" },
     { id: "clientes", label: "👥 Clientes" },
     { id: "finalizados", label: "✅ Finalizados" },
-    { id: "importar", label: "⬆️ Importar" },
   ] as const;
 
   const tabStyle = (id: Tab) => ({
@@ -362,7 +360,6 @@ export default function ControlePage() {
       {tab === "iniciais" && <IniciaisTab />}
       {tab === "clientes" && <ClientesTab />}
       {tab === "finalizados" && <FinalizadosTab />}
-      {tab === "importar" && <ImportarTab />}
     </div>
   );
 }

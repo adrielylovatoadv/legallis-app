@@ -130,9 +130,17 @@ export default function Sidebar() {
           <NavItem key={item.href} {...item} collapsed={collapsed} />
         ))}
 
-        {/* Exportar dados */}
+        {/* Importar / Exportar dados */}
         {!collapsed && <div className="my-2" style={{ borderTop: "1px solid var(--border)" }} />}
         {collapsed && <div className="my-2" style={{ borderTop: "1px solid var(--border)" }} />}
+        <NavItem href="/dashboard/importar" collapsed={collapsed}
+          label="Importar dados (Excel)"
+          icon={
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+          }
+        />
         <button onClick={handleExport} disabled={exporting}
           title={collapsed ? "Exportar todos os dados" : undefined}
           className="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg transition-colors group relative hover:bg-white/5"
