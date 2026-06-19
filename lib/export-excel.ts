@@ -111,7 +111,9 @@ function buildControleSheets(wb: XLSX.WorkBook, processos: Awaited<ReturnType<ty
     "Criado Em": c.criado_em,
   }))), "Clientes");
 
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(iniciais.map(i => ({
+  const CONCLUIDOS = ["PROTOCOLADO", "ARQUIVADO"];
+  const iniciaisPendentes = iniciais.filter(i => !CONCLUIDOS.includes((i.andamento ?? "").toUpperCase().trim()));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(iniciaisPendentes.map(i => ({
     Cliente: i.cliente,
     Réu: i.reu,
     Objeto: i.objeto,
