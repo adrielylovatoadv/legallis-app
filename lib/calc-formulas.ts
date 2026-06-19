@@ -89,21 +89,9 @@ function calcCorrecaoTJSP(
 function getInterestRate(year: number, month: number, idx: Indices): number {
   if (year <= 2002) return 0.5;
   if (year < 2024 || (year === 2024 && month <= 8)) return 1.0;
-
-  // Lei 14.905/2024 (vigor: 30/08/2024): juros moratórios = Selic real mensal
-  // Taxa real = (1 + Selic_nom) / (1 + IPCA) - 1
-  // Usa IPCA mensal IBGE; fallback para IPCA-E se o mês não estiver disponível
+  // Lei 14.905/2024: taxa Selic efetiva mensal (BCB série 4390) — Selic nominal
   const key = monthKey(year, month);
-  const selicNom = idx.selic[key];
-  if (selicNom === undefined) return 1.0;
-
-  const ipca = idx.ipca?.[key] ?? idx.ipcae?.[key];
-  if (ipca !== undefined) {
-    const realRate = ((1 + selicNom / 100) / (1 + ipca / 100) - 1) * 100;
-    return Math.max(0, realRate); // taxa real não pode ser negativa
-  }
-
-  return selicNom;
+  return idx.selic[key] ?? 1.0;
 }
 
 function round2(v: number): number {
@@ -156,7 +144,7 @@ export function calculateCharge(
       correctionFactor *= 1 + corrIdx / 100;
       totalInterestPct += getInterestRate(y, m, idx);
       months++;
-      indicesUsados.push(y < 2024 || (y === 2024 && m <= 8) ? "INPC" : "IPCA-E/Selic-real");
+      indicesUsados.push(y < 2024 || (y === 2024 && m <= 8) ? "INPC" : "IPCA-E/Selic");
     }
     corrected = value * correctionFactor;
   }
@@ -256,7 +244,7 @@ export function calcCorrecaoHonorario(
     for (const [y, m] of iterMonths(dataOrigem, dataCalculo)) {
       corr_factor *= 1 + getCorrectionIndex(y, m, idx) / 100;
       meses_corr++;
-      indicesUsados.push(y < 2024 || (y === 2024 && m <= 8) ? "INPC" : "IPCA-E/Selic-real");
+      indicesUsados.push(y < 2024 || (y === 2024 && m <= 8) ? "INPC" : "IPCA-E/Selic");
     }
   }
 
