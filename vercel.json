@@ -3,6 +3,10 @@
     {
       "path": "/api/trial/notify",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/calculadora/indices/atualizar",
+      "schedule": "0 7 15 * *"
     }
   ]
 }

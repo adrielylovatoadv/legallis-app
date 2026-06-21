@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { loadIndices, calcTaxaImplicita, calcPMT, calcCorrigirExcesso } from "@/lib/calc-formulas";
+import { calcTaxaImplicita, calcPMT, calcCorrigirExcesso } from "@/lib/calc-formulas";
+import { loadIndicesAsync } from "@/lib/indices-store";
 
 function round2(v: number) { return Math.round(v * 100) / 100; }
 function round4(v: number) { return Math.round(v * 10_000) / 10_000; }
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Data de contratação inválida." }, { status: 400 });
     }
 
-    const idx = loadIndices();
+    const idx = await loadIndicesAsync();
 
     // Taxa contratada implícita (Newton-Raphson)
     const taxaContratadaPct = calcTaxaImplicita(pv, pmt_contratada, n_parcelas);

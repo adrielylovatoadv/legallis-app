@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { loadIndices, calculateCharge } from "@/lib/calc-formulas";
+import { calculateCharge } from "@/lib/calc-formulas";
+import { loadIndicesAsync } from "@/lib/indices-store";
 
 function round2(v: number) { return Math.round(v * 100) / 100; }
 
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Data de cálculo obrigatória." }, { status: 400 });
     }
 
-    const idx = loadIndices();
+    const idx = await loadIndicesAsync();
     const dateCalc = new Date(data_calculo + "T12:00:00");
 
     if (isNaN(dateCalc.getTime())) {

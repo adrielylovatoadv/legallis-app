@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { loadIndices, calcCorrecaoHonorario } from "@/lib/calc-formulas";
+import { calcCorrecaoHonorario } from "@/lib/calc-formulas";
+import { loadIndicesAsync } from "@/lib/indices-store";
 
 function round2(v: number) { return Math.round(v * 100) / 100; }
 
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Data inválida." }, { status: 400 });
     }
 
-    const idx = loadIndices();
+    const idx = await loadIndicesAsync();
     const result = calcCorrecaoHonorario(valor_causa, dataOrigem, dataCalculo, idx, tribunal);
 
     const honorario_valor = round2(result.valor_corrigido * (honorarios_pct / 100));
