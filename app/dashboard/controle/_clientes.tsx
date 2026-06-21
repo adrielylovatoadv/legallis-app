@@ -41,8 +41,8 @@ function ClienteForm({ initial, onSave, onCancel }: {
         <div><Lbl>E-mail</Lbl><Inp type="email" value={form.email} onChange={e => set("email",e.target.value)} /></div>
         <div className="sm:col-span-2"><Lbl>Endereço</Lbl><Inp value={form.endereco} onChange={e => set("endereco",e.target.value)} /></div>
         <div><Lbl>Tipo Aposentadoria</Lbl><Inp value={form.tipo_aposentadoria} onChange={e => set("tipo_aposentadoria",e.target.value)} /></div>
-        <div><Lbl>Senha Gov.br</Lbl><Inp value={form.senha_gov} onChange={e => set("senha_gov",e.target.value)} /></div>
-        <div><Lbl>Senha Serasa</Lbl><Inp value={form.senha_serasa} onChange={e => set("senha_serasa",e.target.value)} /></div>
+        <div><Lbl>Senha Gov.br</Lbl><Inp type="password" autoComplete="new-password" value={form.senha_gov} onChange={e => set("senha_gov",e.target.value)} /></div>
+        <div><Lbl>Senha Serasa</Lbl><Inp type="password" autoComplete="new-password" value={form.senha_serasa} onChange={e => set("senha_serasa",e.target.value)} /></div>
         <div className="sm:col-span-2">
           <Lbl>Informações relevantes</Lbl>
           <textarea rows={2} value={form.informacoes} onChange={e => set("informacoes",e.target.value)}

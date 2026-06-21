@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { consumeResetToken, getUserByEmailAsync, updateUserAsync } from "@/lib/users";
 
 export async function POST(req: NextRequest) {
@@ -12,6 +13,7 @@ export async function POST(req: NextRequest) {
   }
   const user = await getUserByEmailAsync(email);
   if (!user) return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
-  await updateUserAsync(user.id, { password });
+  const hashedPassword = await bcrypt.hash(password as string, 10);
+  await updateUserAsync(user.id, { password: hashedPassword });
   return NextResponse.json({ ok: true });
 }

@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
 export type { Plan, Role } from "./plans";
 export { PLAN_FEATURES, canAccess, canExport } from "./plans";
 import type { Plan, Role } from "./plans";
@@ -165,7 +166,10 @@ export async function updateUserAsync(id: string, data: Partial<Omit<User, "id">
 
 export async function createUserAsync(data: Omit<User, "id" | "createdAt">): Promise<User> {
   const users = await getUsersAsync();
-  const user: User = { ...data, id: String(Date.now()), createdAt: new Date().toISOString() };
+  const hashedPassword = data.password && !data.password.startsWith("$2")
+    ? await bcrypt.hash(data.password, 10)
+    : data.password;
+  const user: User = { ...data, password: hashedPassword, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
   users.push(user);
   await saveUsersAsync(users);
   return user;

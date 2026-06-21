@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserByEmail, createResetToken } from "@/lib/users";
+import { getUserByEmailAsync, createResetToken } from "@/lib/users";
 import { sendPasswordReset } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const { email } = await req.json();
-  const user = getUserByEmail(email);
+  const user = await getUserByEmailAsync(email);
   // Always return success to avoid email enumeration
   if (!user) return NextResponse.json({ ok: true });
 

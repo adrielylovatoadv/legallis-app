@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserByIdAsync, getUserByEmailAsync, updateUserAsync } from "@/lib/users";
+import { getUsersAsync, getUserByIdAsync, getUserByEmailAsync, updateUserAsync } from "@/lib/users";
 import type { Plan, SubscriptionStatus } from "@/lib/users";
 
 // Mapeamento de Payment Link suffix → plano
@@ -28,7 +28,12 @@ async function parseEvent(req: NextRequest): Promise<StripeEvent | null> {
       return null;
     }
   }
-  // Dev mode: no signature verification
+  // Em produção, rejeitar se as variáveis não estiverem configuradas
+  if (process.env.NODE_ENV === "production") {
+    console.error("[Stripe Webhook] STRIPE_WEBHOOK_SECRET não configurado em produção");
+    return null;
+  }
+  // Dev local: aceitar sem verificação de assinatura
   return JSON.parse(body) as StripeEvent;
 }
 
@@ -101,7 +106,7 @@ export async function POST(req: NextRequest) {
         id?: string;
       };
       if (sub.status === "active" || sub.status === "trialing") {
-        const users = (await import("@/lib/users")).getUsers();
+        const users = await getUsersAsync();
         const user = users.find(u => u.stripeCustomerId === sub.customer) ?? null;
         if (user) {
           const subscriptionStatus: SubscriptionStatus = sub.status === "trialing" ? "trial" : "active";
@@ -124,7 +129,7 @@ export async function POST(req: NextRequest) {
       if (invoice.billing_reason === "subscription_cycle") {
         let user = invoice.customer_email ? await getUserByEmailAsync(invoice.customer_email) : null;
         if (!user && invoice.customer) {
-          const users = (await import("@/lib/users")).getUsers();
+          const users = await getUsersAsync();
           user = users.find(u => u.stripeCustomerId === invoice.customer) ?? null;
         }
         if (user) {
@@ -144,7 +149,7 @@ export async function POST(req: NextRequest) {
 
       let user = invoice.customer_email ? await getUserByEmailAsync(invoice.customer_email) : null;
       if (!user && invoice.customer) {
-        const users = (await import("@/lib/users")).getUsers();
+        const users = await getUsersAsync();
         user = users.find(u => u.stripeCustomerId === invoice.customer) ?? null;
       }
 
@@ -170,7 +175,7 @@ export async function POST(req: NextRequest) {
         status?: string;
       };
 
-      const users = (await import("@/lib/users")).getUsers();
+      const users = await getUsersAsync();
       const user = users.find(u => u.stripeCustomerId === sub.customer) ?? null;
 
       if (user) {
@@ -202,7 +207,7 @@ export async function POST(req: NextRequest) {
         status === "canceled" ? "cancelled" :
         status === "past_due" ? "pending" : "active";
 
-      const users = (await import("@/lib/users")).getUsers();
+      const users = await getUsersAsync();
       const user = users.find(u => u.stripeCustomerId === sub.customer) ?? null;
 
       if (user) {

@@ -8,32 +8,32 @@ const PLANS = [
   {
     id: "basic",
     name: "Básico",
-    price: "R$ 49",
+    price: "R$ 97",
     period: "/mês",
     description: "Para advogados autônomos",
-    features: ["Controle Processual", "Calculadora Jurídica", "Export PDF", "1 usuário"],
-    paymentLink: "https://buy.stripe.com/test_6oU4gA6FE7Gt3Eg24NeEo00",
+    features: ["1 admin + até 2 usuários", "Controle Processual", "Calculadora Jurídica", "Export PDF"],
+    paymentLink: "https://buy.stripe.com/test_9B600ke867Gta2EdNveEo09",
     color: "var(--text3)",
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price: "R$ 99",
-    period: "/mês",
-    description: "Para pequenos escritórios",
-    features: ["Tudo do Básico", "Financeiro", "Export PDF/Word/Excel", "Até 5 usuários", "Designar tarefas"],
-    paymentLink: "https://buy.stripe.com/test_8x200k8NMaSF1w87p7eEo02",
-    color: "var(--gold)",
-    destaque: true,
   },
   {
     id: "profissional",
     name: "Profissional",
-    price: "R$ 199",
+    price: "R$ 197",
+    period: "/mês",
+    description: "Para pequenos escritórios",
+    features: ["1 admin + até 4 usuários", "Todos os módulos", "Financeiro completo", "Export PDF/Word/Excel", "Suporte por e-mail"],
+    paymentLink: "https://buy.stripe.com/test_00wfZi8NMe4RcaMfVDeEo0a",
+    color: "var(--gold)",
+    destaque: true,
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    price: "R$ 347",
     period: "/mês",
     description: "Para escritórios em crescimento",
-    features: ["Tudo do Pro", "Usuários ilimitados", "Painel admin completo", "Chat interno", "Suporte prioritário"],
-    paymentLink: "https://buy.stripe.com/test_3cIaEYbZY5yl0s46l3eEo01",
+    features: ["1 admin + até 20 usuários", "Todos os módulos", "Export PDF/Word/Excel", "Suporte prioritário", "Onboarding incluso"],
+    paymentLink: "https://buy.stripe.com/test_eVq7sM1lk7Gt7Uw9xfeEo0b",
     color: "#818cf8",
   },
 ];
@@ -176,7 +176,7 @@ export default function CadastroPage() {
             </div>
             <p className="text-center text-xs mt-6" style={{ color: "var(--text3)" }}>
               Já tem uma conta?{" "}
-              <Link href="https://app.legallis.app.br/login" style={{ color: "var(--gold)" }}>
+              <Link href="/login" style={{ color: "var(--gold)" }}>
                 Entrar
               </Link>
             </p>
@@ -210,21 +210,21 @@ export default function CadastroPage() {
                 <div>
                   <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Nome completo *</label>
                   <input value={nome} onChange={e => setNome(e.target.value)} required
-                    placeholder="Adriely Lovato" className={inp} style={inpStyle}
+                    placeholder="Nome completo" className={inp} style={inpStyle}
                     onFocus={e => (e.target.style.borderColor = "var(--gold)")}
                     onBlur={e => (e.target.style.borderColor = "var(--border)")} />
                 </div>
                 <div>
                   <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Nome do escritório *</label>
                   <input value={nomeEscritorio} onChange={e => setNomeEscritorio(e.target.value)} required
-                    placeholder="Lovato & Associados Advocacia" className={inp} style={inpStyle}
+                    placeholder="Sobrenome & Associados Advocacia" className={inp} style={inpStyle}
                     onFocus={e => (e.target.style.borderColor = "var(--gold)")}
                     onBlur={e => (e.target.style.borderColor = "var(--border)")} />
                 </div>
                 <div>
                   <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>E-mail *</label>
                   <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                    placeholder="adriely@escritorio.com" className={inp} style={inpStyle}
+                    placeholder="nome@escritorio.com" className={inp} style={inpStyle}
                     onFocus={e => (e.target.style.borderColor = "var(--gold)")}
                     onBlur={e => (e.target.style.borderColor = "var(--border)")} />
                 </div>
@@ -312,7 +312,7 @@ export default function CadastroPage() {
 
             <p className="text-center text-xs mt-4" style={{ color: "var(--text3)" }}>
               Já tem uma conta?{" "}
-              <Link href="https://app.legallis.app.br/login" style={{ color: "var(--gold)" }}>Entrar</Link>
+              <Link href="/login" style={{ color: "var(--gold)" }}>Entrar</Link>
             </p>
           </div>
         )}

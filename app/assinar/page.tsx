@@ -72,8 +72,7 @@ const PLANS = [
 
 export default function AssinarPage() {
   const { data: session } = useSession();
-  const isExpired = session?.user?.subscriptionStatus === "trial" ||
-    session?.user?.subscriptionStatus === "expired" ||
+  const isExpired = session?.user?.subscriptionStatus === "expired" ||
     session?.user?.subscriptionStatus === "cancelled";
 
   return (

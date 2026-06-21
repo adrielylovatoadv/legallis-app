@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { auth } from "@/auth";
 import { getUserByIdAsync } from "@/lib/users";
 
@@ -10,8 +11,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   }
   const user = await getUserByIdAsync(id);
-  if (!user || user.password !== password) {
-    return NextResponse.json({ error: "Senha incorreta" }, { status: 401 });
-  }
+  if (!user) return NextResponse.json({ error: "Senha incorreta" }, { status: 401 });
+  const match = user.password.startsWith("$2")
+    ? await bcrypt.compare(password as string, user.password)
+    : user.password === password;
+  if (!match) return NextResponse.json({ error: "Senha incorreta" }, { status: 401 });
   return NextResponse.json({ ok: true });
 }

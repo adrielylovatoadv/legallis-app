@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# dados locais (contém senhas e dados sensíveis — não versionar)
+/data/

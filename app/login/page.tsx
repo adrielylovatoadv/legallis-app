@@ -31,10 +31,6 @@ function LoginForm() {
     if (res?.error) {
       setError("Usuário ou senha incorretos.");
     } else {
-      if (!remember) {
-        // Session cookie only (browser close = logout)
-        document.cookie = "next-auth.session-token; max-age=0; path=/";
-      }
       router.push("/dashboard");
       router.refresh();
     }
@@ -69,7 +65,7 @@ function LoginForm() {
               Acesso ao sistema
             </h1>
             <p className="text-sm mt-1" style={{ color: "var(--text3)" }}>
-              Lovato & Estevão Advocacia
+              Gestão jurídica & financeira
             </p>
           </div>
 
@@ -82,7 +78,7 @@ function LoginForm() {
                 type="text"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="adriely@legallis"
+                placeholder="seu@email.com"
                 required
                 className={inp}
                 style={inpStyle}

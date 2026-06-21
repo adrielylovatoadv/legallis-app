@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { auth } from "@/auth";
 import { updateUserAsync, deleteUserAsync, getUserByIdAsync } from "@/lib/users";
+
+const USER_EDITABLE_FIELDS = ["name", "phone", "theme", "oab", "company", "avatar", "password", "sexo"] as const;
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -24,11 +27,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (session.user.role !== "admin" && session.user.id !== id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   }
-  const body = await req.json();
-  // Non-admins cannot change role/plan
+  const rawBody = await req.json();
+  let body: Record<string, unknown>;
   if (session.user.role !== "admin") {
-    delete body.role;
-    delete body.plan;
+    // Whitelist: apenas campos permitidos para usuários comuns
+    body = Object.fromEntries(
+      USER_EDITABLE_FIELDS.filter(f => f in rawBody).map(f => [f, rawBody[f]])
+    );
+  } else {
+    body = rawBody;
+  }
+  // Hash senha se enviada
+  if (body.password && typeof body.password === "string" && !body.password.startsWith("$2")) {
+    body.password = await bcrypt.hash(body.password, 10);
   }
   const updated = await updateUserAsync(id, body);
   if (!updated) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });

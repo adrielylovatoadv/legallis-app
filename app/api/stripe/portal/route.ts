@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getUserById } from "@/lib/users";
+import { getUserByIdAsync } from "@/lib/users";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Stripe não configurado." }, { status: 503 });
   }
 
-  const user = getUserById(session.user.id);
+  const user = await getUserByIdAsync(session.user.id);
   if (!user?.stripeCustomerId) {
     return NextResponse.json({ error: "Nenhuma assinatura Stripe encontrada." }, { status: 404 });
   }

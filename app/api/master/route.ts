@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getUsers } from "@/lib/users";
+import { getUsersAsync } from "@/lib/users";
 import { getTickets } from "@/lib/suporte";
 
 export async function GET() {
@@ -9,7 +9,7 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const users = getUsers();
+  const users = await getUsersAsync();
   const tickets = getTickets();
 
   const now = Date.now();
@@ -22,7 +22,7 @@ export async function GET() {
     return u.subscriptionStatus === "expired";
   });
 
-  const planRevenue: Record<string, number> = { basic: 49, pro: 99, profissional: 199 };
+  const planRevenue: Record<string, number> = { basic: 97, pro: 347, profissional: 197 };
   const monthlyRevenue = activeUsers.reduce((sum, u) => sum + (planRevenue[u.plan] ?? 0), 0);
 
   return NextResponse.json({

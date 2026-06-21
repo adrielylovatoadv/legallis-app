@@ -6,9 +6,9 @@ import Link from "next/link";
 
 const PLAN_INFO: Record<string, { label: string; price: string; maxUsers: number; features: string[] }> = {
   admin: { label: "Administrador", price: "Interno", maxUsers: Infinity, features: ["Acesso total", "Painel Master", "Suporte prioritário"] },
-  profissional: { label: "Profissional", price: "R$ 199/mês", maxUsers: Infinity, features: ["Usuários ilimitados", "Painel admin", "Suporte prioritário"] },
-  pro: { label: "Pro", price: "R$ 99/mês", maxUsers: 5, features: ["Financeiro", "Exportações", "Até 5 usuários"] },
-  basic: { label: "Básico", price: "R$ 49/mês", maxUsers: 1, features: ["Controle Processual", "Calculadora", "1 usuário"] },
+  profissional: { label: "Profissional", price: "R$ 197/mês", maxUsers: 5, features: ["1 admin + até 4 usuários", "Todos os módulos", "Export PDF, Word e Excel", "Suporte por e-mail"] },
+  pro: { label: "Pro", price: "R$ 347/mês", maxUsers: 21, features: ["1 admin + até 20 usuários", "Todos os módulos", "Export PDF, Word e Excel", "Suporte prioritário", "Onboarding incluso"] },
+  basic: { label: "Básico", price: "R$ 97/mês", maxUsers: 3, features: ["1 admin + até 2 usuários", "Até 80 processos", "Controle Processual", "Calculadora Jurídica", "Export em PDF"] },
 };
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -78,9 +78,10 @@ export default function AssinaturaPage() {
               </Link>
             )}
             {status === "active" && plan !== "admin" && (
-              <button className="px-5 py-2 rounded-xl text-sm text-center transition-colors"
-                style={{ background: "var(--surface)", color: "var(--text3)", border: "1px solid var(--border)" }}>
-                Cancelar assinatura
+              <button onClick={openPortal} disabled={portalLoading}
+                className="px-5 py-2 rounded-xl text-sm text-center transition-colors"
+                style={{ background: "var(--surface)", color: "var(--text3)", border: "1px solid var(--border)", opacity: portalLoading ? 0.7 : 1 }}>
+                {portalLoading ? "Abrindo..." : "Cancelar assinatura"}
               </button>
             )}
           </div>

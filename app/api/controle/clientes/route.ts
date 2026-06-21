@@ -22,6 +22,9 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  // Nunca expor senhas de clientes na API
+  const sanitize = ({ senha_gov: _g, senha_serasa: _s, ...rest }: typeof lista[number]) => rest;
+
   if (comProcessos) {
     return NextResponse.json(lista.map(c => {
       const cn = normNome(c.nome);
@@ -29,11 +32,11 @@ export async function GET(req: NextRequest) {
       const ativos = procs.filter(p => !isFinalizado(p));
       const finalizados = procs.filter(p => isFinalizado(p));
       const iniciais = data.iniciais.filter(i => normNome(i.cliente || "").includes(cn));
-      return { ...c, _ativos: ativos, _finalizados: finalizados, _iniciais: iniciais };
+      return { ...sanitize(c), _ativos: ativos, _finalizados: finalizados, _iniciais: iniciais };
     }));
   }
 
-  return NextResponse.json(lista);
+  return NextResponse.json(lista.map(sanitize));
 }
 
 export async function POST(req: NextRequest) {

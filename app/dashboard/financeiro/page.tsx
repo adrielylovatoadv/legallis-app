@@ -1238,9 +1238,7 @@ function VariavelForm({ initial, onSave, onCancel }: {
           )}
         </div>
         <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Responsável</span>
-          <Sel value={form.quem} onChange={e => set("quem",e.target.value)}>
-            <option value="dividido">Dividido</option><option value="Adriely">Adriely</option><option value="Eduarda">Eduarda</option>
-          </Sel></div>
+          <Inp value={form.quem} onChange={e => set("quem",e.target.value)} placeholder="ex: dividido, sócio 1" /></div>
         <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Onde</span><Inp value={form.onde} onChange={e => set("onde",e.target.value)} /></div>
         <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Data compra</span><Inp value={form.data_compra} onChange={e => set("data_compra",e.target.value)} placeholder="DD/MM/AAAA" /></div>
         <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Status</span>
@@ -1696,8 +1694,7 @@ export default function FinanceiroPage() {
         <div>
           <h1 className="font-serif text-2xl font-semibold" style={{ color:"var(--text)" }}>Financeiro Escritório</h1>
           <p className="text-sm mt-0.5" style={{ color:"var(--text3)" }}>
-            Sócias: Adriely & Eduarda &nbsp;·&nbsp;
-            <span className="font-semibold" style={{ color: "var(--gold)" }}>{mesAtualLabel}</span>
+            Competência: <span className="font-semibold" style={{ color: "var(--gold)" }}>{mesAtualLabel}</span>
           </p>
         </div>
         {/* Filtro por competência */}

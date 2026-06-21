@@ -14,11 +14,12 @@ const ROLES: { value: Role; label: string }[] = [
 
 const PLANS: { value: Plan; label: string }[] = [
   { value: "basic", label: "Básico" },
+  { value: "profissional", label: "Profissional" },
   { value: "pro", label: "Pro" },
 ];
 
 export default function UsuariosPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [users, setUsers] = useState<SafeUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,9 +36,10 @@ export default function UsuariosPage() {
   }, []);
 
   useEffect(() => {
+    if (status === "loading") return;
     if (session?.user?.role !== "admin") { router.push("/dashboard/configuracoes"); return; }
     load();
-  }, [session, router, load]);
+  }, [session, status, router, load]);
 
   const createUser = async () => {
     if (!newUser.name || !newUser.email || !newUser.password) {
