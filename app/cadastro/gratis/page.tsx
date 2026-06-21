@@ -121,7 +121,7 @@ export default function CadastroGratisPage() {
             <div>
               <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>E-mail *</label>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                placeholder="nome@escritorio.com" className={inp} style={inpStyle}
+                placeholder="nome@escritorio.com" autoComplete="email" className={inp} style={inpStyle}
                 onFocus={e => (e.target.style.borderColor = "var(--gold)")}
                 onBlur={e => (e.target.style.borderColor = "var(--border)")} />
             </div>
@@ -139,7 +139,7 @@ export default function CadastroGratisPage() {
               <div className="relative">
                 <input type={showSenha ? "text" : "password"} value={senha}
                   onChange={e => setSenha(e.target.value)} required minLength={6}
-                  placeholder="Mínimo 6 caracteres" className={inp + " pr-12"} style={inpStyle}
+                  placeholder="Mínimo 6 caracteres" autoComplete="new-password" className={inp + " pr-12"} style={inpStyle}
                   onFocus={e => (e.target.style.borderColor = "var(--gold)")}
                   onBlur={e => (e.target.style.borderColor = "var(--border)")} />
                 <button type="button" onClick={() => setShowSenha(!showSenha)}
@@ -154,7 +154,7 @@ export default function CadastroGratisPage() {
               <div className="relative">
                 <input type={showConfirm ? "text" : "password"} value={confirmSenha}
                   onChange={e => setConfirmSenha(e.target.value)} required
-                  placeholder="Repita a senha" className={inp + " pr-12"} style={inpStyle}
+                  placeholder="Repita a senha" autoComplete="new-password" className={inp + " pr-12"} style={inpStyle}
                   onFocus={e => (e.target.style.borderColor = "var(--gold)")}
                   onBlur={e => (e.target.style.borderColor = "var(--border)")} />
                 <button type="button" onClick={() => setShowConfirm(!showConfirm)}

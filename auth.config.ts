@@ -35,6 +35,8 @@ const PUBLIC_PATHS = [
   "/cadastro",
   "/bem-vindo",
   "/assinar",
+  "/termos",
+  "/privacidade",
 ];
 
 export const authConfig = {
