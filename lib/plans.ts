@@ -27,7 +27,7 @@ export const PLAN_FEATURES: Record<Plan, {
     modules: ["controle", "financeiro", "calculadora"],
     exports: ["pdf", "word", "excel"],
     canAssignTasks: true,
-    maxUsers: 10,
+    maxUsers: 21,
   },
   basic: {
     label: "Básico",

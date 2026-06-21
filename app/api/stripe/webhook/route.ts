@@ -4,9 +4,9 @@ import type { Plan, SubscriptionStatus } from "@/lib/users";
 
 // Mapeamento de Payment Link suffix → plano
 const LINK_TO_PLAN: Record<string, Plan> = {
-  "test_6oU4gA6FE7Gt3Eg24NeEo00": "basic",
-  "test_8x200k8NMaSF1w87p7eEo02": "pro",
-  "test_3cIaEYbZY5yl0s46l3eEo01": "profissional",
+  "test_9B600ke867Gta2EdNveEo09": "basic",
+  "test_00wfZi8NMe4RcaMfVDeEo0a": "profissional",
+  "test_eVq7sM1lk7Gt7Uw9xfeEo0b": "pro",
 };
 
 type StripeEvent = {
