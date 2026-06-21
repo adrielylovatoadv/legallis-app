@@ -50,9 +50,9 @@ describe("calculateCharge — TJMG (INPC/IPCA-E)", () => {
     expect(res.correction_factor).toBeGreaterThan(1);
   });
 
-  test("correção usa IPCA-E a partir de set/2024", () => {
+  test("correção usa IPCA-E + Selic a partir de set/2024 (Lei 14.905/2024)", () => {
     const res = calculateCharge(1000, d("2024-09-01"), d("2024-12-01"), INDICES, "TJMG");
-    expect(res.indice_label).toBe("IPCA-E");
+    expect(res.indice_label).toBe("IPCA-E/Selic");
     expect(res.months).toBe(3);
   });
 
@@ -195,5 +195,75 @@ describe("Casos extremos", () => {
     const res = calculateCharge(1000, d("2014-01-01"), d("2024-01-01"), INDICES, "TJMG");
     expect(res.months).toBe(120);
     expect(res.total).toBeGreaterThan(1000);
+  });
+});
+
+// ── 6. Valores exatos — validação jurídica ───────────────────────────────────
+describe("Valores exatos — casos jurídicos de referência", () => {
+  // Caso 1: TJMG clássico (pré-transição)
+  // R$1.000 em jan/2022, cálculo jan/2023
+  // Correção: INPC jan–dez/2022 = fator 1.059324
+  // Juros: 12 meses × 1%/mês (simples) = 12%
+  // Corrigido: R$1.059,32 | Juros: R$127,12 | Total: R$1.186,44
+  test("TJMG clássico jan/2022→jan/2023: INPC + 1%/mês simples (valores exatos)", () => {
+    const res = calculateCharge(1000, d("2022-01-01"), d("2023-01-01"), INDICES, "TJMG");
+    expect(res.corrected).toBe(1059.32);
+    expect(res.interest_pct).toBe(12);
+    expect(res.interest_value).toBe(127.12);
+    expect(res.total).toBe(1186.44);
+    expect(res.months).toBe(12);
+    expect(res.indice_label).toBe("INPC");
+  });
+
+  // Caso 2: TJMG pós-Lei 14.905/2024
+  // R$1.000 em set/2024, cálculo jan/2025
+  // Correção: IPCA-E set+out+nov+dez/2024 = fator 1.016393
+  // Juros: Selic set(0.84)+out(0.93)+nov(0.79)+dez(0.93) = 3.49% simples
+  // Corrigido: R$1.016,39 | Juros: R$35,47 | Total: R$1.051,86
+  test("TJMG pós-14905 set/2024→jan/2025: IPCA-E + Selic simples (valores exatos)", () => {
+    const res = calculateCharge(1000, d("2024-09-01"), d("2025-01-01"), INDICES, "TJMG");
+    expect(res.corrected).toBe(1016.39);
+    expect(res.interest_pct).toBeCloseTo(3.49, 2);
+    expect(res.interest_value).toBe(35.47);
+    expect(res.total).toBe(1051.86);
+    expect(res.months).toBe(4);
+    expect(res.indice_label).toBe("IPCA-E/Selic");
+  });
+
+  // Caso 3: Juros são SIMPLES, não compostos
+  // Verificar que juros = corrigido × (soma das taxas) / 100 — NÃO capitalizado mês a mês
+  test("juros são simples (não compostos) — art. 406 CC e súmula 121 STF", () => {
+    const res = calculateCharge(1000, d("2023-01-01"), d("2023-07-01"), INDICES, "TJMG");
+    // 6 meses × 1% = 6% simples
+    expect(res.interest_pct).toBe(6);
+    // juros = sobre o valor JÁ corrigido, não capitalizado mês a mês
+    const jurosEsperado = Math.round(res.corrected * 0.06 * 100) / 100;
+    expect(res.interest_value).toBe(jurosEsperado);
+    // total NÃO é (1 + 0.01)^6 × base, é base × 1.06 (linear)
+    const jurosCompostoHipotetico = Math.round(res.corrected * (Math.pow(1.01, 6) - 1) * 100) / 100;
+    expect(res.interest_value).toBeLessThan(jurosCompostoHipotetico);
+  });
+
+  // Caso 4: Fronteira da transição — ago/2024 ainda usa INPC + 1%, set/2024 usa IPCA-E + Selic
+  test("fronteira ago/2024: INPC + 1% | set/2024: IPCA-E + Selic", () => {
+    const preTransicao = calculateCharge(1000, d("2024-08-01"), d("2024-09-01"), INDICES, "TJMG");
+    const posTransicao = calculateCharge(1000, d("2024-09-01"), d("2024-10-01"), INDICES, "TJMG");
+
+    expect(preTransicao.indice_label).toBe("INPC");
+    expect(preTransicao.interest_pct).toBe(1); // 1% fixo
+
+    expect(posTransicao.indice_label).toBe("IPCA-E/Selic");
+    expect(posTransicao.interest_pct).toBeCloseTo(0.84, 2); // Selic set/2024
+  });
+
+  // Caso 5: TJSP não confunde correção e juros — são calculados separadamente
+  test("TJSP: fator tabela aplicado na correção, Selic nos juros (não dupla contagem)", () => {
+    const res = calculateCharge(1000, d("2025-01-01"), d("2025-06-01"), INDICES, "TJSP");
+    // Tabela 14905 cobre jan→jun/2025
+    expect(res.corrected).toBeGreaterThan(1000);
+    expect(res.interest_value).toBeGreaterThan(0);
+    // Correção e juros são valores independentes
+    expect(res.total).toBeCloseTo(res.corrected + res.interest_value, 2);
+    expect(res.indice_label).toBe("Tabela Prática TJSP");
   });
 });
