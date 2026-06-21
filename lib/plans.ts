@@ -34,7 +34,7 @@ export const PLAN_FEATURES: Record<Plan, {
     modules: ["controle", "calculadora"],
     exports: ["pdf"],
     canAssignTasks: false,
-    maxUsers: 1,
+    maxUsers: 3,
   },
 };
 

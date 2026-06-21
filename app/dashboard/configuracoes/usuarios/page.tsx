@@ -111,11 +111,11 @@ export default function UsuariosPage() {
           <h3 className="font-medium text-sm" style={{ color: "var(--gold)" }}>Novo Usuário</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <input value={newUser.name} onChange={e => setNewUser({ ...newUser, name: e.target.value })}
-              placeholder="Nome completo" className={inp} style={inpStyle} />
+              placeholder="Nome completo" autoComplete="off" className={inp} style={inpStyle} />
             <input type="email" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })}
-              placeholder="E-mail" className={inp} style={inpStyle} />
+              placeholder="E-mail" autoComplete="off" className={inp} style={inpStyle} />
             <input type="password" value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })}
-              placeholder="Senha" className={inp} style={inpStyle} />
+              placeholder="Senha" autoComplete="new-password" className={inp} style={inpStyle} />
             <select value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value as Role })}
               className={inp} style={inpStyle}>
               {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
