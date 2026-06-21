@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserByEmailAsync, createUserAsync, updateUserAsync } from "@/lib/users";
 
-const PLAN_MAP: Record<string, { role: "user"; plan: "basic" | "pro" | "profissional" }> = {
-  basic:         { role: "user", plan: "basic" },
-  pro:           { role: "user", plan: "pro" },
-  profissional:  { role: "user", plan: "pro" }, // mapeado para pro até ter plano separado
-};
+const VALID_PLANS = new Set(["basic", "profissional", "pro"]);
 
 export async function POST(req: NextRequest) {
   const { nome, nomeEscritorio, email, telefone, senha, plan } = await req.json();
@@ -16,18 +12,19 @@ export async function POST(req: NextRequest) {
   if (senha.length < 6) {
     return NextResponse.json({ error: "Senha mínima de 6 caracteres." }, { status: 400 });
   }
+  if (!VALID_PLANS.has(plan)) {
+    return NextResponse.json({ error: "Plano inválido." }, { status: 400 });
+  }
   if (await getUserByEmailAsync(email)) {
     return NextResponse.json({ error: "Este e-mail já está cadastrado." }, { status: 409 });
   }
 
-  const planConfig = PLAN_MAP[plan] ?? { role: "user" as const, plan: "basic" as const };
-
-  // Cria como "pending" — será ativado pelo webhook após pagamento
+  // Cria como "pending" — o webhook ativa e define o plano após pagamento
   const user = await createUserAsync({
     name: nome,
     email,
     password: senha,
-    role: planConfig.role,
+    role: "user",
     plan: "basic",
     avatar: "",
     phone: telefone ?? "",

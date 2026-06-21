@@ -25,7 +25,6 @@ function LoginForm() {
       email,
       password,
       redirect: false,
-      // NextAuth uses maxAge from session config; remember=false sets shorter cookie
     });
     setLoading(false);
     if (res?.error) {
