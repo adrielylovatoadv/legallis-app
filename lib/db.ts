@@ -24,9 +24,14 @@ export async function dbInit() {
 export async function dbGet<T>(key: string): Promise<T | null> {
   const sql = getSql();
   if (!sql) return null;
-  const rows = await sql`SELECT value FROM kv_store WHERE key = ${key}` as Array<{value: T}>;
-  if (!Array.isArray(rows) || rows.length === 0) return null;
-  return rows[0].value as T;
+  try {
+    const rows = await sql`SELECT value FROM kv_store WHERE key = ${key}` as Array<{value: T}>;
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    return rows[0].value as T;
+  } catch (e) {
+    console.error("dbGet error:", e);
+    return null;
+  }
 }
 
 export async function dbSet<T>(key: string, value: T): Promise<boolean> {

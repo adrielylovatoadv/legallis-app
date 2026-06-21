@@ -9,7 +9,13 @@ export async function loadIndicesAsync(): Promise<Indices> {
   if (_cache && Date.now() - _cache.fetchedAt < CACHE_TTL) return _cache.data;
 
   const base = loadIndices();
-  const overrides = await dbGet<Partial<Indices>>(DB_KEY);
+
+  let overrides: Partial<Indices> | null = null;
+  try {
+    overrides = await dbGet<Partial<Indices>>(DB_KEY);
+  } catch {
+    // DB indisponível — usa base JSON sem interromper o cálculo
+  }
 
   if (!overrides) {
     _cache = { data: base, fetchedAt: Date.now() };
