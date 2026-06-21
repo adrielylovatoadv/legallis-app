@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   getIniciais, createInicial, updateInicial, deleteInicial,
-  ANDAMENTOS_INICIAL, RESPONSAVEIS, badgeAndamento,
+  ANDAMENTOS_INICIAL, badgeAndamento,
   type Inicial,
 } from "@/lib/controle";
 import { ConfirmModal } from "@/components/ConfirmModal";
@@ -29,8 +29,8 @@ function SelectField({ children, ...props }: React.SelectHTMLAttributes<HTMLSele
   );
 }
 
-function InicialForm({ initial, onSave, onCancel }: {
-  initial?: Partial<Inicial>; onSave: (i: Omit<Inicial,"id"|"criado_em">) => Promise<void>; onCancel: () => void;
+function InicialForm({ initial, onSave, onCancel, responsaveis = [] }: {
+  initial?: Partial<Inicial>; onSave: (i: Omit<Inicial,"id"|"criado_em">) => Promise<void>; onCancel: () => void; responsaveis?: string[];
 }) {
   const blank = { cliente:"",reu:"",objeto:"",andamento:"FAZER INICIAL",responsavel:"",observacoes:"" };
   const [form, setForm] = useState({ ...blank, ...(initial||{}) });
@@ -59,7 +59,8 @@ function InicialForm({ initial, onSave, onCancel }: {
         <div>
           <Label>Responsável</Label>
           <SelectField value={form.responsavel} onChange={e => set("responsavel",e.target.value)}>
-            {RESPONSAVEIS.map(r => <option key={r} value={r}>{r || "—"}</option>)}
+            <option value="">—</option>
+            {responsaveis.map(r => <option key={r} value={r}>{r}</option>)}
           </SelectField>
         </div>
       </div>
@@ -95,10 +96,16 @@ export function IniciaisTab() {
   const [protForm, setProtForm] = useState({ numero_processo: "", data_protocolo: "", observacoes: "" });
   const [protSaving, setProtSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<Inicial | null>(null);
+  const [users, setUsers] = useState<string[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try { setIniciais(await getIniciais()); } finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/users").then(r => r.ok ? r.json() : [])
+      .then((list: { name: string }[]) => setUsers(list.map(u => u.name)));
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -157,7 +164,7 @@ export function IniciaisTab() {
         <div className="space-y-2">
           {lista.map(i => (
             editando?.id === i.id
-              ? <InicialForm key={i.id} initial={editando} onSave={handleSave} onCancel={() => setEditando(null)} />
+              ? <InicialForm key={i.id} initial={editando} onSave={handleSave} onCancel={() => setEditando(null)} responsaveis={users} />
               : (
                 <div key={i.id} className="flex items-center gap-3 px-4 py-3 rounded-lg"
                   style={{ background:"var(--surface2)", border:"1px solid var(--border)" }}>
@@ -277,7 +284,7 @@ export function IniciaisTab() {
       )}
 
       {aba === "novo" && (
-        <InicialForm onSave={handleSave} onCancel={() => setAba("pendentes")} />
+        <InicialForm onSave={handleSave} onCancel={() => setAba("pendentes")} responsaveis={users} />
       )}
       {aba === "pendentes" && (loading
         ? <div className="py-8 text-center" style={{ color:"var(--text3)" }}>Carregando...</div>

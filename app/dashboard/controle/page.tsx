@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   getDashboard, marcarOk, fmtData, gcalUrl, badgeAndamento,
-  ANDAMENTOS_PROCESSO, RESPONSAVEIS, updateProcesso,
+  ANDAMENTOS_PROCESSO, updateProcesso,
   type DashboardData, type Processo,
 } from "@/lib/controle";
 import { ProcessosTab } from "./_processos";
@@ -110,6 +110,11 @@ function ModalEditar({ p, onClose, onSaved }: {
 }) {
   const [form, setForm] = useState({ ...p });
   const [saving, setSaving] = useState(false);
+  const [users, setUsers] = useState<string[]>([]);
+  useEffect(() => {
+    fetch("/api/users").then(r => r.ok ? r.json() : [])
+      .then((list: { name: string }[]) => setUsers(list.map(u => u.name)));
+  }, []);
 
   const set = (k: keyof Processo, v: string | boolean) =>
     setForm(prev => ({ ...prev, [k]: v }));
@@ -155,7 +160,8 @@ function ModalEditar({ p, onClose, onSaved }: {
             <select value={form.responsavel} onChange={e => set("responsavel", e.target.value)}
               className="w-full px-3 py-2 rounded-lg text-sm"
               style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
-              {RESPONSAVEIS.map(r => <option key={r} value={r}>{r || "—"}</option>)}
+              <option value="">—</option>
+              {users.map(r => <option key={r} value={r}>{r}</option>)}
             </select>
           </div>
         </div>

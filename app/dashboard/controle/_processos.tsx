@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   getProcessos, createProcesso, updateProcesso, deleteProcesso, marcarOk,
-  ANDAMENTOS_PROCESSO, RESPONSAVEIS, fmtData, badgeAndamento, gcalUrl, normText,
+  ANDAMENTOS_PROCESSO, fmtData, badgeAndamento, gcalUrl, normText,
   type Processo,
 } from "@/lib/controle";
 
@@ -27,10 +27,11 @@ function Lbl({ children }: { children: React.ReactNode }) {
   return <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>{children}</span>;
 }
 
-function ProcessoForm({ initial, onSave, onCancel }: {
+function ProcessoForm({ initial, onSave, onCancel, responsaveis = [] }: {
   initial?: Partial<Processo>;
   onSave: (d: Omit<Processo, "id" | "criado_em">) => Promise<void>;
   onCancel: () => void;
+  responsaveis?: string[];
 }) {
   const blank = { autor:"",reu:"",objeto:"",numero_processo:"",data:"",hora:"",andamento:"",responsavel:"",observacoes:"",atencao:false,finalizado:false };
   const [form, setForm] = useState({ ...blank, ...(initial || {}) });
@@ -76,7 +77,8 @@ function ProcessoForm({ initial, onSave, onCancel }: {
         <div>
           <Lbl>Responsável</Lbl>
           <Sel value={form.responsavel} onChange={e => set("responsavel",e.target.value)} style={{ width:"100%" }}>
-            {RESPONSAVEIS.map(r => <option key={r} value={r}>{r || "—"}</option>)}
+            <option value="">—</option>
+            {responsaveis.map(r => <option key={r} value={r}>{r}</option>)}
           </Sel>
         </div>
       </div>
@@ -200,10 +202,16 @@ export function ProcessosTab() {
   const [editando, setEditando] = useState<Processo | null>(null);
   const [soAtencao, setSoAtencao] = useState(false);
   const [pagina, setPagina] = useState(0);
+  const [users, setUsers] = useState<string[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try { setProcessos(await getProcessos()); } finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/users").then(r => r.ok ? r.json() : [])
+      .then((list: { name: string }[]) => setUsers(list.map(u => u.name)));
   }, []);
 
   // Reseta paginação ao mudar filtro ou aba
@@ -311,7 +319,7 @@ export function ProcessosTab() {
                 {paginada.map(p =>
                   editando?.id === p.id
                     ? <tr key={p.id}><td colSpan={7} className="py-2">
-                        <ProcessoForm initial={editando} onSave={handleSave} onCancel={() => setEditando(null)} />
+                        <ProcessoForm initial={editando} onSave={handleSave} onCancel={() => setEditando(null)} responsaveis={users} />
                       </td></tr>
                     : <ProcessoRow key={p.id} p={p} onEdit={setEditando} onDelete={handleDelete}
                         onOk={handleOk} onToggleAtencao={handleToggleAtencao} />
@@ -389,7 +397,7 @@ export function ProcessosTab() {
           </Sel>
           <Sel value={filtroResp} onChange={e => setFiltroResp(e.target.value)}>
             <option value="Todos">Responsável: Todos</option>
-            {RESPONSAVEIS.filter(r => r).map(r => <option key={r} value={r}>{r}</option>)}
+            {users.map(r => <option key={r} value={r}>{r}</option>)}
           </Sel>
           <label className="flex items-center gap-2 cursor-pointer whitespace-nowrap">
             <input type="checkbox" checked={soAtencao} onChange={e => setSoAtencao(e.target.checked)} className="accent-red-500" />
@@ -400,7 +408,7 @@ export function ProcessosTab() {
 
       {/* Conteúdo */}
       <div className="rounded-xl p-5" style={{ background:"var(--surface)", border:"1px solid var(--border)" }}>
-        {aba === "novo" && <ProcessoForm onSave={handleSave} onCancel={() => setAba("ativos")} />}
+        {aba === "novo" && <ProcessoForm onSave={handleSave} onCancel={() => setAba("ativos")} responsaveis={users} />}
         {aba !== "novo" && (loading
           ? <div className="py-8 text-center" style={{ color:"var(--text3)" }}>Carregando...</div>
           : renderTable(listaAtual)

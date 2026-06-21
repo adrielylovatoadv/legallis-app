@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import {
   getProcessos, getIniciais, updateProcesso, marcarOk, createProcesso,
   fmtData, badgeAndamento, gcalUrl,
-  ANDAMENTOS_PROCESSO, RESPONSAVEIS,
+  ANDAMENTOS_PROCESSO,
   type Processo, type Inicial,
 } from "@/lib/controle";
 
@@ -37,10 +37,11 @@ function Lbl({ children }: { children: React.ReactNode }) {
 }
 
 // ── Modal cadastrar processo a partir de inicial ─────────────────────────────
-function ModalCadastroProcesso({ initialData, onClose, onSaved }: {
+function ModalCadastroProcesso({ initialData, onClose, onSaved, responsaveis = [] }: {
   initialData: { autor: string; reu: string; objeto: string };
   onClose: () => void;
   onSaved: () => void;
+  responsaveis?: string[];
 }) {
   const [form, setForm] = useState({
     autor: initialData.autor,
@@ -97,7 +98,8 @@ function ModalCadastroProcesso({ initialData, onClose, onSaved }: {
             <select value={form.responsavel} onChange={e => set("responsavel", e.target.value)}
               className="w-full px-3 py-2 rounded-lg text-sm"
               style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
-              {RESPONSAVEIS.map(r => <option key={r} value={r}>{r || "—"}</option>)}
+              <option value="">—</option>
+              {responsaveis.map(r => <option key={r} value={r}>{r}</option>)}
             </select>
           </div>
           <div className="col-span-2">
@@ -307,6 +309,7 @@ export default function DesignacoesPage() {
         <ModalCadastroProcesso
           initialData={cadastroProcesso}
           onClose={() => setCadastroProcesso(null)}
+          responsaveis={admins.map(u => u.name)}
           onSaved={() => { setCadastroProcesso(null); setActionMsg("Processo cadastrado com sucesso!"); load(); setTimeout(() => setActionMsg(null), 3000); }}
         />
       )}
@@ -369,7 +372,7 @@ export default function DesignacoesPage() {
             className="px-3 py-2 rounded-lg text-sm"
             style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
             <option value="">Todos</option>
-            {RESPONSAVEIS.filter(Boolean).map(r => <option key={r} value={r}>{r}</option>)}
+            {admins.map(u => <option key={u.id} value={u.name}>{u.name}</option>)}
           </select>
           <select value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)}
             className="px-3 py-2 rounded-lg text-sm"

@@ -27,7 +27,6 @@ export const ANDAMENTOS_INICIAL = [
   "AGUARDAR NOTIFICAÇÃO","ASSINAR PROCURAÇÃO","PROTOCOLADO","ARQUIVADO",
 ];
 
-export const RESPONSAVEIS = ["", "Adriely", "Eduarda"];
 
 export interface Processo {
   id: string; autor: string; reu: string; objeto: string;
