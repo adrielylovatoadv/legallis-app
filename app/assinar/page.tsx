@@ -132,7 +132,6 @@ export default function AssinarPage() {
                 <span className="text-4xl font-bold" style={{ color: "var(--text)" }}>{plan.price}</span>
                 <span className="text-sm" style={{ color: "var(--text3)" }}>{plan.period}</span>
               </div>
-              <p className="text-xs mb-1" style={{ color: "var(--text3)" }}>{plan.description}</p>
               {plan.trial
                 ? <p className="text-xs mb-5" style={{ color: "var(--gold)" }}>✦ {plan.trial}</p>
                 : <p className="text-xs mb-5" style={{ color: "var(--text3)" }}>Sem período de teste · cobrança imediata</p>

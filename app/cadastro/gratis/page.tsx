@@ -93,7 +93,7 @@ export default function CadastroGratisPage() {
             <div>
               <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Nome completo *</label>
               <input value={nome} onChange={e => setNome(e.target.value)} required
-                placeholder="Adriely Lovato" className={inp} style={inpStyle}
+                placeholder="Nome completo" className={inp} style={inpStyle}
                 onFocus={e => (e.target.style.borderColor = "var(--gold)")}
                 onBlur={e => (e.target.style.borderColor = "var(--border)")} />
             </div>
@@ -113,7 +113,7 @@ export default function CadastroGratisPage() {
             <div>
               <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Nome do escritório *</label>
               <input value={nomeEscritorio} onChange={e => setNomeEscritorio(e.target.value)} required
-                placeholder="Lovato & Associados Advocacia" className={inp} style={inpStyle}
+                placeholder="Sobrenome & Associados Advocacia" className={inp} style={inpStyle}
                 onFocus={e => (e.target.style.borderColor = "var(--gold)")}
                 onBlur={e => (e.target.style.borderColor = "var(--border)")} />
             </div>
@@ -121,7 +121,7 @@ export default function CadastroGratisPage() {
             <div>
               <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>E-mail *</label>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                placeholder="adriely@escritorio.com" className={inp} style={inpStyle}
+                placeholder="nome@escritorio.com" className={inp} style={inpStyle}
                 onFocus={e => (e.target.style.borderColor = "var(--gold)")}
                 onBlur={e => (e.target.style.borderColor = "var(--border)")} />
             </div>

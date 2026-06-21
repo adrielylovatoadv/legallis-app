@@ -46,7 +46,7 @@ async function sendEmail(to: string, subject: string, html: string) {
   const resend = new Resend(process.env.RESEND_API_KEY);
   await resend.emails.send({
     from: "Legallis <noreply@legallis.app.br>",
-    to: to.includes("@legallis") ? "adriely@legallis.app.br" : to,
+    to: to.includes("@legallis") ? (process.env.ADMIN_EMAIL ?? "noreply@legallis.app.br") : to,
     subject,
     html,
   });

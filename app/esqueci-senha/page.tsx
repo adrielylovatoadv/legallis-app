@@ -63,12 +63,12 @@ export default function EsqueciSenhaPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="text-xs uppercase tracking-wider mb-1.5 block"
-                  style={{ color: "var(--text3)" }}>E-mail ou usuário</label>
+                  style={{ color: "var(--text3)" }}>E-mail</label>
                 <input
-                  type="text"
+                  type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="adriely@legallis"
+                  placeholder="seu@email.com"
                   required
                   className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-colors"
                   style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}

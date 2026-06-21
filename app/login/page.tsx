@@ -75,7 +75,7 @@ function LoginForm() {
               <label className="text-xs uppercase tracking-wider mb-1.5 block"
                 style={{ color: "var(--text3)" }}>Usuário</label>
               <input
-                type="text"
+                type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="seu@email.com"

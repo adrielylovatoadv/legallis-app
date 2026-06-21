@@ -28,7 +28,7 @@ export default function BemVindoPage() {
           <p className="text-sm" style={{ color: "var(--text3)" }}>
             Sua assinatura foi ativada com sucesso. Faça login para acessar o sistema.
           </p>
-          <Link href="https://app.legallis.app.br/login"
+          <Link href="/login"
             className="block w-full py-3 rounded-xl font-semibold text-sm text-center"
             style={{ background: "var(--gold)", color: "#000" }}>
             Entrar no sistema →

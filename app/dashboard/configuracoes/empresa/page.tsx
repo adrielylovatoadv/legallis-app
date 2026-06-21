@@ -50,7 +50,7 @@ export default function EmpresaPage() {
           <div className="md:col-span-2">
             <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Nome da empresa / escritório</label>
             <input value={companyName} onChange={e => setCompanyName(e.target.value)}
-              placeholder="Lovato & Estevão Advocacia" className={inp} style={inpStyle}
+              placeholder="Sobrenome & Associados Advocacia" className={inp} style={inpStyle}
               onFocus={e => (e.target.style.borderColor = "var(--gold)")}
               onBlur={e => (e.target.style.borderColor = "var(--border)")} />
           </div>

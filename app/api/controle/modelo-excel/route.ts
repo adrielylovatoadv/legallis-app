@@ -20,8 +20,8 @@ export async function GET() {
   // ── Processos Ativos ─────────────────────────────────────────────────────
   const wsProcessos = XLSX.utils.aoa_to_sheet([
     ["Autor *", "Réu", "Objeto", "Nº Processo", "Data (DD/MM/AAAA)", "Hora (HH:MM)", "Andamento", "Responsável", "Observações", "Atenção (SIM/NÃO)"],
-    ["Maria Silva", "BANCO BRADESCO", "Cobrança Indevida", "0000001-00.2024.8.13.0024", "15/01/2024", "09:00", "AGUARDANDO DESPACHO", "Adriely", "", "NÃO"],
-    ["João Souza", "NUBANK", "Fraude Cartão", "0000002-00.2024.8.13.0024", "20/02/2024", "14:30", "AIJ - AUDIÊNCIA", "Eduarda", "Trazer documentos", "SIM"],
+    ["Maria Silva", "BANCO BRADESCO", "Cobrança Indevida", "0000001-00.2024.8.13.0024", "15/01/2024", "09:00", "AGUARDANDO DESPACHO", "Dr. Silva", "", "NÃO"],
+    ["João Souza", "NUBANK", "Fraude Cartão", "0000002-00.2024.8.13.0024", "20/02/2024", "14:30", "AIJ - AUDIÊNCIA", "Dra. Santos", "Trazer documentos", "SIM"],
   ]);
   estilizarCabecalho(wsProcessos, 10);
   XLSX.utils.book_append_sheet(wb, wsProcessos, "Processos Ativos");
@@ -29,8 +29,8 @@ export async function GET() {
   // ── Iniciais ─────────────────────────────────────────────────────────────
   const wsIniciais = XLSX.utils.aoa_to_sheet([
     ["Cliente *", "Réu", "Objeto", "Andamento", "Responsável", "Observações"],
-    ["Cleide Alves", "BRADESCO", "Pacote de Serviços", "FAZER INICIAL", "Adriely", "Aguardando procuração"],
-    ["Pedro Lima", "ITAÚ", "Débito Indevido", "AGUARDAR DOCS", "Eduarda", ""],
+    ["Cleide Alves", "BRADESCO", "Pacote de Serviços", "FAZER INICIAL", "Dr. Silva", "Aguardando procuração"],
+    ["Pedro Lima", "ITAÚ", "Débito Indevido", "AGUARDAR DOCS", "Dra. Santos", ""],
   ]);
   estilizarCabecalho(wsIniciais, 6);
   XLSX.utils.book_append_sheet(wb, wsIniciais, "Iniciais");
