@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/calculadora/indices/atualizar",
-      "schedule": "0 7 15 * *"
+      "schedule": "0 7 * * *"
     }
   ]
 }
