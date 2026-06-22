@@ -13,6 +13,7 @@ type SafeUser = {
   role: Role;
   plan: Plan;
   createdAt: string;
+  tenantId?: string;
 };
 
 const PLANS: Plan[] = ["basic", "pro", "admin"];
@@ -172,7 +173,7 @@ export default function AdminPage() {
         <table className="w-full text-sm">
           <thead>
             <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--surface2)" }}>
-              {["Nome", "Usuário/E-mail", "Perfil", "Plano", "Ações"].map(h => (
+              {["Nome", "Usuário/E-mail", "Perfil", "Plano", "Escritório (tenantId)", "Ações"].map(h => (
                 <th key={h} className="px-4 py-3 text-left text-xs uppercase tracking-wider font-semibold"
                   style={{ color: "var(--text3)" }}>{h}</th>
               ))}
@@ -209,6 +210,13 @@ export default function AdminPage() {
                       </select>
                     </td>
                     <td className="px-4 py-3">
+                      <input
+                        value={editData.tenantId ?? u.tenantId ?? ""}
+                        onChange={e => setEditData(p => ({ ...p, tenantId: e.target.value || undefined }))}
+                        placeholder="ex: t_1"
+                        className={inp} style={{ ...inpStyle, width: "90px" }} />
+                    </td>
+                    <td className="px-4 py-3">
                       <div className="flex gap-2">
                         <button onClick={saveEdit}
                           className="px-3 py-1 rounded-lg text-xs font-semibold"
@@ -233,6 +241,11 @@ export default function AdminPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3"><PlanBadge plan={u.plan} /></td>
+                    <td className="px-4 py-3">
+                      <span className="text-xs font-mono" style={{ color: u.tenantId ? "var(--gold)" : "var(--text3)" }}>
+                        {u.tenantId ?? "—"}
+                      </span>
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
                         <button onClick={() => { setEditingId(u.id); setEditData({}); }}

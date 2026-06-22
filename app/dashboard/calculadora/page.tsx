@@ -141,7 +141,7 @@ const TIPOS_SEGURO = [
 
 let _id = 1;
 
-interface UserProfile { name?: string; oab?: Array<{ state: string; number: string }>; company?: { name?: string } }
+interface UserProfile { id?: string; name?: string; oab?: Array<{ state: string; number: string }>; company?: { name?: string } }
 
 // ── Componente Formação Rápida ─────────────────────────────────
 function FormacaoRapida({ onGerar }: {
@@ -281,22 +281,30 @@ export default function CalculadoraPage() {
   const plan = (session?.user.plan ?? "basic") as Plan;
   const today = new Date().toISOString().split("T")[0];
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [colegas, setColegas] = useState<UserProfile[]>([]);
+  const [advogadoSelecionadoId, setAdvogadoSelecionadoId] = useState<string>("");
 
   useEffect(() => {
     if (session?.user?.id) {
       fetch(`/api/usuarios/${session.user.id}`)
         .then(r => r.ok ? r.json() : null)
-        .then(d => d && setUserProfile(d))
+        .then(d => { if (d) { setUserProfile(d); setAdvogadoSelecionadoId(d.id); } })
+        .catch(() => {});
+      fetch("/api/usuarios/escritorio")
+        .then(r => r.ok ? r.json() : [])
+        .then(d => Array.isArray(d) && setColegas(d))
         .catch(() => {});
     }
   }, [session?.user?.id]);
 
-  const advogadoInfo = userProfile ? {
-    nome: userProfile.name,
-    oab: userProfile.oab?.[0]?.number,
-    estado: userProfile.oab?.[0]?.state,
-    oabs: userProfile.oab?.map(o => ({ estado: o.state, numero: o.number })),
-    escritorio: userProfile.company?.name,
+  const advogadoPerfil = colegas.find(u => u.id === advogadoSelecionadoId) ?? userProfile;
+
+  const advogadoInfo = advogadoPerfil ? {
+    nome: advogadoPerfil.name,
+    oab: advogadoPerfil.oab?.[0]?.number,
+    estado: advogadoPerfil.oab?.[0]?.state,
+    oabs: advogadoPerfil.oab?.map(o => ({ estado: o.state, numero: o.number })),
+    escritorio: advogadoPerfil.company?.name,
   } : undefined;
 
   // ── modos principais ──
@@ -467,6 +475,33 @@ export default function CalculadoraPage() {
           </button>
         ))}
       </div>
+
+      {/* ── Seletor de advogado para o PDF ─────────────────── */}
+      {colegas.length > 1 && (
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-xs font-medium uppercase tracking-wider flex-shrink-0" style={{ color: "var(--text3)" }}>
+            Advogado no PDF:
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {colegas.map(u => (
+              <button
+                key={u.id}
+                onClick={() => setAdvogadoSelecionadoId(u.id ?? "")}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+                style={{
+                  background: advogadoSelecionadoId === u.id ? "rgba(201,168,76,0.15)" : "var(--surface2)",
+                  color: advogadoSelecionadoId === u.id ? "var(--gold)" : "var(--text3)",
+                  border: `1px solid ${advogadoSelecionadoId === u.id ? "var(--gold)" : "var(--border)"}`,
+                }}>
+                {u.name}
+                {u.id === userProfile?.id && (
+                  <span className="ml-1.5 text-xs opacity-60">(você)</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Modo Petição Inicial / Cumprimento de Sentença ─── */}
       {(modo === "execucao" || modo === "inicial") && (
