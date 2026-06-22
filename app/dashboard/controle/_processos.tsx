@@ -9,7 +9,7 @@ import {
 
 const POR_PAGINA = 50;
 
-type Aba = "ativos" | "audiencias" | "prazos" | "standby" | "novo";
+type Aba = "ativos" | "audiencias" | "prazos" | "standby" | "suspenso" | "procedente" | "novo";
 
 function Sel({ children, ...p }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
@@ -224,6 +224,8 @@ export function ProcessosTab() {
     const a = (p.andamento || "").toUpperCase();
     return a === "ACORDO" || a === "ARQUIVADO" || a === "DESISTÊNCIA" || a === "DESISTENCIA";
   };
+  const isSuspenso = (p: Processo) => (p.andamento || "").toUpperCase() === "SUSPENSO";
+  const isProcedente = (p: Processo) => (p.andamento || "").toUpperCase() === "PROCEDENTE";
 
   const filtrar = useCallback((lista: Processo[]) => {
     let r = lista;
@@ -259,8 +261,10 @@ export function ProcessosTab() {
   const standby = filtrar(processos.filter(p => {
     const a = (p.andamento||"").toUpperCase();
     const isAud = a.includes("AIJ") || a.startsWith("AC");
-    return ((!p.data) || (isAud && p.data < hoje)) && !isFin(p);
+    return ((!p.data) || (isAud && p.data < hoje)) && !isFin(p) && !isSuspenso(p) && !isProcedente(p);
   }));
+  const suspensos = filtrar(processos.filter(p => isSuspenso(p) && !isFin(p)));
+  const procedentes = filtrar(processos.filter(p => isProcedente(p) && !isFin(p)));
 
   const handleSave = async (form: Omit<Processo,"id"|"criado_em">) => {
     if (editando) { await updateProcesso(editando.id, form); setEditando(null); }
@@ -278,7 +282,9 @@ export function ProcessosTab() {
     { id:"ativos", label:`📋 Ativos (${processos.filter(p => !isFin(p)).length})` },
     { id:"audiencias", label:`🔴 Audiências (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); return (a.includes("AIJ")||a.startsWith("AC"))&&p.data>=hoje&&!isFin(p); }).length})` },
     { id:"prazos", label:`📅 Prazos (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); return !!p.data&&!a.includes("AIJ")&&!a.startsWith("AC")&&!isFin(p); }).length})` },
-    { id:"standby", label:`⏸️ Standby (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); const isAud=a.includes("AIJ")||a.startsWith("AC"); return ((!p.data)||(isAud&&p.data<hoje))&&!isFin(p); }).length})` },
+    { id:"standby", label:`⏸️ Standby (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); const isAud=a.includes("AIJ")||a.startsWith("AC"); return ((!p.data)||(isAud&&p.data<hoje))&&!isFin(p)&&a!=="SUSPENSO"&&a!=="PROCEDENTE"; }).length})` },
+    { id:"suspenso", label:`⏸ Suspenso (${processos.filter(p => (p.andamento||"").toUpperCase()==="SUSPENSO"&&!isFin(p)).length})` },
+    { id:"procedente", label:`✅ Procedente (${processos.filter(p => (p.andamento||"").toUpperCase()==="PROCEDENTE"&&!isFin(p)).length})` },
     { id:"novo", label:"➕ Novo" },
   ];
 
@@ -373,6 +379,8 @@ export function ProcessosTab() {
   const listaAtual = aba === "ativos" ? ativos
     : aba === "audiencias" ? audiencias
     : aba === "prazos" ? prazos
+    : aba === "suspenso" ? suspensos
+    : aba === "procedente" ? procedentes
     : standby;
 
   return (
