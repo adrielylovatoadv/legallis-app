@@ -40,5 +40,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# dados locais (contém senhas e dados sensíveis — não versionar)
-/data/
+# dados sensíveis de usuários — não versionar
+/data/users.json
+/data/controle_data.json
+/data/financeiro_data.json
+/data/reset_tokens.json
