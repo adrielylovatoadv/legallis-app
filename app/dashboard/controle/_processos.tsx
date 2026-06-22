@@ -256,7 +256,7 @@ export function ProcessosTab() {
   const prazos = filtrar(processos.filter(p => {
     const a = (p.andamento || "").toUpperCase();
     const isAud = a.includes("AIJ") || a.startsWith("AC");
-    return !!p.data && !isAud && !isFin(p);
+    return !!p.data && !isAud && !isFin(p) && !isProcedente(p);
   }));
   const standby = filtrar(processos.filter(p => {
     const a = (p.andamento||"").toUpperCase();
