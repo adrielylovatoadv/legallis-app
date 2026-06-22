@@ -14,7 +14,7 @@ interface Finalizado {
   _migrado?: boolean;
 }
 
-const MOTIVOS = ["Acordo", "Desistência", "Improcedência", "Arquivado"] as const;
+const MOTIVOS = ["Acordo", "Desistência", "Improcedência", "Arquivado", "Outro"] as const;
 type Motivo = typeof MOTIVOS[number];
 
 const MOTIVO_COLORS: Record<Motivo, { bg: string; color: string }> = {
@@ -22,7 +22,17 @@ const MOTIVO_COLORS: Record<Motivo, { bg: string; color: string }> = {
   "Desistência":   { bg: "rgba(107,114,128,0.12)", color: "#9ca3af" },
   "Improcedência": { bg: "rgba(239,68,68,0.10)",   color: "#f87171" },
   "Arquivado":     { bg: "rgba(96,165,250,0.10)",  color: "#60a5fa" },
+  "Outro":         { bg: "rgba(168,85,247,0.10)",  color: "#c084fc" },
 };
+
+function canonMotivo(m: string): Motivo {
+  const u = (m || "").toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  if (u === "ACORDO")        return "Acordo";
+  if (u.startsWith("DESIST")) return "Desistência";
+  if (u.startsWith("IMPROC")) return "Improcedência";
+  if (u === "ARQUIVADO")     return "Arquivado";
+  return "Outro";
+}
 
 function fmtDate(s: string) {
   if (!s || s.length < 10) return "—";
@@ -177,12 +187,12 @@ export function FinalizadosTab() {
       normText(f.reu).includes(b) ||
       normText(f.objeto).includes(b) ||
       normText(f.processo).includes(b);
-    const matchMotivo = !filtroMotivo || f.motivo === filtroMotivo;
+    const matchMotivo = !filtroMotivo || canonMotivo(f.motivo) === filtroMotivo;
     return matchBusca && matchMotivo;
   });
 
   const counts = MOTIVOS.reduce((acc, m) => {
-    acc[m] = finalizados.filter(f => f.motivo === m).length;
+    acc[m] = finalizados.filter(f => canonMotivo(f.motivo) === m).length;
     return acc;
   }, {} as Record<string, number>);
 
