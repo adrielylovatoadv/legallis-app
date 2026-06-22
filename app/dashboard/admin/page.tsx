@@ -49,6 +49,23 @@ export default function AdminPage() {
   const [creating, setCreating] = useState(false);
   const [newUser, setNewUser] = useState({ name: "", email: "", password: "", role: "user" as Role, plan: "basic" as Plan });
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [setupLoading, setSetupLoading] = useState(false);
+
+  const setupEscritorio = async () => {
+    setSetupLoading(true);
+    try {
+      const res = await fetch("/api/admin/setup-escritorio", { method: "POST" });
+      const d = await res.json();
+      if (res.ok) {
+        setMsg({ type: "ok", text: `Escritório configurado! ${d.atualizados} usuário(s) atualizados.` });
+        load();
+      } else {
+        setMsg({ type: "err", text: d.error ?? "Erro ao configurar escritório." });
+      }
+    } finally {
+      setSetupLoading(false);
+    }
+  };
 
   const load = useCallback(async () => {
     const res = await fetch("/api/usuarios");
@@ -111,14 +128,21 @@ export default function AdminPage() {
         <h1 className="font-serif text-2xl font-semibold" style={{ color: "var(--text)" }}>
           Painel Administrativo
         </h1>
-        <button onClick={() => setCreating(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold"
-          style={{ background: "var(--gold)", color: "#000" }}>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Novo usuário
-        </button>
+        <div className="flex gap-2">
+          <button onClick={setupEscritorio} disabled={setupLoading}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-opacity"
+            style={{ background: "rgba(201,168,76,0.15)", color: "var(--gold)", border: "1px solid var(--gold)", opacity: setupLoading ? 0.6 : 1 }}>
+            {setupLoading ? "⏳" : "🏢"} Sincronizar escritório
+          </button>
+          <button onClick={() => setCreating(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold"
+            style={{ background: "var(--gold)", color: "#000" }}>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Novo usuário
+          </button>
+        </div>
       </div>
 
       {msg && (
