@@ -3,11 +3,15 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 
+interface Colega { id: string; name: string }
+
 export default function EmpresaPage() {
   const { data: session } = useSession();
   const [companyName, setCompanyName] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [address, setAddress] = useState("");
+  const [defaultPdfSignerId, setDefaultPdfSignerId] = useState("");
+  const [colegas, setColegas] = useState<Colega[]>([]);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -19,10 +23,18 @@ export default function EmpresaPage() {
         setCompanyName(u.company?.name ?? "");
         setCnpj(u.company?.cnpj ?? "");
         setAddress(u.company?.address ?? "");
+        setDefaultPdfSignerId(u.company?.defaultPdfSignerId ?? u.id ?? "");
       }
     };
     if (session?.user?.id) load();
   }, [session?.user?.id]);
+
+  useEffect(() => {
+    fetch("/api/usuarios/escritorio")
+      .then(r => r.ok ? r.json() : [])
+      .then(d => Array.isArray(d) && setColegas(d))
+      .catch(() => {});
+  }, []);
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +42,7 @@ export default function EmpresaPage() {
     const res = await fetch(`/api/usuarios/${session?.user?.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ company: { name: companyName, cnpj, address } }),
+      body: JSON.stringify({ company: { name: companyName, cnpj, address, defaultPdfSignerId } }),
     });
     setLoading(false);
     if (res.ok) setMsg({ type: "ok", text: "Dados da empresa salvos." });
@@ -71,6 +83,42 @@ export default function EmpresaPage() {
               onBlur={e => (e.target.style.borderColor = "var(--border)")} />
           </div>
         </div>
+
+        {/* Assinatura padrão nos PDFs */}
+        {colegas.length > 1 && (
+          <div className="pt-4 border-t" style={{ borderColor: "var(--border)" }}>
+            <label className="text-xs uppercase tracking-wider mb-3 block" style={{ color: "var(--text3)" }}>
+              Advogado padrão na assinatura dos PDFs
+            </label>
+            <p className="text-xs mb-3" style={{ color: "var(--text3)" }}>
+              Quando um cálculo for exportado, este será o advogado que aparece por padrão. Pode ser alterado na hora da exportação.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {colegas.map(u => (
+                <button
+                  key={u.id}
+                  type="button"
+                  onClick={() => setDefaultPdfSignerId(u.id)}
+                  className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center gap-2"
+                  style={{
+                    background: defaultPdfSignerId === u.id ? "rgba(201,168,76,0.15)" : "var(--surface2)",
+                    color: defaultPdfSignerId === u.id ? "var(--gold)" : "var(--text2)",
+                    border: `1px solid ${defaultPdfSignerId === u.id ? "var(--gold)" : "var(--border)"}`,
+                  }}>
+                  {defaultPdfSignerId === u.id && (
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                  {u.name}
+                  {u.id === session?.user?.id && (
+                    <span className="text-xs opacity-50">(você)</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {msg && (
           <div className="text-sm px-4 py-2.5 rounded-lg"

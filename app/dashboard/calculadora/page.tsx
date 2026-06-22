@@ -288,7 +288,13 @@ export default function CalculadoraPage() {
     if (session?.user?.id) {
       fetch(`/api/usuarios/${session.user.id}`)
         .then(r => r.ok ? r.json() : null)
-        .then(d => { if (d) { setUserProfile(d); setAdvogadoSelecionadoId(d.id); } })
+        .then(d => {
+          if (d) {
+            setUserProfile(d);
+            // usa o advogado padrão salvo na empresa, ou o próprio usuário
+            setAdvogadoSelecionadoId(d.company?.defaultPdfSignerId ?? d.id);
+          }
+        })
         .catch(() => {});
       fetch("/api/usuarios/escritorio")
         .then(r => r.ok ? r.json() : [])

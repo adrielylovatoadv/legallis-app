@@ -20,6 +20,7 @@ export interface Company {
   name?: string;
   cnpj?: string;
   address?: string;
+  defaultPdfSignerId?: string;
 }
 
 export interface User {
