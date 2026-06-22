@@ -281,7 +281,7 @@ export function ProcessosTab() {
   const ABAS: { id: Aba; label: string }[] = [
     { id:"ativos", label:`📋 Ativos (${processos.filter(p => !isFin(p)).length})` },
     { id:"audiencias", label:`🔴 Audiências (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); return (a.includes("AIJ")||a.startsWith("AC"))&&p.data>=hoje&&!isFin(p); }).length})` },
-    { id:"prazos", label:`📅 Prazos (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); return !!p.data&&!a.includes("AIJ")&&!a.startsWith("AC")&&!isFin(p); }).length})` },
+    { id:"prazos", label:`📅 Prazos (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); return !!p.data&&!a.includes("AIJ")&&!a.startsWith("AC")&&!isFin(p)&&a!=="PROCEDENTE"; }).length})` },
     { id:"standby", label:`⏸️ Standby (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); const isAud=a.includes("AIJ")||a.startsWith("AC"); return ((!p.data)||(isAud&&p.data<hoje))&&!isFin(p)&&a!=="SUSPENSO"&&a!=="PROCEDENTE"; }).length})` },
     { id:"suspenso", label:`⏸ Suspenso (${processos.filter(p => (p.andamento||"").toUpperCase()==="SUSPENSO"&&!isFin(p)).length})` },
     { id:"procedente", label:`✅ Procedente (${processos.filter(p => (p.andamento||"").toUpperCase()==="PROCEDENTE"&&!isFin(p)).length})` },
