@@ -37,7 +37,13 @@ function fmtHora(v: unknown): string {
 function getSheet(wb: XLSX.WorkBook, names: string[]): Record<string, unknown>[] {
   for (const n of names) {
     const ws = wb.Sheets[n];
-    if (ws) return XLSX.utils.sheet_to_json(ws, { defval: "" });
+    if (ws) {
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: "" }) as Record<string, unknown>[];
+      // Normaliza nomes de colunas removendo espaços extras
+      return rows.map(row =>
+        Object.fromEntries(Object.entries(row).map(([k, v]) => [k.trim(), v]))
+      );
+    }
   }
   return [];
 }
@@ -194,6 +200,12 @@ export async function POST(req: NextRequest) {
         };
         if (bySem.has(key)) Object.assign(bySem.get(key)!, novo);
         else { existingSem.push(novo); bySem.set(key, novo); stats.finalizados++; }
+      }
+
+      // Marca o processo ativo correspondente como finalizado
+      if (processo) {
+        const proc = byNum.get(processo);
+        if (proc) proc.finalizado = true;
       }
     }
     (data as ControleData).finalizados_externos_sem_honor = existingSem;
