@@ -256,7 +256,11 @@ export function ProcessosTab() {
     const isAud = a.includes("AIJ") || a.startsWith("AC");
     return !!p.data && !isAud && !isFin(p);
   }));
-  const standby = filtrar(processos.filter(p => !p.data && !isFin(p)));
+  const standby = filtrar(processos.filter(p => {
+    const a = (p.andamento||"").toUpperCase();
+    const isAud = a.includes("AIJ") || a.startsWith("AC");
+    return ((!p.data) || (isAud && p.data < hoje)) && !isFin(p);
+  }));
 
   const handleSave = async (form: Omit<Processo,"id"|"criado_em">) => {
     if (editando) { await updateProcesso(editando.id, form); setEditando(null); }
@@ -274,7 +278,7 @@ export function ProcessosTab() {
     { id:"ativos", label:`📋 Ativos (${processos.filter(p => !isFin(p)).length})` },
     { id:"audiencias", label:`🔴 Audiências (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); return (a.includes("AIJ")||a.startsWith("AC"))&&p.data>=hoje&&!isFin(p); }).length})` },
     { id:"prazos", label:`📅 Prazos (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); return !!p.data&&!a.includes("AIJ")&&!a.startsWith("AC")&&!isFin(p); }).length})` },
-    { id:"standby", label:`⏸️ Standby (${processos.filter(p => !p.data && !isFin(p)).length})` },
+    { id:"standby", label:`⏸️ Standby (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); const isAud=a.includes("AIJ")||a.startsWith("AC"); return ((!p.data)||(isAud&&p.data<hoje))&&!isFin(p); }).length})` },
     { id:"novo", label:"➕ Novo" },
   ];
 
