@@ -34,6 +34,8 @@ interface RevisionalResult {
   excesso_mensal: number; total_excesso: number;
   parcelas: { parcela: number; data_vencimento: string; pmt_contratada: number; pmt_justa: number; excesso: number }[];
   total_parcelas: number;
+  aplicar_dobro?: boolean; subtotal_dobro?: number;
+  dano_moral?: number; total_geral?: number;
 }
 
 // ── componentes base ───────────────────────────────────────────
@@ -392,6 +394,7 @@ export default function CalculadoraPage() {
             data_contratacao: revDataContrat, data_calculo: revDataCalc,
             taxa_bacen: revTaxaBacen ? parseFloat(revTaxaBacen) : null,
             total_seguros: totalSeguros(seguros),
+            aplicar_dobro: aplicarDobro, dano_moral: parseBRL(danoMoral),
           }),
         });
         setRevResult(r);
@@ -688,6 +691,19 @@ export default function CalculadoraPage() {
           <div className="mt-5 pt-4 border-t" style={{ borderColor: "var(--border)" }}>
             <SegurosEmbutidos valores={segurosVeiculo} onChange={setSegurosVeiculo} />
           </div>
+          <div className="mt-5 pt-4 border-t space-y-3" style={{ borderColor: "var(--border)" }}>
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text3)" }}>Pedidos adicionais</p>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={aplicarDobro} onChange={e => setAplicarDobro(e.target.checked)}
+                style={{ accentColor: "var(--gold)" }} />
+              <span className="text-sm" style={{ color: "var(--text2)" }}>Repetição em dobro (CDC art. 42)</span>
+            </label>
+            <div>
+              <Label>Dano moral (R$)</Label>
+              <Input type="text" value={danoMoral} onChange={e => setDanoMoral(e.target.value)}
+                placeholder="0,00" className="mt-1" />
+            </div>
+          </div>
           {error && <div className="mt-4 px-4 py-3 rounded-lg text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>{error}</div>}
           <button onClick={calcular} disabled={loading}
             className="mt-4 w-full py-3 rounded-xl font-semibold text-base"
@@ -739,6 +755,19 @@ export default function CalculadoraPage() {
               <SegurosEmbutidos valores={segurosContrato} onChange={setSegurosContrato} />
             </div>
           )}
+          <div className="mt-5 pt-4 border-t space-y-3" style={{ borderColor: "var(--border)" }}>
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text3)" }}>Pedidos adicionais</p>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={aplicarDobro} onChange={e => setAplicarDobro(e.target.checked)}
+                style={{ accentColor: "var(--gold)" }} />
+              <span className="text-sm" style={{ color: "var(--text2)" }}>Repetição em dobro (CDC art. 42)</span>
+            </label>
+            <div>
+              <Label>Dano moral (R$)</Label>
+              <Input type="text" value={danoMoral} onChange={e => setDanoMoral(e.target.value)}
+                placeholder="0,00" className="mt-1" />
+            </div>
+          </div>
           {error && <div className="mt-4 px-4 py-3 rounded-lg text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>{error}</div>}
           <button onClick={calcular} disabled={loading}
             className="mt-4 w-full py-3 rounded-xl font-semibold text-base"
@@ -929,12 +958,27 @@ export default function CalculadoraPage() {
                 {revResult.tipo === "emprestimo" && totalSeguros(segurosContrato) > 0 && (
                   <SummaryRow label="Seguros embutidos (restituíveis)" value={fmtBRL(totalSeguros(segurosContrato))} />
                 )}
+                {revResult.aplicar_dobro && revResult.subtotal_dobro !== undefined && (
+                  <SummaryRow label="Repetição em dobro (CDC art. 42)" value={fmtBRL(revResult.subtotal_dobro)} />
+                )}
+                {revResult.dano_moral !== undefined && revResult.dano_moral > 0 && (
+                  <SummaryRow label="Dano moral" value={fmtBRL(revResult.dano_moral)} />
+                )}
               </div>
               <div className="flex flex-col items-center justify-center rounded-xl p-6"
                 style={{ background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.2)" }}>
-                <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--text3)" }}>Total de excesso cobrado</p>
-                <p className="font-bold text-3xl tabular-nums" style={{ color: "var(--gold)" }}>{fmtBRL(revResult.total_excesso)}</p>
+                <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--text3)" }}>
+                  {revResult.total_geral !== undefined && revResult.total_geral !== revResult.total_excesso ? "Total geral (com pedidos adicionais)" : "Total de excesso cobrado"}
+                </p>
+                <p className="font-bold text-3xl tabular-nums" style={{ color: "var(--gold)" }}>
+                  {fmtBRL(revResult.total_geral ?? revResult.total_excesso)}
+                </p>
                 <p className="text-xs mt-1" style={{ color: "var(--text3)" }}>{revResult.total_parcelas} parcela(s)</p>
+                {revResult.total_geral !== undefined && revResult.total_geral !== revResult.total_excesso && (
+                  <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>
+                    Excesso base: {fmtBRL(revResult.total_excesso)}
+                  </p>
+                )}
               </div>
             </div>
           </Card>
@@ -979,6 +1023,9 @@ export default function CalculadoraPage() {
                       { label: "Parcela justa", valor: fmtBRL(revResult.pmt_justa) },
                       { label: "Excesso mensal", valor: fmtBRL(revResult.excesso_mensal) },
                       { label: "Total de excesso cobrado", valor: fmtBRL(revResult.total_excesso) },
+                      ...(revResult.aplicar_dobro && revResult.subtotal_dobro !== undefined ? [{ label: "( × ) Repetição em dobro — CDC art. 42, §único", valor: `${fmtBRL(revResult.total_excesso)} × 2 = ${fmtBRL(revResult.subtotal_dobro)}` }] : []),
+                      ...(revResult.dano_moral ? [{ label: "( + ) Dano Moral", valor: fmtBRL(revResult.dano_moral) }] : []),
+                      ...(revResult.total_geral !== undefined && revResult.total_geral !== revResult.total_excesso ? [{ label: "TOTAL GERAL", valor: fmtBRL(revResult.total_geral) }] : []),
                     ],
                   },
                   {

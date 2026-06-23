@@ -21,6 +21,8 @@ export async function POST(req: NextRequest) {
       data_calculo,
       taxa_bacen = null,
       total_seguros = 0,
+      aplicar_dobro = false,
+      dano_moral = 0,
     } = body;
 
     if (!pv || pv <= 0) return NextResponse.json({ error: "Valor financiado inválido." }, { status: 400 });
@@ -112,6 +114,11 @@ export async function POST(req: NextRequest) {
 
     const totalExcesso = round2(totalParcelas + totalSegurosCorrigido);
 
+    const subtotalDobro = aplicar_dobro ? round2(totalExcesso * 2) : undefined;
+    const danoMoralVal = dano_moral > 0 ? round2(dano_moral) : undefined;
+    const base = aplicar_dobro ? (subtotalDobro ?? totalExcesso) : totalExcesso;
+    const totalGeral = round2(base + (danoMoralVal ?? 0));
+
     return NextResponse.json({
       tipo,
       pv: round2(pv),
@@ -125,6 +132,10 @@ export async function POST(req: NextRequest) {
       total_parcelas: n_parcelas,
       total_seguros: round2(totalSegurosCorrigido),
       parcelas,
+      aplicar_dobro: aplicar_dobro || undefined,
+      subtotal_dobro: subtotalDobro,
+      dano_moral: danoMoralVal,
+      total_geral: totalGeral,
     });
   } catch (e: unknown) {
     console.error("[calculadora/revisional]", e);
