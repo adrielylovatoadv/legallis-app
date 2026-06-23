@@ -920,6 +920,10 @@ export default function CalculadoraPage() {
           <BotoesExport nome={`honorario-${new Date().toISOString().slice(0,10)}`} doc={{
             titulo: "Execução de Honorário",
             subtitulo: honResult.numero_processo ? `Processo: ${honResult.numero_processo}` : undefined,
+            modo: "honorario",
+            tribunal: honTribunal,
+            data_calculo: honDataCalc,
+            indice: honResult.indice_label,
             advogado: advogadoInfo,
             processo: honResult.numero_processo || undefined,
             secoes: [{
@@ -1009,6 +1013,10 @@ export default function CalculadoraPage() {
               </div>
               <BotoesExport nome={`revisional-${revResult.tipo}-${new Date().toISOString().slice(0,10)}`} doc={{
                 titulo: revResult.tipo === "veiculo" ? "Revisional de Veículo" : "Revisional de Contratos Bancários",
+                modo: revResult.tipo === "veiculo" ? "revisional_veiculo" : "revisional_emprestimo",
+                data_calculo: revDataCalc,
+                aplicar_dobro: revResult.aplicar_dobro,
+                indice: `Taxa de referência: ${revResult.taxa_referencia_pct.toFixed(4)}% a.m. | Taxa contratada: ${revResult.taxa_contratada_pct.toFixed(4)}% a.m.`,
                 advogado: advogadoInfo,
                 secoes: [
                   {

@@ -15,8 +15,10 @@ export interface ExportDoc {
   subtitulo?: string;
   data_calculo?: string;   // YYYY-MM-DD → DD/MM/AAAA no PDF
   tribunal?: string;
-  modo?: string;           // "inicial" | "execucao" | "honorario" | ...
+  modo?: string;           // "inicial" | "execucao" | "honorario" | "revisional_veiculo" | "revisional_emprestimo"
   aplicar_dobro?: boolean;
+  indice?: string;         // descrição do índice principal utilizado
+  criterios?: string[];    // critérios extras a exibir além dos automáticos
   advogado?: AdvogadoInfo;
   processo?: string;
   secoes: Array<{
@@ -266,49 +268,81 @@ export async function exportarPDF(doc: ExportDoc, nomeArquivo: string) {
   // ══════════════════════════════════════════════════════════════
   // CRITÉRIOS UTILIZADOS
   // ══════════════════════════════════════════════════════════════
-  if (doc.modo === "inicial" || doc.modo === "execucao") {
-    drawSectionHeading("Critérios Utilizados");
-
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(8);
-    pdf.setTextColor(...DARK);
-
+  {
     const isTJSP = doc.tribunal?.includes("TJSP");
     const siglaTribunal = doc.tribunal ?? "TJMG";
     const uf = siglaTribunal.replace("TJ", "");
-
     const criterios: string[] = [];
 
-    criterios.push(
-      isTJSP
-        ? "Atualização Monetária: Tabela Prática do TJSP (atualizada mensalmente pelo Tribunal de Justiça de São Paulo)."
-        : "Atualização Monetária: INPC (IBGE, série BCB 188) de julho/1995 a agosto/2024; IPCAe (série BCB 10764) de setembro/2024 em diante."
-    );
-    criterios.push(
-      "Juros de Mora: 0,5% ao mês até dezembro/2002; 1% ao mês de janeiro/2003 a agosto/2024; Taxa Selic mensal (BCB, série 4390) de setembro/2024 em diante (Lei 14.905/2024)."
-    );
-    criterios.push("Juros calculados sobre o débito corrigido — regime de juros simples (não composto).");
-    criterios.push(`Tribunal: ${siglaTribunal} (CGJ/${uf}).`);
+    const isRevisional = doc.modo === "revisional_veiculo" || doc.modo === "revisional_emprestimo";
 
-    if (doc.modo === "inicial" && doc.aplicar_dobro) {
+    if (doc.modo === "inicial" || doc.modo === "execucao") {
       criterios.push(
-        "Repetição em dobro aplicada nos termos do CDC art. 42, §único (EAREsp 676.608/RS — STJ, independe de comprovação de má-fé)."
+        isTJSP
+          ? "Atualização Monetária: Tabela Prática do TJSP (atualizada mensalmente pelo Tribunal de Justiça de São Paulo)."
+          : "Atualização Monetária: INPC (IBGE, série BCB 188) de julho/1995 a agosto/2024; IPCAe (BCB 10764) de setembro/2024 em diante."
       );
+      criterios.push(
+        "Juros de Mora: 0,5% ao mês até dezembro/2002; 1% ao mês de janeiro/2003 a agosto/2024; Taxa Selic mensal (BCB, série 4390) de setembro/2024 em diante (Lei 14.905/2024)."
+      );
+      criterios.push("Juros calculados sobre o débito corrigido — regime de juros simples (não composto).");
+      criterios.push(`Tribunal de referência: ${siglaTribunal} (CGJ/${uf}).`);
+      if (doc.modo === "inicial" && doc.aplicar_dobro) {
+        criterios.push(
+          "Repetição em dobro aplicada nos termos do CDC art. 42, §único (EAREsp 676.608/RS — STJ, independe de comprovação de má-fé)."
+        );
+      }
+    } else if (doc.modo === "honorario") {
+      if (doc.indice) {
+        criterios.push(`Índice de atualização monetária: ${doc.indice}.`);
+      } else {
+        criterios.push(
+          isTJSP
+            ? "Atualização Monetária: Tabela Prática do TJSP."
+            : "Atualização Monetária: INPC (BCB 188) até agosto/2024; IPCAe (BCB 10764) de setembro/2024 em diante."
+        );
+      }
+      criterios.push("Juros de mora: não aplicados na execução de honorários advocatícios contratuais.");
+      criterios.push("Base de cálculo: valor da causa atualizado monetariamente até a data do cálculo.");
+      if (siglaTribunal) criterios.push(`Tribunal de referência: ${siglaTribunal} (CGJ/${uf}).`);
+    } else if (isRevisional) {
+      criterios.push(
+        "Taxa contratada implícita: calculada pelo método de Newton-Raphson (IRR) a partir do valor financiado (PV), da parcela contratada e do número de parcelas."
+      );
+      criterios.push(
+        doc.indice
+          ? `Taxa de referência: ${doc.indice}.`
+          : "Taxa de referência: média BACEN para a modalidade (quando não informada, estimada com base na Taxa Selic vigente)."
+      );
+      criterios.push(
+        "Correção monetária do excesso de parcelas vencidas: INPC (IBGE, série BCB 188) até agosto/2024; IPCAe (BCB 10764) de setembro/2024 em diante."
+      );
+      criterios.push(
+        "Excesso apurado: diferença entre a parcela contratada e a parcela calculada com a taxa de referência (Price/SAC), aplicada sobre cada prestação já vencida."
+      );
+      if (doc.aplicar_dobro) {
+        criterios.push(
+          "Repetição em dobro aplicada nos termos do CDC art. 42, §único (EAREsp 676.608/RS — STJ)."
+        );
+      }
     }
 
-    for (const crit of criterios) {
-      const lines = pdf.splitTextToSize(crit, CW - 8);
-      if (y + lines.length * 4.6 > 268) { pdf.addPage(); y = 15; }
+    // critérios extras passados pelo chamador
+    if (doc.criterios?.length) criterios.push(...doc.criterios);
 
-      // bullet dourado
-      pdf.setFillColor(...GOLD);
-      pdf.circle(M + 2, y - 0.8, 0.9, "F");
-
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(8);
-      pdf.setTextColor(...DARK);
-      pdf.text(lines, M + 6, y);
-      y += lines.length * 4.6 + 2.5;
+    if (criterios.length > 0) {
+      drawSectionHeading("Critérios e Metodologia");
+      for (const crit of criterios) {
+        const lines = pdf.splitTextToSize(crit, CW - 8);
+        if (y + lines.length * 4.6 > 268) { pdf.addPage(); y = 15; }
+        pdf.setFillColor(...GOLD);
+        pdf.circle(M + 2, y - 0.8, 0.9, "F");
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(8);
+        pdf.setTextColor(...DARK);
+        pdf.text(lines, M + 6, y);
+        y += lines.length * 4.6 + 2.5;
+      }
     }
   }
 
