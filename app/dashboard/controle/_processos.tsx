@@ -130,19 +130,19 @@ function ProcessoRow({ p, onEdit, onDelete, onOk, onToggleAtencao }: {
   return (
     <tr style={{ borderBottom: "1px solid var(--border)" }}
       className={p.atencao ? "bg-red-500/5" : ""}>
-      <td className="py-2 pr-3 text-sm font-medium" style={{ color: p.atencao ? "#ef4444" : "var(--text)", maxWidth: 160 }}>
+      <td className="py-2 pr-3 text-sm font-medium" style={{ color: p.atencao ? "#ef4444" : "var(--text)", minWidth: 220 }}>
         <div className="truncate">
           {p.atencao && <span className="mr-1">🚨</span>}
           {p.autor}
         </div>
         {p.responsavel && <div className="text-xs" style={{ color:"var(--text3)" }}>{p.responsavel}</div>}
         {p.numero_processo && (
-          <div className="text-xs font-mono break-all" style={{ color:"var(--text3)" }}>{p.numero_processo}</div>
+          <div className="text-xs font-mono whitespace-nowrap" style={{ color:"var(--text3)" }}>{p.numero_processo}</div>
         )}
       </td>
-      <td className="py-2 pr-3 text-sm" style={{ color:"var(--text2)" }}>{p.reu}</td>
-      <td className="py-2 pr-3 text-xs max-w-32 truncate" style={{ color:"var(--text3)" }}>{p.objeto}</td>
-      <td className="py-2 pr-3 text-xs" style={{ color:"var(--text3)", maxWidth:160 }}>
+      <td className="py-2 pr-3 text-sm" style={{ color:"var(--text2)", minWidth: 80 }}>{p.reu}</td>
+      <td className="py-2 pr-3 text-xs truncate" style={{ color:"var(--text3)", maxWidth: 100 }}>{p.objeto}</td>
+      <td className="py-2 pr-3 text-xs" style={{ color:"var(--text3)", maxWidth:120 }}>
         <div className="truncate">{p.observacoes}</div>
       </td>
       <td className="py-2 pr-3 text-xs tabular-nums whitespace-nowrap"
