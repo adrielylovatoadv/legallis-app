@@ -137,8 +137,7 @@ function ProcessoRow({ p, onEdit, onDelete, onOk, onToggleAtencao }: {
         </div>
         {p.responsavel && <div className="text-xs" style={{ color:"var(--text3)" }}>{p.responsavel}</div>}
         {p.numero_processo && (
-          <div className="text-xs font-mono truncate" style={{ color:"var(--text3)" }}
-            title={p.numero_processo}>{p.numero_processo}</div>
+          <div className="text-xs font-mono break-all" style={{ color:"var(--text3)" }}>{p.numero_processo}</div>
         )}
       </td>
       <td className="py-2 pr-3 text-sm" style={{ color:"var(--text2)" }}>{p.reu}</td>
