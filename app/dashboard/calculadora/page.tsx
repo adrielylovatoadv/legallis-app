@@ -364,6 +364,20 @@ export default function CalculadoraPage() {
   const [revResult, setRevResult] = useState<RevisionalResult | null>(null);
   const [atualizando, setAtualizando] = useState(false);
   const [processoInfo, setProcessoInfo] = useState({ numero: "", parte: "", advogado: "" });
+  const [indicesStatus, setIndicesStatus] = useState<{
+    ultima_atualizacao: string | null;
+    proxima_atualizacao_tjsp: string | null;
+    cobertura: { inpc: string; ipcae: string; selic: string; tjsp: string; tjsp_raw: string | null } | null;
+  }>({ ultima_atualizacao: null, proxima_atualizacao_tjsp: null, cobertura: null });
+
+  const fetchIndicesStatus = async () => {
+    try {
+      const r = await fetch("/api/calculadora/indices/status");
+      if (r.ok) setIndicesStatus(await r.json());
+    } catch { /* silencioso */ }
+  };
+
+  useEffect(() => { fetchIndicesStatus(); }, []);
 
   const parseBRL = (s: string) => parseFloat(s.replace(/\./g, "").replace(",", ".")) || 0;
   const totalSeguros = (seg: Record<string, string>) =>
@@ -445,7 +459,8 @@ export default function CalculadoraPage() {
     setAtualizando(true);
     try { await fetchAPI("/calculadora/indices/atualizar", { method: "POST" }); }
     catch { /* ignore */ }
-    setTimeout(() => setAtualizando(false), 2000);
+    await fetchIndicesStatus();
+    setAtualizando(false);
   };
 
   const exportarPDF = () => {
@@ -463,7 +478,7 @@ export default function CalculadoraPage() {
           <h1 className="font-serif text-2xl font-semibold" style={{ color: "var(--text)" }}>Calculadora Jurídica</h1>
           <p className="text-sm mt-0.5" style={{ color: "var(--text3)" }}>Correção monetária e juros — TJMG / TJSP</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {(rows.length > 0 || honResult || revResult) && (
             <button onClick={exportarPDF}
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
@@ -475,15 +490,44 @@ export default function CalculadoraPage() {
               PDF
             </button>
           )}
-          <button onClick={atualizarIndices} disabled={atualizando}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors"
-            style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text2)" }}>
-            <svg className={`w-4 h-4 ${atualizando ? "animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            {atualizando ? "Atualizando..." : "Atualizar índices"}
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={atualizarIndices} disabled={atualizando}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors"
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text2)" }}>
+              <svg className={`w-4 h-4 ${atualizando ? "animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              {atualizando ? "Atualizando..." : "Atualizar índices"}
+            </button>
+            {indicesStatus.proxima_atualizacao_tjsp && (() => {
+              const [d, m, y] = indicesStatus.proxima_atualizacao_tjsp!.split("/").map(Number);
+              const proximaDate = new Date(y, m - 1, d);
+              const hoje = new Date();
+              hoje.setHours(0, 0, 0, 0);
+              const diasRestantes = Math.ceil((proximaDate.getTime() - hoje.getTime()) / 86400000);
+              const vencida = diasRestantes < 0;
+              const urgente = diasRestantes >= 0 && diasRestantes <= 7;
+              return (
+                <div className="flex flex-col items-start"
+                  title={`INPC: ${indicesStatus.cobertura?.inpc} · IPCA-E: ${indicesStatus.cobertura?.ipcae} · Selic: ${indicesStatus.cobertura?.selic} · TJSP: ${indicesStatus.cobertura?.tjsp}`}>
+                  <span className="text-xs leading-none mb-0.5" style={{ color: "var(--text3)" }}>
+                    TJSP — próxima atualização
+                  </span>
+                  <span className="text-xs font-semibold leading-none px-2 py-1 rounded"
+                    style={{
+                      background: vencida ? "rgba(239,68,68,0.12)" : urgente ? "rgba(245,158,11,0.12)" : "rgba(34,197,94,0.10)",
+                      color: vencida ? "#f87171" : urgente ? "#f59e0b" : "#4ade80",
+                      border: `1px solid ${vencida ? "rgba(239,68,68,0.3)" : urgente ? "rgba(245,158,11,0.3)" : "rgba(34,197,94,0.25)"}`,
+                    }}>
+                    {vencida ? "⚠ Vencida — " : urgente ? "⏰ " : "✓ "}
+                    {indicesStatus.proxima_atualizacao_tjsp}
+                    {!vencida && diasRestantes <= 30 && ` (${diasRestantes}d)`}
+                  </span>
+                </div>
+              );
+            })()}
+          </div>
         </div>
       </div>
 
