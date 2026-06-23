@@ -119,43 +119,53 @@ export function calculateCharge(
   dateCharge: Date,
   dateCalc: Date,
   idx: Indices,
-  tribunal = "TJMG"
+  tribunal = "TJMG",
+  dataMora?: Date   // termo inicial dos juros (ex: data da citação). Se omitido = dateCharge
 ): ChargeResult {
   if (dateCharge >= dateCalc) {
     return { corrected: value, correction_factor: 1, interest_pct: 0, interest_value: 0, total: value, months: 0, indice_label: "Sem atualização" };
   }
 
   const isTJSP = tribunal.includes("TJSP");
+  // Mora começa em dataMora (se posterior ao débito e anterior ao cálculo), senão no débito
+  const moraStart = (dataMora && dataMora > dateCharge && dataMora < dateCalc)
+    ? dataMora : dateCharge;
+
   let corrected: number, correctionFactor: number, months: number;
   let totalInterestPct = 0;
   const indicesUsados: string[] = [];
 
   if (isTJSP) {
+    // Correção: Tabela Prática TJSP (dateCharge → dateCalc)
     [corrected, correctionFactor, months] = calcCorrecaoTJSP(value, dateCharge, dateCalc, idx);
-    for (const [y, m] of iterMonths(dateCharge, dateCalc)) {
+    // Juros: a partir de moraStart
+    for (const [y, m] of iterMonths(moraStart, dateCalc)) {
       totalInterestPct += getInterestRate(y, m, idx);
-      indicesUsados.push(y < 2024 || (y === 2024 && m <= 8) ? "TJSP-INPC" : "TJSP-14905/Selic-real");
+      indicesUsados.push(y < 2024 || (y === 2024 && m <= 8) ? "TJSP-INPC" : "TJSP-14905/Selic");
     }
   } else {
+    // Correção TJMG: INPC/IPCAe (dateCharge → dateCalc)
     correctionFactor = 1.0;
     months = 0;
     for (const [y, m] of iterMonths(dateCharge, dateCalc)) {
       const corrIdx = getCorrectionIndex(y, m, idx);
       correctionFactor *= 1 + corrIdx / 100;
-      totalInterestPct += getInterestRate(y, m, idx);
       months++;
-      indicesUsados.push(y < 2024 || (y === 2024 && m <= 8) ? "INPC" : "IPCA-E/Selic");
+      indicesUsados.push(y < 2024 || (y === 2024 && m <= 8) ? "INPC" : "IPCAe");
     }
     corrected = value * correctionFactor;
+    // Juros: a partir de moraStart (pode ser data da citação)
+    for (const [y, m] of iterMonths(moraStart, dateCalc)) {
+      totalInterestPct += getInterestRate(y, m, idx);
+    }
+    if (moraStart > dateCharge) indicesUsados.push("Selic/1%");
   }
 
   const interestValue = corrected * totalInterestPct / 100;
   const total = corrected + interestValue;
 
   const uniq = [...new Set(indicesUsados)];
-  const indice_label = isTJSP
-    ? "Tabela Prática TJSP"
-    : uniq.join("/");
+  const indice_label = isTJSP ? "Tabela Prática TJSP" : uniq.join("/");
 
   return {
     corrected: round2(corrected),
@@ -204,14 +214,13 @@ export function calcCorrigirExcesso(
 ): number {
   if (dataVenc >= dataCalc || excesso <= 0) return excesso;
   let fatorCorr = 1.0;
-  let mesesMora = 0;
+  let totalMoraPct = 0;
   for (const [y, m] of iterMonths(dataVenc, dataCalc)) {
     fatorCorr *= 1 + getCorrectionIndex(y, m, idx) / 100;
-    mesesMora++;
+    totalMoraPct += getInterestRate(y, m, idx); // Selic pós-set/2024 (Lei 14.905/2024)
   }
   const corrigido = excesso * fatorCorr;
-  const mora = corrigido * mesesMora * 0.01;
-  return round2(corrigido + mora);
+  return round2(corrigido + corrigido * totalMoraPct / 100);
 }
 
 // ── Correção de honorário ─────────────────────────────────────────────────────
