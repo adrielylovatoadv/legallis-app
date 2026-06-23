@@ -36,6 +36,7 @@ interface RevisionalResult {
   total_parcelas: number;
   aplicar_dobro?: boolean; subtotal_dobro?: number;
   dano_moral?: number; total_geral?: number;
+  taxa_estimada?: boolean;
 }
 
 // ── componentes base ───────────────────────────────────────────
@@ -1016,7 +1017,9 @@ export default function CalculadoraPage() {
                 modo: revResult.tipo === "veiculo" ? "revisional_veiculo" : "revisional_emprestimo",
                 data_calculo: revDataCalc,
                 aplicar_dobro: revResult.aplicar_dobro,
-                indice: `Taxa de referência: ${revResult.taxa_referencia_pct.toFixed(4)}% a.m. | Taxa contratada: ${revResult.taxa_contratada_pct.toFixed(4)}% a.m.`,
+                indice: revResult.taxa_estimada
+                  ? `${revResult.taxa_referencia_pct.toFixed(4)}% a.m. — estimada com base na Taxa Selic (informe a taxa BACEN para a modalidade para maior precisão)`
+                  : `${revResult.taxa_referencia_pct.toFixed(4)}% a.m. — informada pelo usuário`,
                 advogado: advogadoInfo,
                 secoes: [
                   {

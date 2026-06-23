@@ -311,7 +311,7 @@ export async function exportarPDF(doc: ExportDoc, nomeArquivo: string) {
       );
       criterios.push(
         doc.indice
-          ? `Taxa de referência: ${doc.indice}.`
+          ? `Taxa de referência BACEN (média de mercado para a modalidade): ${doc.indice}.`
           : "Taxa de referência: média BACEN para a modalidade (quando não informada, estimada com base na Taxa Selic vigente)."
       );
       criterios.push(

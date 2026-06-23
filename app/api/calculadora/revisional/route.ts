@@ -47,8 +47,10 @@ export async function POST(req: NextRequest) {
 
     // Taxa de referência: BACEN informada OU estimativa conservadora baseada em Selic
     let taxaReferenciaPct: number;
+    let taxaEstimada: boolean;
     if (taxa_bacen && taxa_bacen > 0) {
       taxaReferenciaPct = taxa_bacen;
+      taxaEstimada = false;
     } else {
       // Usa Selic mensal mais recente disponível como proxy da taxa de mercado
       const selicKeys = Object.keys(idx.selic).sort();
@@ -58,6 +60,7 @@ export async function POST(req: NextRequest) {
         ? Math.min(taxaContratadaPct * 0.7, Math.max(ultimaSelic * 1.5, 1.5))
         : Math.min(taxaContratadaPct * 0.7, Math.max(ultimaSelic * 2, 2.0));
       taxaReferenciaPct = round4(taxaReferenciaPct);
+      taxaEstimada = true;
     }
 
     // Parcela justa com a taxa de referência
@@ -125,6 +128,7 @@ export async function POST(req: NextRequest) {
       n_parcelas,
       taxa_contratada_pct: round4(taxaContratadaPct),
       taxa_referencia_pct: round4(taxaReferenciaPct),
+      taxa_estimada: taxaEstimada,
       pmt_contratada: round2(pmt_contratada),
       pmt_justa: pmtJusta,
       excesso_mensal: excessoMensal,
