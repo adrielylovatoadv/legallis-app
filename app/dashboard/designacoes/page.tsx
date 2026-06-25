@@ -502,6 +502,17 @@ function ProcessoRow({ p, onOk, onEdit, showDate = false, onConcluir, onRedesign
             <span className={`font-medium ${badgeAndamento(p.andamento)}`}>{p.andamento}</span>
             {showDate && p.data && <span className="ml-2" style={{ color: "var(--gold)" }}>{fmtData(p.data)}{p.hora && ` ${p.hora}`}</span>}
           </p>
+          {p.numero_processo && (
+            <p className="text-xs mt-1 flex items-center gap-1.5" style={{ color: "var(--text2)" }}>
+              <span className="font-mono select-all">{p.numero_processo}</span>
+              <button
+                onClick={() => navigator.clipboard.writeText(p.numero_processo)}
+                title="Copiar número do processo"
+                className="text-xs px-1 rounded hover:opacity-80"
+                style={{ color: "var(--text3)", background: "var(--surface)", border: "1px solid var(--border)" }}
+              >⎘</button>
+            </p>
+          )}
         </div>
         <div className="flex gap-1 shrink-0 flex-wrap justify-end">
           <button onClick={() => onOk(p.id)} title="Marcar OK"
