@@ -40,9 +40,9 @@ export async function POST(req: NextRequest) {
     if (!item) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
 
     if (action === "concluir") {
-      item.andamento = "AGUARDANDO DESPACHO";
+      item.andamento = "PROTOCOLADO";
       item.responsavel = "";
-      const msg = `${userName} concluiu tarefa de petição inicial: ${item.cliente} x ${item.reu}. Status: AGUARDANDO DESPACHO.`;
+      const msg = `${userName} concluiu tarefa de petição inicial: ${item.cliente} x ${item.reu}. Status: PROTOCOLADO.`;
       await addSystemMessage(msg, "system", tid);
       logEvent({ tipo: "Conclusão de Tarefa", descricao: msg, usuario: userName, usuarioId: userId, detalhe: `Inicial ID ${id}` });
       await saveData(data, tid);
