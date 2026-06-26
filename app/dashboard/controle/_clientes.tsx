@@ -72,7 +72,21 @@ function ClienteCard({ c, onEdit, onDelete }: {
 }) {
   const [aberto, setAberto] = useState(false);
   const [mostraSenhas, setMostraSenhas] = useState(false);
+  const [senhas, setSenhas] = useState<{ senha_gov: string; senha_serasa: string } | null>(null);
+  const [loadingSenhas, setLoadingSenhas] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  async function toggleSenhas() {
+    if (mostraSenhas) { setMostraSenhas(false); return; }
+    if (!senhas) {
+      setLoadingSenhas(true);
+      try {
+        const res = await fetch(`/api/controle/clientes/${c.id}/senhas`);
+        if (res.ok) setSenhas(await res.json());
+      } finally { setLoadingSenhas(false); }
+    }
+    setMostraSenhas(true);
+  }
   const ativos = c._ativos || [];
   const finalizados = c._finalizados || [];
   const iniciais = c._iniciais || [];
@@ -132,18 +146,16 @@ function ClienteCard({ c, onEdit, onDelete }: {
             {c.endereco && <div className="col-span-2"><span style={{ color:"var(--text3)" }}>Endereço: </span>{c.endereco}</div>}
             <div>
               <span style={{ color:"var(--text3)" }}>Senha Gov.br: </span>
-              {mostraSenhas ? (c.senha_gov || "—") : "••••••••"}
+              {mostraSenhas ? (senhas?.senha_gov || "—") : "••••••••"}
             </div>
-            {c.senha_serasa && (
-              <div>
-                <span style={{ color:"var(--text3)" }}>Senha Serasa: </span>
-                {mostraSenhas ? c.senha_serasa : "••••••••"}
-              </div>
-            )}
             <div>
-              <button onClick={() => setMostraSenhas(!mostraSenhas)} className="text-xs underline"
+              <span style={{ color:"var(--text3)" }}>Senha Serasa: </span>
+              {mostraSenhas ? (senhas?.senha_serasa || "—") : "••••••••"}
+            </div>
+            <div>
+              <button onClick={toggleSenhas} disabled={loadingSenhas} className="text-xs underline"
                 style={{ color:"var(--gold)" }}>
-                {mostraSenhas ? "Ocultar senhas" : "👁️ Mostrar senhas"}
+                {loadingSenhas ? "Carregando..." : mostraSenhas ? "Ocultar senhas" : "👁️ Mostrar senhas"}
               </button>
             </div>
           </div>
