@@ -180,6 +180,15 @@ export function FinalizadosTab() {
     load();
   };
 
+  const handleReabrir = async (index: number) => {
+    await fetch("/api/controle/finalizados/reabrir", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ index }),
+    });
+    load();
+  };
+
   const filtered = finalizados.filter(f => {
     const b = normText(busca);
     const matchBusca = !busca ||
@@ -307,6 +316,11 @@ export function FinalizadosTab() {
                       </span>
                     ) : (
                       <>
+                        <button onClick={() => handleReabrir(realIdx)} title="Voltar para andamento"
+                          className="text-xs px-2 py-1 rounded"
+                          style={{ background: "rgba(96,165,250,0.12)", color: "#60a5fa", border: "1px solid var(--border)" }}>
+                          ↩️ Reabrir
+                        </button>
                         <button onClick={() => setModal({ entry: f, index: realIdx })}
                           className="text-xs px-2 py-1 rounded"
                           style={{ background: "var(--surface2)", color: "var(--text2)", border: "1px solid var(--border)" }}>

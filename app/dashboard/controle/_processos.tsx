@@ -9,7 +9,7 @@ import {
 
 const POR_PAGINA = 50;
 
-type Aba = "ativos" | "audiencias" | "prazos" | "standby" | "suspenso" | "procedente" | "finalizados" | "novo";
+type Aba = "ativos" | "audiencias" | "prazos" | "standby" | "suspenso" | "procedente" | "novo";
 
 function Sel({ children, ...p }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
@@ -113,13 +113,12 @@ function ProcessoForm({ initial, onSave, onCancel, responsaveis = [] }: {
   );
 }
 
-function ProcessoRow({ p, onEdit, onDelete, onOk, onToggleAtencao, onReabrir }: {
+function ProcessoRow({ p, onEdit, onDelete, onOk, onToggleAtencao }: {
   p: Processo;
   onEdit: (p: Processo) => void;
   onDelete: (id: string) => void;
   onOk: (id: string) => void;
   onToggleAtencao: (id: string, val: boolean) => void;
-  onReabrir?: (id: string) => void;
 }) {
   const [confirming, setConfirming] = useState(false);
   const url = gcalUrl(p);
@@ -170,14 +169,9 @@ function ProcessoRow({ p, onEdit, onDelete, onOk, onToggleAtencao, onReabrir }: 
       </td>
       <td className="py-2">
         <div className="flex flex-wrap gap-1">
-          {onReabrir
-            ? <button onClick={() => onReabrir(p.id)} title="Voltar para andamento"
-                className="text-xs px-2 py-1 rounded"
-                style={{ background:"rgba(96,165,250,0.12)", color:"#60a5fa" }}>↩️ Reabrir</button>
-            : <button onClick={() => onOk(p.id)} title="Marcar OK"
-                className="text-xs px-2 py-1 rounded"
-                style={{ background:"rgba(34,197,94,0.12)", color:"#4ade80" }}>✅</button>
-          }
+          <button onClick={() => onOk(p.id)} title="Marcar OK"
+            className="text-xs px-2 py-1 rounded"
+            style={{ background:"rgba(34,197,94,0.12)", color:"#4ade80" }}>✅</button>
           <button onClick={() => onToggleAtencao(p.id, !p.atencao)} title="Toggle atenção"
             className="text-xs px-2 py-1 rounded"
             style={{ background: p.atencao ? "rgba(239,68,68,0.15)" : "var(--surface2)", color: p.atencao ? "#f87171" : "var(--text3)", border:"1px solid var(--border)" }}>
@@ -270,7 +264,6 @@ export function ProcessosTab() {
   }));
   const suspensos = filtrar(processos.filter(p => isSuspenso(p) && !isFin(p)));
   const procedentes = filtrar(processos.filter(p => isProcedente(p) && !isFin(p)));
-  const finalizados = filtrar(processos.filter(isFin));
 
   const handleSave = async (form: Omit<Processo,"id"|"criado_em">) => {
     if (editando) { await updateProcesso(editando.id, form); setEditando(null); }
@@ -283,10 +276,6 @@ export function ProcessosTab() {
     await updateProcesso(id, { atencao: val });
     load();
   };
-  const handleReabrir = async (id: string) => {
-    await updateProcesso(id, { andamento: "", finalizado: false });
-    load();
-  };
 
   const ABAS: { id: Aba; label: string }[] = [
     { id:"ativos", label:`📋 Ativos (${processos.filter(p => !isFin(p)).length})` },
@@ -295,7 +284,6 @@ export function ProcessosTab() {
     { id:"standby", label:`⏸️ Standby (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); const isAud=a.includes("AIJ")||a.startsWith("AC"); return ((!p.data)||(isAud&&p.data<hoje))&&!isFin(p)&&a!=="SUSPENSO"&&a!=="PROCEDENTE"; }).length})` },
     { id:"suspenso", label:`⏸ Suspenso (${processos.filter(p => (p.andamento||"").toUpperCase()==="SUSPENSO"&&!isFin(p)).length})` },
     { id:"procedente", label:`✅ Procedente (${processos.filter(p => (p.andamento||"").toUpperCase()==="PROCEDENTE"&&!isFin(p)).length})` },
-    { id:"finalizados", label:`🏁 Finalizados (${processos.filter(isFin).length})` },
     { id:"novo", label:"➕ Novo" },
   ];
 
@@ -343,8 +331,7 @@ export function ProcessosTab() {
                         <ProcessoForm initial={editando} onSave={handleSave} onCancel={() => setEditando(null)} responsaveis={users} />
                       </td></tr>
                     : <ProcessoRow key={p.id} p={p} onEdit={setEditando} onDelete={handleDelete}
-                        onOk={handleOk} onToggleAtencao={handleToggleAtencao}
-                        onReabrir={aba === "finalizados" ? handleReabrir : undefined} />
+                        onOk={handleOk} onToggleAtencao={handleToggleAtencao} />
                 )}
               </tbody>
             </table>
@@ -393,7 +380,6 @@ export function ProcessosTab() {
     : aba === "prazos" ? prazos
     : aba === "suspenso" ? suspensos
     : aba === "procedente" ? procedentes
-    : aba === "finalizados" ? finalizados
     : standby;
 
   return (
