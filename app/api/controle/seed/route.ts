@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
     finalizados_externos_sem_honor: body.finalizados_externos_sem_honor || [],
     finalizados_externos_acordos: body.finalizados_externos_acordos || [],
     finalizados_execucao: body.finalizados_execucao || [],
+    redesignacoes: body.redesignacoes || [],
   };
 
   await saveDataAsync(safeData, tid);

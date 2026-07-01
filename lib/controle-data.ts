@@ -43,6 +43,23 @@ export interface FinalizadoExecucao {
   honorarios: number; repasse_cliente: number; status: string; observacoes?: string;
 }
 
+export type StatusRedesignacao = "pendente" | "aceita" | "recusada";
+
+export interface Redesignacao {
+  id: string;
+  tipo: "processo" | "inicial";
+  itemId: string;
+  label: string;
+  deUserId: string;
+  deUserName: string;
+  paraUserId: string;
+  paraUserName: string;
+  motivo: string;
+  status: StatusRedesignacao;
+  criado_em: string;
+  respondido_em?: string;
+}
+
 export interface ControleData {
   processos: Processo[];
   clientes: Cliente[];
@@ -50,6 +67,7 @@ export interface ControleData {
   finalizados_externos_sem_honor: FinalizadoSemHonor[];
   finalizados_externos_acordos: FinalizadoAcordo[];
   finalizados_execucao: FinalizadoExecucao[];
+  redesignacoes: Redesignacao[];
 }
 
 function parseRaw(d: Partial<ControleData>): ControleData {
@@ -73,11 +91,12 @@ function parseRaw(d: Partial<ControleData>): ControleData {
     finalizados_externos_sem_honor: d.finalizados_externos_sem_honor || [],
     finalizados_externos_acordos: d.finalizados_externos_acordos || [],
     finalizados_execucao: (d as ControleData).finalizados_execucao || [],
+    redesignacoes: (d as ControleData).redesignacoes || [],
   };
 }
 
 function emptyData(): ControleData {
-  return { processos: [], clientes: [], iniciais: [], finalizados_externos_sem_honor: [], finalizados_externos_acordos: [], finalizados_execucao: [] };
+  return { processos: [], clientes: [], iniciais: [], finalizados_externos_sem_honor: [], finalizados_externos_acordos: [], finalizados_execucao: [], redesignacoes: [] };
 }
 
 function readFromFile(): ControleData {

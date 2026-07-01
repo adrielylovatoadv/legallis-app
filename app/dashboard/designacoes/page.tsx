@@ -194,6 +194,9 @@ export default function DesignacoesPage() {
   const [admins, setAdmins] = useState<{ id: string; name: string }[]>([]);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
   const [cadastroProcesso, setCadastroProcesso] = useState<{ autor: string; reu: string; objeto: string } | null>(null);
+  const [pendentesRecebidas, setPendentesRecebidas] = useState<{
+    id: string; tipo: "processo"|"inicial"; label: string; deUserName: string; motivo: string;
+  }[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -204,7 +207,18 @@ export default function DesignacoesPage() {
     } finally { setLoading(false); }
   }, []);
 
+  const loadPendentes = useCallback(async () => {
+    try {
+      const res = await fetch("/api/designacoes");
+      if (res.ok) {
+        const json = await res.json();
+        setPendentesRecebidas(json.recebidas || []);
+      }
+    } catch { /* silencioso */ }
+  }, []);
+
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { loadPendentes(); }, [loadPendentes]);
   useEffect(() => { if (userName) setResponsavelFiltro(userName); }, [userName]);
   useEffect(() => {
     fetch("/api/users").then(r => r.json()).then((users: { id: string; name: string }[]) => {
@@ -292,6 +306,20 @@ export default function DesignacoesPage() {
     }
   };
 
+  const handleResponderRedesignacao = async (redesignacaoId: string, aceitar: boolean) => {
+    const res = await fetch("/api/designacoes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "responder_redesignacao", redesignacaoId, aceitar }),
+    });
+    if (res.ok) {
+      setActionMsg(aceitar ? "Redesignação aceita — prazo transferido para você." : "Solicitação recusada.");
+      loadPendentes();
+      load();
+      setTimeout(() => setActionMsg(null), 4000);
+    }
+  };
+
   if (loading) return (
     <div className="p-6 flex items-center justify-center min-h-64">
       <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
@@ -359,6 +387,34 @@ export default function DesignacoesPage() {
           style={{ background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.3)", color: "#4ade80" }}>
           ✓ {actionMsg}
         </div>
+      )}
+
+      {/* Solicitações de redesignação recebidas */}
+      {pendentesRecebidas.length > 0 && (
+        <Card>
+          <h2 className="font-semibold mb-3" style={{ color: "#facc15" }}>📨 Solicitações de Redesignação para você ({pendentesRecebidas.length})</h2>
+          <div className="space-y-2">
+            {pendentesRecebidas.map(r => (
+              <div key={r.id} className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg flex-wrap"
+                style={{ background: "rgba(234,179,8,0.06)", border: "1px solid rgba(234,179,8,0.25)" }}>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-sm" style={{ color: "var(--text)" }}>{r.label}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>
+                    {r.deUserName} pede redesignação — {r.motivo}
+                  </p>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <button onClick={() => handleResponderRedesignacao(r.id, true)}
+                    className="text-xs px-3 py-1.5 rounded font-semibold"
+                    style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>Aceitar</button>
+                  <button onClick={() => handleResponderRedesignacao(r.id, false)}
+                    className="text-xs px-3 py-1.5 rounded"
+                    style={{ background: "var(--surface2)", color: "var(--text2)", border: "1px solid var(--border)" }}>Recusar</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
       )}
 
       {/* Cabeçalho */}
