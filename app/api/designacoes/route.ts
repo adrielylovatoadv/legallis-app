@@ -37,19 +37,18 @@ export async function POST(req: NextRequest) {
     pedido.status = aceitar ? "aceita" : "recusada";
     pedido.respondido_em = new Date().toISOString();
 
-    if (aceitar) {
-      if (pedido.tipo === "processo") {
-        const item = data.processos.find(p => p.id === pedido.itemId);
-        if (item) item.responsavel = pedido.paraUserName;
-      } else {
-        const item = data.iniciais.find(i => i.id === pedido.itemId);
-        if (item) item.responsavel = pedido.paraUserName;
-      }
+    const item = pedido.tipo === "processo"
+      ? data.processos.find(p => p.id === pedido.itemId)
+      : data.iniciais.find(i => i.id === pedido.itemId);
+    if (item) {
+      // Aceita: transfere para quem respondeu. Recusa: volta sem responsável,
+      // pra não ficar "esquecido" com quem já pediu pra se livrar da tarefa.
+      item.responsavel = aceitar ? pedido.paraUserName : "";
     }
 
     const msg = aceitar
       ? `${userName} aceitou a redesignação de "${pedido.label}" solicitada por ${pedido.deUserName}.`
-      : `${userName} recusou a redesignação de "${pedido.label}" solicitada por ${pedido.deUserName}.`;
+      : `${userName} recusou a redesignação de "${pedido.label}" solicitada por ${pedido.deUserName}. O item voltou sem responsável.`;
     const conv = await getOrCreateDM(userId, pedido.deUserId, tid);
     await addMessage({ conversationId: conv.id, from: userId, fromName: userName, text: msg, type: "user" }, tid);
     logEvent({ tipo: "Redesignação", descricao: msg, usuario: userName, usuarioId: userId, detalhe: `${pedido.tipo} ID ${pedido.itemId}` });
