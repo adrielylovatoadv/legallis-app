@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getDataAsync as getData, COLS, MESES } from "@/lib/financeiro-data";
+import { getDataAsync as getData, COLS, MESES, calcAcordo } from "@/lib/financeiro-data";
 
 const COL_TO_MES: Record<string, string> = {
   "Out":"Out/2025","Nov":"Nov/2025","Dez":"Dez/2025",
@@ -16,17 +16,20 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   const tid = session.user.tenantId;
   const d = await getData(tid);
+  // Alguns acordos antigos têm "honorarios" zerado mesmo com valor_acordo preenchido —
+  // recalcula na hora, igual a rota /api/financeiro/acordos já faz.
+  const acordos = d.acordos.map(a => ({ ...a, honorarios: a.honorarios || calcAcordo(a.valor_acordo || 0) }));
 
   // Receitas recebidas (não pendentes)
   const receitasPagas = [
-    ...d.acordos.filter(a => a.status !== "pendente").map(a => ({ mes: a.mes, valor: a.honorarios })),
+    ...acordos.filter(a => a.status !== "pendente").map(a => ({ mes: a.mes, valor: a.honorarios })),
     ...d.execucoes.filter(e => e.status !== "pendente").map(e => ({ mes: e.mes, valor: e.honorarios })),
     ...d.honorarios_iniciais.filter(h => h.status === "pago").map(h => ({ mes: h.mes || "", valor: h.valor })),
   ];
 
   // Receitas pendentes
   const receitasPendentes = [
-    ...d.acordos.filter(a => a.status === "pendente").map(a => ({ tipo: "acordo", cliente: a.cliente, mes: a.mes, valor: a.honorarios, processo: a.processo })),
+    ...acordos.filter(a => a.status === "pendente").map(a => ({ tipo: "acordo", cliente: a.cliente, mes: a.mes, valor: a.honorarios, processo: a.processo })),
     ...d.execucoes.filter(e => e.status === "pendente").map(e => ({ tipo: "execucao", cliente: e.cliente, mes: e.mes, valor: e.honorarios, processo: e.processo })),
     ...d.honorarios_iniciais.filter(h => h.status === "pendente").map(h => ({ tipo: "inicial", cliente: h.cliente, mes: h.mes || "", valor: h.valor, observacao: h.observacao })),
   ];
@@ -53,7 +56,7 @@ export async function GET() {
     if (m && !mesMap[m]) mesMap[m] = { honorarios_recebido: 0, honorarios_pendente: 0, fixas: 0, variaveis: 0 };
   };
 
-  for (const a of d.acordos) {
+  for (const a of acordos) {
     if (!a.mes) continue;
     ensureMes(a.mes);
     if (a.status !== "pendente") mesMap[a.mes].honorarios_recebido += a.honorarios;
