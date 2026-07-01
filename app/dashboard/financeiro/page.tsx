@@ -236,9 +236,14 @@ function AcordoForm({ initial, onSave, onCancel }: {
   const blank = { mes: getCurrentMes(), data_pagamento:"", cliente:"", reu:"", objeto:"", processo:"", valor_acordo:0, status:"pendente" as Status };
   const [form, setForm] = useState({ ...blank, ...(initial || {}) });
   const [saving, setSaving] = useState(false);
-  const set = (k: string, v: string | number) => setForm(p => ({ ...p, [k]: v }));
+  const [erroValor, setErroValor] = useState(false);
+  const set = (k: string, v: string | number) => {
+    setForm(p => ({ ...p, [k]: v }));
+    if (k === "valor_acordo") setErroValor(false);
+  };
 
   const submit = async () => {
+    if (!(form.valor_acordo > 0)) { setErroValor(true); return; }
     setSaving(true);
     try { await onSave(form); } finally { setSaving(false); }
   };
@@ -281,7 +286,9 @@ function AcordoForm({ initial, onSave, onCancel }: {
         <div>
           <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Valor do Acordo (R$)</span>
           <Inp value={form.valor_acordo || ""} type="number" step="0.01" min="0"
-            onChange={e => set("valor_acordo", parseFloat(e.target.value) || 0)} />
+            onChange={e => set("valor_acordo", parseFloat(e.target.value) || 0)}
+            style={erroValor ? { background:"rgba(239,68,68,0.08)", border:"1px solid #ef4444", color:"var(--text)" } : undefined} />
+          {erroValor && <p className="text-xs mt-1" style={{ color:"#f87171" }}>Informe o valor do acordo (não pode ser R$ 0,00)</p>}
         </div>
         <div>
           <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Status</span>

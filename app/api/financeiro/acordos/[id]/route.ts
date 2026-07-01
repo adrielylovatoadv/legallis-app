@@ -8,6 +8,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const tid = session.user.tenantId;
   const { id } = await params;
   const body = await req.json();
+  if (body.valor_acordo !== undefined && !(body.valor_acordo > 0)) {
+    return NextResponse.json({ error: "Valor do acordo deve ser maior que zero" }, { status: 400 });
+  }
   const d = await getData(tid);
   const idx = d.acordos.findIndex(a => a.id === id);
   if (idx === -1) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
