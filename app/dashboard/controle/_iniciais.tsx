@@ -7,6 +7,7 @@ import {
   type Inicial,
 } from "@/lib/controle";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { DateField } from "@/components/ui/DateField";
 
 const ANDAMENTOS_PENDENTES = ["FAZER INICIAL","EM ANDAMENTO","AGUARDAR","AGUARDAR DOCS","AGUARDAR CONTRATO","AGUARDAR LIMINAR","ENVIAR NOTIFICAÇÃO","AGUARDAR NOTIFICAÇÃO","ASSINAR PROCURAÇÃO"];
 const ANDAMENTOS_CONCLUIDOS = ["PROTOCOLADO","ARQUIVADO"];
@@ -32,7 +33,7 @@ function SelectField({ children, ...props }: React.SelectHTMLAttributes<HTMLSele
 function InicialForm({ initial, onSave, onCancel, responsaveis = [] }: {
   initial?: Partial<Inicial>; onSave: (i: Omit<Inicial,"id"|"criado_em">) => Promise<void>; onCancel: () => void; responsaveis?: string[];
 }) {
-  const blank = { cliente:"",reu:"",objeto:"",andamento:"FAZER INICIAL",responsavel:"",observacoes:"" };
+  const blank = { cliente:"",reu:"",objeto:"",andamento:"FAZER INICIAL",responsavel:"",observacoes:"",data:"",hora:"" };
   const [form, setForm] = useState({ ...blank, ...(initial||{}) });
   const [saving, setSaving] = useState(false);
 
@@ -50,6 +51,8 @@ function InicialForm({ initial, onSave, onCancel, responsaveis = [] }: {
         <div><Label>Cliente *</Label><Input value={form.cliente} onChange={e => set("cliente",e.target.value)} /></div>
         <div><Label>Réu</Label><Input value={form.reu} onChange={e => set("reu",e.target.value)} /></div>
         <div><Label>Objeto</Label><Input value={form.objeto} onChange={e => set("objeto",e.target.value)} /></div>
+        <DateField label="Data" value={form.data} onChange={v => set("data", v)} />
+        <DateField label="Hora" type="time" value={form.hora} onChange={v => set("hora", v)} />
         <div>
           <Label>Andamento</Label>
           <SelectField value={form.andamento} onChange={e => set("andamento",e.target.value)}>
@@ -227,12 +230,7 @@ export function IniciaisTab() {
                   className="w-full px-3 py-2 rounded-lg text-sm outline-none"
                   style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }} />
               </div>
-              <div>
-                <label className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Data do protocolo</label>
-                <input type="date" value={protForm.data_protocolo} onChange={e => setProtForm(f => ({ ...f, data_protocolo: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-                  style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }} />
-              </div>
+              <DateField label="Data do protocolo" value={protForm.data_protocolo} onChange={v => setProtForm(f => ({ ...f, data_protocolo: v }))} />
               <div>
                 <label className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Observações</label>
                 <textarea rows={2} value={protForm.observacoes} onChange={e => setProtForm(f => ({ ...f, observacoes: e.target.value }))}

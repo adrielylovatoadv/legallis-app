@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
     id: newId(), cliente: body.cliente || "", reu: body.reu || "",
     objeto: body.objeto || "", andamento: body.andamento || "FAZER INICIAL",
     responsavel: body.responsavel || "", observacoes: body.observacoes || "",
+    data: body.data || "", hora: body.hora || "",
     criado_em: new Date().toISOString(),
   };
   data.iniciais.push(novo);

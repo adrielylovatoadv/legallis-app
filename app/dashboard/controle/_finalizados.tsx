@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { normText } from "@/lib/controle";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { DateField } from "@/components/ui/DateField";
 
 interface Finalizado {
   cliente: string;
@@ -106,12 +107,7 @@ function ModalForm({ initial, onSave, onClose }: {
             </div>
           ))}
 
-          <div>
-            <label className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Data de finalização</label>
-            <input type="date" value={form.data_fin} onChange={e => set("data_fin", e.target.value)}
-              className="w-full px-3 py-2 rounded-lg text-sm"
-              style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }} />
-          </div>
+          <DateField label="Data de finalização" value={form.data_fin} onChange={v => set("data_fin", v)} />
         </div>
 
         <div className="flex gap-3 pt-1">

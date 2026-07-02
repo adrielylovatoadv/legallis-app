@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDataAsync, saveDataAsync, newId, type ControleData } from "@/lib/controle-data";
+import {
+  getDataAsync as getFinanceiroDataAsync,
+  saveDataAsync as saveFinanceiroDataAsync,
+  newId as newFinanceiroId,
+  type Acordo, type Execucao, type HonorarioInicial,
+} from "@/lib/financeiro-data";
 import * as XLSX from "xlsx";
 
 function clean(v: unknown): string {
@@ -55,8 +61,9 @@ export async function POST(req: NextRequest) {
   const tid = session.user.tenantId;
   const formData = await req.formData();
   const data = await getDataAsync(tid);
+  const finData = await getFinanceiroDataAsync(tid);
 
-  const stats = { clientes: 0, processos: 0, iniciais: 0, finalizados: 0, acordos: 0 };
+  const stats = { clientes: 0, processos: 0, iniciais: 0, finalizados: 0, acordos: 0, honorarios_iniciais: 0 };
   const erros: string[] = [];
 
   const arquivo = formData.get("arquivo") as File | null;
@@ -146,6 +153,8 @@ export async function POST(req: NextRequest) {
       andamento:   clean(r["Andamento"] ?? "FAZER INICIAL"),
       responsavel: clean(r["Responsável"] ?? r["Responsavel"] ?? ""),
       observacoes: clean(r["Observações"] ?? r["Observacoes"] ?? ""),
+      data:        fmtDate(r["Data (DD/MM/AAAA)"] ?? r["Data"] ?? ""),
+      hora:        fmtHora(r["Hora (HH:MM)"] ?? r["Hora"] ?? ""),
     };
     if (byIniKey.has(key)) {
       Object.assign(byIniKey.get(key)!, fields);
@@ -165,6 +174,8 @@ export async function POST(req: NextRequest) {
     const existingExec = (data as ControleData).finalizados_execucao ?? [];
     const bySem = new Map(existingSem.map(f => [`${f.processo}|${f.cliente.toUpperCase()}|${f.reu.toUpperCase()}`, f]));
     const byExec = new Map(existingExec.map(f => [`${f.processo}|${f.cliente.toUpperCase()}|${f.reu.toUpperCase()}`, f]));
+    // Financeiro: chave de merge igual à usada nativamente em lib/financeiro-data.ts (execução)
+    const byExecFin = new Map(finData.execucoes.map(e => [`${e.processo}|${e.cliente.toUpperCase()}|${e.mes}`, e]));
 
     for (const r of rowsFinalizados) {
       const tipo = clean(r["Tipo * (Execução / Improcedente / Desistência / Outros)"] ?? r["Tipo"] ?? "").toUpperCase();
@@ -188,6 +199,21 @@ export async function POST(req: NextRequest) {
         };
         if (byExec.has(key)) Object.assign(byExec.get(key)!, novo);
         else { existingExec.push(novo); byExec.set(key, novo); stats.finalizados++; }
+
+        // Sincroniza com o módulo Financeiro (lê de financeiro_data, não de controle_data)
+        const finKey = `${processo}|${cliente.toUpperCase()}|${novo.mes}`;
+        const execFin: Execucao = {
+          id: newFinanceiroId(), mes: novo.mes, data_pagamento: novo.data_pagamento,
+          cliente, reu, processo,
+          tipo_execucao: "processo_completo",
+          valor_percebido: novo.valor_execucao,
+          sucumbencia: 0,
+          honorarios: novo.honorarios,
+          repasse_cliente: novo.repasse_cliente,
+          status: (novo.status.toLowerCase() === "pago" ? "pago" : "pendente"),
+        };
+        if (byExecFin.has(finKey)) Object.assign(byExecFin.get(finKey)!, execFin, { id: byExecFin.get(finKey)!.id });
+        else { finData.execucoes.push(execFin); byExecFin.set(finKey, execFin); }
       } else {
         const novo = {
           cliente, reu, processo,
@@ -217,6 +243,7 @@ export async function POST(req: NextRequest) {
   if (rowsAcordos.length > 0) {
     const existingAc = (data as ControleData).finalizados_externos_acordos ?? [];
     const byAcKey = new Map(existingAc.map(a => [`${a.processo}|${a.cliente.toUpperCase()}|${a.mes}`, a]));
+    const byAcKeyFin = new Map(finData.acordos.map(a => [`${a.processo}|${a.cliente.toUpperCase()}|${a.mes}`, a]));
     for (const r of rowsAcordos) {
       const novo = {
         mes:             clean(r["Mês"] ?? r["Mes"] ?? ""),
@@ -233,10 +260,45 @@ export async function POST(req: NextRequest) {
       const key = `${novo.processo}|${novo.cliente.toUpperCase()}|${novo.mes}`;
       if (byAcKey.has(key)) Object.assign(byAcKey.get(key)!, novo);
       else { existingAc.push(novo); byAcKey.set(key, novo); stats.acordos++; }
+
+      // Sincroniza com o módulo Financeiro
+      const acordoFin: Acordo = {
+        id: newFinanceiroId(), mes: novo.mes, data_pagamento: novo.data_pagamento,
+        cliente: novo.cliente, reu: novo.reu, objeto: novo.objeto, processo: novo.processo,
+        valor_acordo: novo.valor_acordo, honorarios: novo.honorarios,
+        status: (novo.status.toLowerCase() === "pago" ? "pago" : "pendente"),
+      };
+      if (byAcKeyFin.has(key)) Object.assign(byAcKeyFin.get(key)!, acordoFin, { id: byAcKeyFin.get(key)!.id });
+      else { finData.acordos.push(acordoFin); byAcKeyFin.set(key, acordoFin); }
     }
     (data as ControleData).finalizados_externos_acordos = existingAc;
   }
 
+  // ── Honorários Iniciais ───────────────────────────────────────────────────
+  const rowsHonIniciais = getSheet(wb, ["Honorários Iniciais", "Honorarios Iniciais", "honorarios iniciais", "HONORARIOS INICIAIS"]);
+  if (rowsHonIniciais.length > 0) {
+    const byHonKey = new Map(finData.honorarios_iniciais.map(h => [`${h.processo}|${h.cliente.toUpperCase()}|${h.mes ?? ""}`, h]));
+    for (let i = 0; i < rowsHonIniciais.length; i++) {
+      const r = rowsHonIniciais[i];
+      const cliente = clean(r["Cliente *"] ?? r["Cliente"] ?? "");
+      if (!cliente) { erros.push(`Honorários Iniciais linha ${i + 2}: Cliente ausente`); continue; }
+      const novo: HonorarioInicial = {
+        id: newFinanceiroId(),
+        mes:            clean(r["Mês"] ?? r["Mes"] ?? ""),
+        cliente,
+        processo:       clean(r["Nº Processo"] ?? r["Processo"] ?? ""),
+        valor:          Number(r["Valor (R$)"] ?? r["Valor"] ?? 0) || 0,
+        data_pagamento: fmtDate(r["Data Pagamento (DD/MM/AAAA)"] ?? r["Data Pagamento"] ?? ""),
+        observacao:     clean(r["Observação"] ?? r["Observacao"] ?? ""),
+        status:         (clean(r["Status (Pago / Pendente)"] ?? r["Status"] ?? "").toLowerCase() === "pago" ? "pago" : "pendente"),
+      };
+      const key = `${novo.processo}|${cliente.toUpperCase()}|${novo.mes ?? ""}`;
+      if (byHonKey.has(key)) Object.assign(byHonKey.get(key)!, novo, { id: byHonKey.get(key)!.id });
+      else { finData.honorarios_iniciais.push(novo); byHonKey.set(key, novo); stats.honorarios_iniciais++; }
+    }
+  }
+
   await saveDataAsync(data, tid);
+  await saveFinanceiroDataAsync(finData, tid);
   return NextResponse.json({ ok: true, stats, erros: erros.length > 0 ? erros : undefined });
 }

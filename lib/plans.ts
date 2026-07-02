@@ -13,7 +13,7 @@ export const PLAN_FEATURES: Record<Plan, {
     modules: ["controle", "financeiro", "calculadora"],
     exports: ["pdf", "word", "excel"],
     canAssignTasks: true,
-    maxUsers: Infinity,
+    maxUsers: 5, // 1 admin + até 4 usuários
   },
   admin: {
     label: "Administrador",

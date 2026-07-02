@@ -7,9 +7,10 @@ type Status = "idle" | "loading" | "success" | "error";
 const ABAS_MODELO = [
   { nome: "Clientes", campos: "Nome *, CPF, Telefone, E-mail, Endereço, Tipo Aposentadoria, Informações" },
   { nome: "Processos Ativos", campos: "Autor *, Réu, Objeto, Nº Processo, Data, Hora, Andamento, Responsável, Observações, Atenção" },
-  { nome: "Iniciais", campos: "Cliente *, Réu, Objeto, Andamento, Responsável, Observações" },
-  { nome: "Finalizados", campos: "Tipo *, Cliente *, Réu, Nº Processo, Objeto, Data Finalização, Motivo — se Execução: também Valor Execução, Honorários, Repasse, Mês, Data Pagamento, Status" },
-  { nome: "Acordos", campos: "Mês, Data Pagamento, Cliente *, Réu, Nº Processo, Objeto, Valor Acordo, Honorários, Repasse ao Cliente, Status" },
+  { nome: "Iniciais", campos: "Cliente *, Réu, Objeto, Andamento, Responsável, Observações, Data, Hora" },
+  { nome: "Finalizados", campos: "Tipo *, Cliente *, Réu, Nº Processo, Objeto, Data Finalização, Motivo — se Execução: também Valor Execução, Honorários, Repasse, Mês, Data Pagamento, Status (alimenta o módulo Financeiro automaticamente)" },
+  { nome: "Acordos", campos: "Mês, Data Pagamento, Cliente *, Réu, Nº Processo, Objeto, Valor Acordo, Honorários, Repasse ao Cliente, Status (alimenta o módulo Financeiro automaticamente)" },
+  { nome: "Honorários Iniciais", campos: "Cliente *, Nº Processo, Mês, Valor, Data Pagamento, Observação, Status (alimenta o módulo Financeiro)" },
 ];
 
 export function ImportarTab() {
@@ -84,7 +85,7 @@ export function ImportarTab() {
       {/* Abas do modelo */}
       <div className="rounded-xl p-4 space-y-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
         <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text3)" }}>
-          O modelo contém 5 abas — preencha apenas as que precisar:
+          O modelo contém 6 abas — preencha apenas as que precisar:
         </p>
         <div className="space-y-2">
           {ABAS_MODELO.map(a => (
@@ -158,6 +159,7 @@ export function ImportarTab() {
               ["Iniciais",    result.stats.iniciais,    "#818cf8"],
               ["Finalizados", result.stats.finalizados, "#f97316"],
               ["Acordos",     result.stats.acordos,     "#60a5fa"],
+              ["Honorários Iniciais", result.stats.honorarios_iniciais, "#facc15"],
             ] as [string, number, string][]).map(([label, val, color]) =>
               val > 0 ? (
                 <div key={label} className="rounded-lg p-3 text-center"

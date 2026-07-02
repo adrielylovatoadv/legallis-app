@@ -6,9 +6,15 @@ const ORIGINAL_FILE = path.join(process.cwd(), "data", "financeiro_data.json");
 const TMP_FILE = "/tmp/legallis_financeiro.json";
 const DB_KEY_PREFIX = "financeiro";
 
-function readFile(): string {
-  if (fs.existsSync(TMP_FILE)) return TMP_FILE;
-  return ORIGINAL_FILE;
+// Legado: tenant "t_1" é o dono original dos dados no arquivo sem sufixo (pré multi-tenant).
+// Qualquer outro tenant usa um arquivo próprio, para não vazar dados entre escritórios
+// quando o app roda localmente sem POSTGRES_URL configurado.
+function fileForTenant(tenantId: string): { main: string; tmp: string } {
+  if (tenantId === "t_1" || tenantId === "default") return { main: ORIGINAL_FILE, tmp: TMP_FILE };
+  return {
+    main: path.join(process.cwd(), "data", `financeiro_data_${tenantId}.json`),
+    tmp: `/tmp/legallis_financeiro_${tenantId}.json`,
+  };
 }
 
 export const MESES = [
@@ -86,8 +92,9 @@ function emptyData(): FinanceiroData {
   return { acordos: [], execucoes: [], honorarios_iniciais: [], fixas: {}, fixas_quem: {}, fixas_status: {}, fixas_valor_fixo: {}, variaveis: [] };
 }
 
-function readFromFile(): FinanceiroData {
-  const file = readFile();
+function readFromFile(tenantId: string): FinanceiroData {
+  const { main, tmp } = fileForTenant(tenantId);
+  const file = fs.existsSync(tmp) ? tmp : main;
   if (!fs.existsSync(file)) return emptyData();
   const d = JSON.parse(fs.readFileSync(file, "utf-8")) as Partial<FinanceiroData>;
   return parseRaw(d);
@@ -106,10 +113,10 @@ export async function getDataAsync(tenantId = "default"): Promise<FinanceiroData
       return empty;
     } catch (e) {
       console.error(`[financeiro] Erro ao ler banco, usando fallback: ${e}`);
-      return readFromFile();
+      return readFromFile(tenantId);
     }
   }
-  return readFromFile();
+  return readFromFile(tenantId);
 }
 
 export async function saveDataAsync(data: FinanceiroData, tenantId = "default"): Promise<void> {
@@ -119,14 +126,15 @@ export async function saveDataAsync(data: FinanceiroData, tenantId = "default"):
     if (!ok) console.error(`[financeiro] FALHA ao salvar no banco: chave=${key}`);
     return;
   }
+  const { main, tmp } = fileForTenant(tenantId);
   const content = JSON.stringify(data, null, 2);
-  try { fs.writeFileSync(ORIGINAL_FILE, content, "utf-8"); }
-  catch { fs.writeFileSync(TMP_FILE, content, "utf-8"); }
+  try { fs.writeFileSync(main, content, "utf-8"); }
+  catch { fs.writeFileSync(tmp, content, "utf-8"); }
 }
 
 // Legacy sync API (file-only, used only when DB not available)
 export function getData(): FinanceiroData {
-  return readFromFile();
+  return readFromFile("t_1");
 }
 
 export function saveData(data: FinanceiroData) {

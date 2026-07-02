@@ -28,11 +28,11 @@ export async function GET() {
 
   // ── Iniciais ─────────────────────────────────────────────────────────────
   const wsIniciais = XLSX.utils.aoa_to_sheet([
-    ["Cliente *", "Réu", "Objeto", "Andamento", "Responsável", "Observações"],
-    ["Cleide Alves", "BRADESCO", "Pacote de Serviços", "FAZER INICIAL", "Dr. Silva", "Aguardando procuração"],
-    ["Pedro Lima", "ITAÚ", "Débito Indevido", "AGUARDAR DOCS", "Dra. Santos", ""],
+    ["Cliente *", "Réu", "Objeto", "Andamento", "Responsável", "Observações", "Data (DD/MM/AAAA)", "Hora (HH:MM)"],
+    ["Cleide Alves", "BRADESCO", "Pacote de Serviços", "FAZER INICIAL", "Dr. Silva", "Aguardando procuração", "20/03/2024", "10:00"],
+    ["Pedro Lima", "ITAÚ", "Débito Indevido", "AGUARDAR DOCS", "Dra. Santos", "", "", ""],
   ]);
-  estilizarCabecalho(wsIniciais, 6);
+  estilizarCabecalho(wsIniciais, 8);
   XLSX.utils.book_append_sheet(wb, wsIniciais, "Iniciais");
 
   // ── Finalizados ──────────────────────────────────────────────────────────
@@ -62,8 +62,17 @@ export async function GET() {
   estilizarCabecalho(wsAcordos, 10);
   XLSX.utils.book_append_sheet(wb, wsAcordos, "Acordos");
 
+  // ── Honorários Iniciais ──────────────────────────────────────────────────
+  const wsHonIniciais = XLSX.utils.aoa_to_sheet([
+    ["Cliente *", "Nº Processo", "Mês", "Valor (R$)", "Data Pagamento (DD/MM/AAAA)", "Observação", "Status (Pago / Pendente)"],
+    ["Maria Silva", "0000001-00.2024.8.13.0024", "Janeiro/2024", 1500, "10/01/2024", "Honorário inicial de contrato", "Pago"],
+    ["João Souza", "0000002-00.2024.8.13.0024", "Fevereiro/2024", 1200, "", "", "Pendente"],
+  ]);
+  estilizarCabecalho(wsHonIniciais, 7);
+  XLSX.utils.book_append_sheet(wb, wsHonIniciais, "Honorários Iniciais");
+
   // ── Larguras de coluna ────────────────────────────────────────────────────
-  for (const ws of [wsClientes, wsProcessos, wsIniciais, wsFinalizados, wsAcordos]) {
+  for (const ws of [wsClientes, wsProcessos, wsIniciais, wsFinalizados, wsAcordos, wsHonIniciais]) {
     ws["!cols"] = Array(20).fill({ wch: 22 });
   }
 

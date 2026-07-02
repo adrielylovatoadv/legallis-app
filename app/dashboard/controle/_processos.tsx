@@ -6,6 +6,7 @@ import {
   ANDAMENTOS_PROCESSO, fmtData, badgeAndamento, gcalUrl, normText,
   type Processo,
 } from "@/lib/controle";
+import { DateField } from "@/components/ui/DateField";
 
 const POR_PAGINA = 50;
 
@@ -65,7 +66,7 @@ function ProcessoForm({ initial, onSave, onCancel, responsaveis = [] }: {
         <div><Lbl>Réu</Lbl><Inp value={form.reu} onChange={e => set("reu",e.target.value)} /></div>
         <div><Lbl>Objeto</Lbl><Inp value={form.objeto} onChange={e => set("objeto",e.target.value)} /></div>
         <div><Lbl>Nº Processo</Lbl><Inp value={form.numero_processo} onChange={e => set("numero_processo",e.target.value)} /></div>
-        <div><Lbl>Data</Lbl><Inp type="date" value={form.data} onChange={e => set("data",e.target.value)} /></div>
+        <DateField label="Data" value={form.data} onChange={v => set("data", v)} />
         <div><Lbl>Hora</Lbl><Inp value={form.hora} placeholder="HH:MM" onChange={e => set("hora",e.target.value)} /></div>
         <div>
           <Lbl>Andamento</Lbl>

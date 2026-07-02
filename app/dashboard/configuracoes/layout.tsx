@@ -15,9 +15,11 @@ const TABS = [
 export default function ConfigLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const isAdmin = session?.user?.role === "admin";
+  const isSuperAdmin = session?.user?.role === "admin";
+  const isOwner = !!session?.user && session.user.tenantId === `t_${session.user.id}`;
+  const canManageUsers = isSuperAdmin || isOwner;
 
-  const tabs = isAdmin ? TABS : TABS.filter(t => !t.href.includes("/usuarios"));
+  const tabs = canManageUsers ? TABS : TABS.filter(t => !t.href.includes("/usuarios"));
 
   return (
     <div className="p-6 md:p-8 max-w-4xl mx-auto w-full">

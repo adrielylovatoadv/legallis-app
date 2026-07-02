@@ -45,6 +45,7 @@ export interface User {
   isActive: boolean;
   tenantId?: string;
   sexo?: "feminino" | "masculino";
+  cargo?: "administrador" | "socio" | "advogado" | "estagiario" | "assistente";
 }
 
 export interface ResetToken {
@@ -154,6 +155,21 @@ export async function getUserByIdAsync(id: string): Promise<User | null> {
 export async function getUserByEmailAsync(email: string): Promise<User | null> {
   const users = await getUsersAsync();
   return users.find(u => u.email === email) ?? null;
+}
+
+// O dono do escritório é o usuário que originou o tenant (tenantId = t_<seu próprio id>,
+// atribuído no cadastro em app/api/cadastro/route.ts e cadastro/gratis/route.ts).
+export function isOwner(user: Pick<User, "id" | "tenantId">): boolean {
+  return !!user.tenantId && user.tenantId === `t_${user.id}`;
+}
+
+// Usuários ativos do mesmo escritório (tenantId) de currentUser. Se currentUser não tiver
+// tenantId, retorna só ele mesmo — nunca vaza usuários de outros escritórios.
+export async function getTenantUsersAsync(currentUser: Pick<User, "id" | "tenantId">): Promise<User[]> {
+  const allUsers = await getUsersAsync();
+  return currentUser.tenantId
+    ? allUsers.filter(u => u.tenantId === currentUser.tenantId && u.isActive)
+    : allUsers.filter(u => u.id === currentUser.id);
 }
 
 export async function updateUserAsync(id: string, data: Partial<Omit<User, "id">>): Promise<User | null> {

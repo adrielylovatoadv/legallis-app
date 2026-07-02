@@ -24,6 +24,7 @@ export interface Cliente {
 export interface Inicial {
   id: string; cliente: string; reu: string; objeto: string;
   andamento: string; responsavel: string; observacoes: string; criado_em: string;
+  data?: string; hora?: string;
 }
 
 export interface FinalizadoSemHonor {
@@ -85,7 +86,7 @@ function parseRaw(d: Partial<ControleData>): ControleData {
       senha_serasa: decryptField(c.senha_serasa || ""),
     })),
     iniciais: (d.iniciais || []).map((i: Inicial) => ({
-      ...{ reu: "", objeto: "", responsavel: "", observacoes: "" },
+      ...{ reu: "", objeto: "", responsavel: "", observacoes: "", data: "", hora: "" },
       ...i,
     })),
     finalizados_externos_sem_honor: d.finalizados_externos_sem_honor || [],
@@ -99,8 +100,20 @@ function emptyData(): ControleData {
   return { processos: [], clientes: [], iniciais: [], finalizados_externos_sem_honor: [], finalizados_externos_acordos: [], finalizados_execucao: [], redesignacoes: [] };
 }
 
-function readFromFile(): ControleData {
-  const file = fs.existsSync(TMP_CONTROLE) ? TMP_CONTROLE : DATA_FILE;
+// Legado: tenant "t_1" é o dono original dos dados no arquivo sem sufixo (pré multi-tenant).
+// Qualquer outro tenant usa um arquivo próprio, para não vazar dados entre escritórios
+// quando o app roda localmente sem POSTGRES_URL configurado.
+function fileForTenant(tenantId: string): { main: string; tmp: string } {
+  if (tenantId === "t_1" || tenantId === "default") return { main: DATA_FILE, tmp: TMP_CONTROLE };
+  return {
+    main: path.join(process.cwd(), "data", `controle_data_${tenantId}.json`),
+    tmp: `/tmp/legallis_controle_${tenantId}.json`,
+  };
+}
+
+function readFromFile(tenantId: string): ControleData {
+  const { main, tmp } = fileForTenant(tenantId);
+  const file = fs.existsSync(tmp) ? tmp : main;
   if (!fs.existsSync(file)) return emptyData();
   return parseRaw(JSON.parse(fs.readFileSync(file, "utf-8")));
 }
@@ -129,10 +142,10 @@ export async function getDataAsync(tenantId = "default"): Promise<ControleData> 
       return empty;
     } catch (e) {
       console.error(`[controle] Erro ao ler banco, usando fallback: ${e}`);
-      return readFromFile();
+      return readFromFile(tenantId);
     }
   }
-  return readFromFile();
+  return readFromFile(tenantId);
 }
 
 export async function saveDataAsync(data: ControleData, tenantId = "default"): Promise<void> {
@@ -143,14 +156,15 @@ export async function saveDataAsync(data: ControleData, tenantId = "default"): P
     if (!ok) console.error(`[controle] FALHA ao salvar no banco: chave=${key}`);
     return;
   }
+  const { main, tmp } = fileForTenant(tenantId);
   const content = JSON.stringify(encrypted, null, 2);
-  try { fs.writeFileSync(DATA_FILE, content, "utf-8"); }
-  catch { fs.writeFileSync(TMP_CONTROLE, content, "utf-8"); }
+  try { fs.writeFileSync(main, content, "utf-8"); }
+  catch { fs.writeFileSync(tmp, content, "utf-8"); }
 }
 
 // Legacy sync API
 export function getData(): ControleData {
-  return readFromFile();
+  return readFromFile("t_1");
 }
 
 export function saveData(data: ControleData) {
