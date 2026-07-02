@@ -33,6 +33,7 @@ export interface Acordo {
   id: string; mes: string; data_pagamento: string;
   cliente: string; reu: string; objeto: string; processo: string;
   valor_acordo: number; honorarios: number; status: Status;
+  processoId?: string;
 }
 export type TipoExecucao = "processo_completo" | "honorarios_somente";
 
@@ -42,15 +43,24 @@ export interface Execucao {
   tipo_execucao?: TipoExecucao;
   valor_percebido: number; pct_honorarios?: number; sucumbencia: number;
   honorarios: number; repasse_cliente?: number; status: Status;
+  processoId?: string;
 }
 export interface HonorarioInicial {
   id: string; mes?: string; cliente: string; processo: string;
   valor: number; data_pagamento: string; observacao: string; status: Status;
+  processoId?: string;
 }
 export interface Variavel {
   id: string; descricao: string; valor: number; parcelas: string;
   quem: string; onde: string; status: Status; data_compra: string;
   meses: Record<string, number>;
+}
+
+// Horas cobráveis lançadas contra um processo (vinculado por processoId).
+export interface Timesheet {
+  id: string; processoId?: string; processo?: string; cliente?: string;
+  data: string; minutos: number; descricao: string; responsavel: string;
+  faturavel: boolean; valor_hora?: number; status: Status;
 }
 
 export interface Socio {
@@ -71,6 +81,7 @@ export interface FinanceiroData {
   fixas_status: Record<string, Record<string, string>>;
   fixas_valor_fixo: Record<string, number>; // valor mensal fixo (aplica em todos os meses)
   variaveis: Variavel[];
+  timesheets: Timesheet[];
   config_escritorio?: ConfigEscritorio;
 }
 
@@ -84,12 +95,13 @@ function parseRaw(d: Partial<FinanceiroData>): FinanceiroData {
     fixas_quem: d.fixas_quem || {},
     fixas_status: d.fixas_status || {},
     variaveis: (d.variaveis || []).map((v, i) => Object.assign({ parcelas: "1x", quem: "dividido", onde: "", data_compra: "", status: "pendente" as Status, meses: {}, id: String(i) }, v) as Variavel),
+    timesheets: (d.timesheets || []).map((t, i) => Object.assign({ processo: "", cliente: "", descricao: "", faturavel: true, status: "pendente" as Status, id: String(i) }, t) as Timesheet),
     config_escritorio: d.config_escritorio,
   };
 }
 
 function emptyData(): FinanceiroData {
-  return { acordos: [], execucoes: [], honorarios_iniciais: [], fixas: {}, fixas_quem: {}, fixas_status: {}, fixas_valor_fixo: {}, variaveis: [] };
+  return { acordos: [], execucoes: [], honorarios_iniciais: [], fixas: {}, fixas_quem: {}, fixas_status: {}, fixas_valor_fixo: {}, variaveis: [], timesheets: [] };
 }
 
 function readFromFile(tenantId: string): FinanceiroData {

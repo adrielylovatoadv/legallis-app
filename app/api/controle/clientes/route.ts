@@ -50,6 +50,9 @@ export async function POST(req: NextRequest) {
     cpf: body.cpf || "", email: body.email || "", endereco: body.endereco || "",
     tipo_aposentadoria: body.tipo_aposentadoria || "", informacoes: body.informacoes || "",
     senha_gov: body.senha_gov || "", senha_serasa: body.senha_serasa || "",
+    tipo_pessoa: body.tipo_pessoa || "fisica", cnpj: body.cnpj || "", tratamento: body.tratamento || "",
+    etiquetas: body.etiquetas || [], telefones_adicionais: body.telefones_adicionais || [],
+    emails_adicionais: body.emails_adicionais || [],
     criado_em: new Date().toISOString(),
   };
   data.clientes.push(novo);

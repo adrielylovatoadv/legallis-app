@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import {
   getClientes, createCliente, updateCliente, deleteCliente,
   fmtData, badgeAndamento,
   type Cliente, type Processo, type Inicial,
 } from "@/lib/controle";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { generateProcuracaoPDF, generateContratoHonorariosPDF, type AdvogadoDoc } from "@/lib/document-templates";
 
 type ClienteComProcs = Cliente & { _ativos?: Processo[]; _finalizados?: Processo[]; _iniciais?: Inicial[] };
 
@@ -17,30 +19,98 @@ function Inp({ ...p }: React.InputHTMLAttributes<HTMLInputElement>) {
 function Lbl({ children }: { children: React.ReactNode }) {
   return <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>{children}</span>;
 }
+function Sel({ children, ...p }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <select {...p} className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+      style={{ background:"var(--surface2)", border:"1px solid var(--border)", color:"var(--text)" }}>
+      {children}
+    </select>
+  );
+}
+
+const TRATAMENTOS = ["", "Senhor", "Senhora", "Doutor", "Doutora", "Excelentíssimo"];
+
+function ListaRepetivel({ label, valores, onChange, placeholder }: {
+  label: string; valores: string[]; onChange: (v: string[]) => void; placeholder: string;
+}) {
+  return (
+    <div className="sm:col-span-2">
+      <Lbl>{label}</Lbl>
+      <div className="space-y-1.5">
+        {valores.map((v, i) => (
+          <div key={i} className="flex gap-2">
+            <Inp value={v} placeholder={placeholder}
+              onChange={e => onChange(valores.map((x, j) => j === i ? e.target.value : x))} />
+            <button type="button" onClick={() => onChange(valores.filter((_, j) => j !== i))}
+              className="px-2 rounded-lg text-xs" style={{ background:"var(--surface2)", color:"var(--text3)", border:"1px solid var(--border)" }}>✕</button>
+          </div>
+        ))}
+        <button type="button" onClick={() => onChange([...valores, ""])}
+          className="text-xs px-2 py-1 rounded" style={{ background:"var(--surface2)", color:"var(--gold)", border:"1px solid var(--border)" }}>
+          + adicionar
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function ClienteForm({ initial, onSave, onCancel }: {
   initial?: Partial<Cliente>;
   onSave: (c: Omit<Cliente,"id"|"criado_em">) => Promise<void>;
   onCancel: () => void;
 }) {
-  const blank = { nome:"",telefone:"",cpf:"",email:"",endereco:"",tipo_aposentadoria:"",informacoes:"",senha_gov:"",senha_serasa:"" };
+  const blank = {
+    nome:"",telefone:"",cpf:"",email:"",endereco:"",tipo_aposentadoria:"",informacoes:"",senha_gov:"",senha_serasa:"",
+    tipo_pessoa:"fisica" as "fisica"|"juridica", cnpj:"", tratamento:"",
+    etiquetas:[] as string[], telefones_adicionais:[] as string[], emails_adicionais:[] as string[],
+  };
   const [form, setForm] = useState({ ...blank, ...(initial||{}) });
+  const [etiquetasTexto, setEtiquetasTexto] = useState((initial?.etiquetas || []).join(", "));
   const [saving, setSaving] = useState(false);
-  const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
+  const set = (k: string, v: string | string[]) => setForm(p => ({ ...p, [k]: v }));
   const submit = async () => {
     if (!form.nome.trim()) return;
     setSaving(true);
-    try { await onSave(form as Omit<Cliente,"id"|"criado_em">); } finally { setSaving(false); }
+    try {
+      const etiquetas = etiquetasTexto.split(",").map(s => s.trim()).filter(Boolean);
+      await onSave({ ...form, etiquetas } as Omit<Cliente,"id"|"criado_em">);
+    } finally { setSaving(false); }
   };
   return (
     <div className="rounded-xl p-5 space-y-4" style={{ background:"var(--surface)", border:"1px solid var(--border)" }}>
+      <div className="flex gap-4">
+        <label className="flex items-center gap-2 text-sm cursor-pointer" style={{ color:"var(--text2)" }}>
+          <input type="radio" checked={form.tipo_pessoa==="fisica"} onChange={() => set("tipo_pessoa","fisica")} /> Pessoa Física
+        </label>
+        <label className="flex items-center gap-2 text-sm cursor-pointer" style={{ color:"var(--text2)" }}>
+          <input type="radio" checked={form.tipo_pessoa==="juridica"} onChange={() => set("tipo_pessoa","juridica")} /> Pessoa Jurídica
+        </label>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div><Lbl>Nome *</Lbl><Inp value={form.nome} onChange={e => set("nome",e.target.value)} /></div>
+        <div>
+          <Lbl>Tratamento</Lbl>
+          <Sel value={form.tratamento} onChange={e => set("tratamento",e.target.value)}>
+            {TRATAMENTOS.map(t => <option key={t} value={t}>{t || "—"}</option>)}
+          </Sel>
+        </div>
         <div><Lbl>Telefone</Lbl><Inp value={form.telefone} onChange={e => set("telefone",e.target.value)} /></div>
-        <div><Lbl>CPF</Lbl><Inp value={form.cpf} onChange={e => set("cpf",e.target.value)} /></div>
+        {form.tipo_pessoa === "juridica"
+          ? <div><Lbl>CNPJ</Lbl><Inp value={form.cnpj} onChange={e => set("cnpj",e.target.value)} /></div>
+          : <div><Lbl>CPF</Lbl><Inp value={form.cpf} onChange={e => set("cpf",e.target.value)} /></div>
+        }
         <div><Lbl>E-mail</Lbl><Inp type="email" value={form.email} onChange={e => set("email",e.target.value)} /></div>
         <div className="sm:col-span-2"><Lbl>Endereço</Lbl><Inp value={form.endereco} onChange={e => set("endereco",e.target.value)} /></div>
         <div><Lbl>Tipo Aposentadoria</Lbl><Inp value={form.tipo_aposentadoria} onChange={e => set("tipo_aposentadoria",e.target.value)} /></div>
+        <div>
+          <Lbl>Etiquetas (separadas por vírgula)</Lbl>
+          <Inp value={etiquetasTexto} placeholder="ex: prioritário, revisional"
+            onChange={e => setEtiquetasTexto(e.target.value)} />
+        </div>
+        <ListaRepetivel label="Telefones adicionais" valores={form.telefones_adicionais}
+          onChange={v => set("telefones_adicionais", v)} placeholder="(31) 99999-0000" />
+        <ListaRepetivel label="E-mails adicionais" valores={form.emails_adicionais}
+          onChange={v => set("emails_adicionais", v)} placeholder="email@exemplo.com" />
         <div><Lbl>Senha Gov.br</Lbl><Inp type="password" autoComplete="new-password" value={form.senha_gov} onChange={e => set("senha_gov",e.target.value)} /></div>
         <div><Lbl>Senha Serasa</Lbl><Inp type="password" autoComplete="new-password" value={form.senha_serasa} onChange={e => set("senha_serasa",e.target.value)} /></div>
         <div className="sm:col-span-2">
@@ -61,6 +131,55 @@ function ClienteForm({ initial, onSave, onCancel }: {
           Cancelar
         </button>
       </div>
+    </div>
+  );
+}
+
+function GerarDocumentoMenu({ cliente, processo }: { cliente: Cliente; processo?: Processo }) {
+  const { data: session } = useSession();
+  const [gerando, setGerando] = useState<"procuracao" | "contrato" | null>(null);
+  const [erro, setErro] = useState("");
+
+  async function getAdvogado(): Promise<AdvogadoDoc> {
+    if (!session?.user?.id) return {};
+    const res = await fetch(`/api/usuarios/${session.user.id}`);
+    if (!res.ok) return {};
+    const u = await res.json();
+    return {
+      nome: u.name, escritorio: u.company?.name, enderecoEscritorio: u.company?.address,
+      cnpjEscritorio: u.company?.cnpj,
+      oabs: (u.oab || []).map((o: { state: string; number: string }) => ({ estado: o.state, numero: o.number })),
+    };
+  }
+
+  const gerarProcuracao = async () => {
+    setGerando("procuracao"); setErro("");
+    try { await generateProcuracaoPDF(cliente, await getAdvogado()); }
+    catch { setErro("Erro ao gerar procuração."); }
+    finally { setGerando(null); }
+  };
+
+  const gerarContrato = async () => {
+    setGerando("contrato"); setErro("");
+    try {
+      await generateContratoHonorariosPDF(cliente, await getAdvogado(), {
+        processoNumero: processo?.numero_processo, objeto: processo?.objeto,
+      });
+    } catch { setErro("Erro ao gerar contrato."); }
+    finally { setGerando(null); }
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <button onClick={gerarProcuracao} disabled={!!gerando} className="text-xs px-3 py-1.5 rounded-lg font-medium disabled:opacity-50"
+        style={{ background: "var(--surface2)", color: "var(--text2)", border: "1px solid var(--border)" }}>
+        {gerando === "procuracao" ? "⏳ Gerando..." : "📄 Procuração"}
+      </button>
+      <button onClick={gerarContrato} disabled={!!gerando} className="text-xs px-3 py-1.5 rounded-lg font-medium disabled:opacity-50"
+        style={{ background: "var(--surface2)", color: "var(--text2)", border: "1px solid var(--border)" }}>
+        {gerando === "contrato" ? "⏳ Gerando..." : "📄 Contrato de Honorários"}
+      </button>
+      {erro && <span className="text-xs text-red-400">{erro}</span>}
     </div>
   );
 }
@@ -114,12 +233,24 @@ function ClienteCard({ c, onEdit, onDelete }: {
         onClick={() => setAberto(!aberto)}>
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium text-sm select-text" style={{ color:"var(--text)" }} onClick={e => e.stopPropagation()}>👤 {c.nome}</span>
+            <span className="font-medium text-sm select-text" style={{ color:"var(--text)" }} onClick={e => e.stopPropagation()}>
+              {c.tipo_pessoa === "juridica" ? "🏢" : "👤"} {c.nome}
+            </span>
+            <span className="text-xs px-1.5 py-0.5 rounded" style={{ background:"var(--surface2)", color:"var(--text3)" }}>
+              {c.tipo_pessoa === "juridica" ? "PJ" : "PF"}
+            </span>
             {ativos.some(p => p.atencao) && <span className="text-xs px-1.5 py-0.5 rounded bg-red-500/15 text-red-400">🚨 Atenção</span>}
+            {(c.etiquetas || []).map(tag => (
+              <span key={tag} className="text-xs px-1.5 py-0.5 rounded-full" style={{ background:"rgba(201,168,76,0.12)", color:"var(--gold)" }}>{tag}</span>
+            ))}
           </div>
           <p className="text-xs mt-0.5" style={{ color:"var(--text3)" }}>
             {c.telefone && <span>{c.telefone}</span>}
-            {c.cpf && <span className="select-text ml-1" style={{ cursor:"text" }} onClick={e => e.stopPropagation()}>· {c.cpf}</span>}
+            {(c.tipo_pessoa === "juridica" ? c.cnpj : c.cpf) && (
+              <span className="select-text ml-1" style={{ cursor:"text" }} onClick={e => e.stopPropagation()}>
+                · {c.tipo_pessoa === "juridica" ? c.cnpj : c.cpf}
+              </span>
+            )}
             {c.tipo_aposentadoria && <span> · {c.tipo_aposentadoria}</span>}
             {badge
               ? <span className="ml-2 text-[var(--gold)]">{badge}</span>
@@ -142,8 +273,15 @@ function ClienteCard({ c, onEdit, onDelete }: {
         <div className="px-4 pb-4 space-y-4 border-t" style={{ borderColor:"var(--border)" }}>
           {/* Dados pessoais */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-3 text-xs" style={{ color:"var(--text2)" }}>
+            {c.tratamento && <div><span style={{ color:"var(--text3)" }}>Tratamento: </span>{c.tratamento}</div>}
             {c.email && <div><span style={{ color:"var(--text3)" }}>E-mail: </span>{c.email}</div>}
             {c.endereco && <div className="col-span-2"><span style={{ color:"var(--text3)" }}>Endereço: </span>{c.endereco}</div>}
+            {(c.telefones_adicionais || []).filter(Boolean).length > 0 && (
+              <div className="col-span-2"><span style={{ color:"var(--text3)" }}>Outros telefones: </span>{(c.telefones_adicionais || []).filter(Boolean).join(", ")}</div>
+            )}
+            {(c.emails_adicionais || []).filter(Boolean).length > 0 && (
+              <div className="col-span-2"><span style={{ color:"var(--text3)" }}>Outros e-mails: </span>{(c.emails_adicionais || []).filter(Boolean).join(", ")}</div>
+            )}
             <div>
               <span style={{ color:"var(--text3)" }}>Senha Gov.br: </span>
               {mostraSenhas ? (senhas?.senha_gov || "—") : "••••••••"}
@@ -159,6 +297,9 @@ function ClienteCard({ c, onEdit, onDelete }: {
               </button>
             </div>
           </div>
+
+          {/* Gerar documento */}
+          <GerarDocumentoMenu cliente={c} processo={ativos[0]} />
 
           {/* Informações */}
           {c.informacoes && (

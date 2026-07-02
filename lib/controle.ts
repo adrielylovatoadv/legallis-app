@@ -40,6 +40,8 @@ export interface Cliente {
   id: string; nome: string; telefone: string; cpf: string;
   email: string; endereco: string; tipo_aposentadoria: string;
   informacoes: string; senha_gov: string; senha_serasa: string; criado_em: string;
+  tipo_pessoa?: "fisica" | "juridica"; cnpj?: string; tratamento?: string;
+  etiquetas?: string[]; telefones_adicionais?: string[]; emails_adicionais?: string[];
 }
 
 export interface Inicial {

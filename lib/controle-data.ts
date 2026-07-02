@@ -19,6 +19,8 @@ export interface Cliente {
   id: string; nome: string; telefone: string; cpf: string;
   email: string; endereco: string; tipo_aposentadoria: string;
   informacoes: string; senha_gov: string; senha_serasa: string; criado_em: string;
+  tipo_pessoa?: "fisica" | "juridica"; cnpj?: string; tratamento?: string;
+  etiquetas?: string[]; telefones_adicionais?: string[]; emails_adicionais?: string[];
 }
 
 export interface Inicial {
@@ -80,7 +82,9 @@ function parseRaw(d: Partial<ControleData>): ControleData {
     })),
     clientes: (d.clientes || []).map((c: Cliente) => ({
       ...{ telefone: "", cpf: "", email: "", endereco: "",
-        tipo_aposentadoria: "", informacoes: "", senha_gov: "", senha_serasa: "" },
+        tipo_aposentadoria: "", informacoes: "", senha_gov: "", senha_serasa: "",
+        tipo_pessoa: "fisica" as const, cnpj: "", tratamento: "",
+        etiquetas: [], telefones_adicionais: [], emails_adicionais: [] },
       ...c,
       senha_gov: decryptField(c.senha_gov || ""),
       senha_serasa: decryptField(c.senha_serasa || ""),

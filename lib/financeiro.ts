@@ -34,6 +34,7 @@ export interface Acordo {
   id: string; mes: string; data_pagamento: string;
   cliente: string; reu: string; objeto: string; processo: string;
   valor_acordo: number; honorarios: number; status: Status;
+  processoId?: string;
 }
 export type TipoExecucao = "processo_completo" | "honorarios_somente";
 
@@ -43,10 +44,21 @@ export interface Execucao {
   tipo_execucao?: TipoExecucao;
   valor_percebido: number; pct_honorarios?: number; sucumbencia: number;
   honorarios: number; repasse_cliente?: number; status: Status;
+  processoId?: string;
 }
 export interface HonorarioInicial {
   id: string; mes?: string; cliente: string; processo: string;
   valor: number; data_pagamento: string; observacao: string; status: Status;
+  processoId?: string;
+}
+export interface Timesheet {
+  id: string; processoId?: string; processo?: string; cliente?: string;
+  data: string; minutos: number; descricao: string; responsavel: string;
+  faturavel: boolean; valor_hora?: number; status: Status;
+}
+export interface ProcessoFinanceiro {
+  acordos: Acordo[]; execucoes: Execucao[];
+  honorarios_iniciais: HonorarioInicial[]; timesheets: Timesheet[];
 }
 export interface Fixa {
   categoria: string; quem: string;
@@ -96,6 +108,14 @@ export const deleteFixa = (categoria: string) =>
   fetchAPI(`${p}/fixas/${encodeURIComponent(categoria)}`, { method:"DELETE" });
 export const statusFixaMes = (categoria: string, col: string, status: string) =>
   fetchAPI(`${p}/fixas/${encodeURIComponent(categoria)}/status`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ col, status }) });
+
+export const getTimesheets = () => fetchAPI(`${p}/timesheet`) as Promise<Timesheet[]>;
+export const createTimesheet = (t: Omit<Timesheet,"id">) => fetchAPI(`${p}/timesheet`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(t) });
+export const updateTimesheet = (id: string, t: Partial<Timesheet>) => fetchAPI(`${p}/timesheet/${id}`, { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(t) });
+export const deleteTimesheet = (id: string) => fetchAPI(`${p}/timesheet/${id}`, { method:"DELETE" });
+
+export const getProcessoFinanceiro = (processoId: string) =>
+  fetchAPI(`/controle/processos/${processoId}/financeiro`) as Promise<ProcessoFinanceiro>;
 
 export const getVariaveis = () => fetchAPI(`${p}/variaveis`) as Promise<Variavel[]>;
 export const createVariavel = (v: Omit<Variavel,"id">) => fetchAPI(`${p}/variaveis`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(v) });
