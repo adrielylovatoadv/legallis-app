@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { normText } from "@/lib/controle";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { DateField } from "@/components/ui/DateField";
+import { FinanceiroPanel } from "./_financeiro-panel";
 
 interface Finalizado {
   cliente: string;
@@ -134,6 +135,7 @@ export function FinalizadosTab() {
   const [filtroMotivo, setFiltroMotivo] = useState<string>("");
   const [modal, setModal] = useState<{ entry?: Finalizado; index?: number } | null>(null);
   const [confirmIdx, setConfirmIdx] = useState<number | null>(null);
+  const [financeiroAbertoIdx, setFinanceiroAbertoIdx] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -305,6 +307,13 @@ export function FinalizadosTab() {
                       style={{ background: c.bg, color: c.color, border: `1px solid ${c.color}` }}>
                       {f.motivo}
                     </span>
+                    {f.processo && (
+                      <button onClick={() => setFinanceiroAbertoIdx(v => v === realIdx ? null : realIdx)} title="Financeiro do processo"
+                        className="text-xs px-2 py-1 rounded"
+                        style={{ background: financeiroAbertoIdx === realIdx ? "rgba(201,168,76,0.15)" : "var(--surface2)", color: financeiroAbertoIdx === realIdx ? "var(--gold)" : "var(--text3)", border: "1px solid var(--border)" }}>
+                        💰
+                      </button>
+                    )}
                     {f._migrado ? (
                       <span className="text-xs px-2 py-0.5 rounded" title="Registro do Financeiro — edite lá"
                         style={{ background: "var(--surface2)", color: "var(--text3)", border: "1px solid var(--border)" }}>
@@ -331,6 +340,11 @@ export function FinalizadosTab() {
                     )}
                   </div>
                 </div>
+                {financeiroAbertoIdx === realIdx && f.processo && (
+                  <div className="mt-2 pt-2 border-t" style={{ borderColor: "var(--border)" }}>
+                    <FinanceiroPanel alvo={{ numeroProcesso: f.processo, cliente: f.cliente, reu: f.reu, objeto: f.objeto }} />
+                  </div>
+                )}
               </div>
             );
           })}

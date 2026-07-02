@@ -116,6 +116,8 @@ export const deleteTimesheet = (id: string) => fetchAPI(`${p}/timesheet/${id}`, 
 
 export const getProcessoFinanceiro = (processoId: string) =>
   fetchAPI(`/controle/processos/${processoId}/financeiro`) as Promise<ProcessoFinanceiro>;
+export const getFinanceiroPorNumero = (numero: string) =>
+  fetchAPI(`${p}/por-numero?numero=${encodeURIComponent(numero)}`) as Promise<ProcessoFinanceiro>;
 
 export const getVariaveis = () => fetchAPI(`${p}/variaveis`) as Promise<Variavel[]>;
 export const createVariavel = (v: Omit<Variavel,"id">) => fetchAPI(`${p}/variaveis`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(v) });
