@@ -125,7 +125,7 @@ export function fmtData(iso: string): string {
 
 export function gcalUrl(p: Processo): string | null {
   const s = (p.andamento || "").toUpperCase();
-  if (!s.includes("AIJ") && !s.startsWith("AC")) return null;
+  if (!s.includes("AIJ") && !s.startsWith("AC") && !s.includes("PERÍCIA") && !s.includes("PERICIA")) return null;
   if (!p.data) return null;
   const [y, mo, d] = p.data.split("-").map(Number);
   const [h, min] = (p.hora || "08:00").split(":").map(Number);
@@ -134,7 +134,7 @@ export function gcalUrl(p: Processo): string | null {
   const endMin = min + 30 >= 60 ? min + 30 - 60 : min + 30;
   const endH = min + 30 >= 60 ? h + 1 : h;
   const end = `${y}${fmt(mo)}${fmt(d)}T${fmt(endH)}${fmt(endMin)}00`;
-  const tipo = s.includes("AIJ") ? "AIJ" : "AC";
+  const tipo = s.includes("AIJ") ? "AIJ" : s.startsWith("AC") ? "AC" : "PERÍCIA";
   const titulo = `${tipo} ${p.autor} ${p.numero_processo}`.trim();
   const detalhe = `Processo: ${p.numero_processo} | ${p.autor} × ${p.reu} | ${p.objeto}`;
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(titulo)}&dates=${start}/${end}&details=${encodeURIComponent(detalhe)}`;

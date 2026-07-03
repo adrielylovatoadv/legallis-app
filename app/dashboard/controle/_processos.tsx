@@ -165,7 +165,7 @@ function ProcessoRow({ p, onEdit, onDelete, onOk, onToggleAtencao }: {
           ? <a href={url} target="_blank" rel="noopener noreferrer"
               className="mt-1 flex items-center gap-1 text-xs"
               style={{ color:"#60a5fa" }}>📅 Calendar</a>
-          : (p.andamento || "").toUpperCase().match(/AIJ|^AC/) && (
+          : (p.andamento || "").toUpperCase().match(/AIJ|^AC|PER[IÍ]CIA/) && (
               <span className="mt-1 text-xs" title="Adicione data e hora para gerar link"
                 style={{ color:"var(--text3)", cursor:"help" }}>📅 sem data/hora</span>
             )
