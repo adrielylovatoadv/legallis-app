@@ -124,8 +124,9 @@ export function fmtData(iso: string): string {
 }
 
 export function gcalUrl(p: Processo): string | null {
-  const s = (p.andamento || "").toUpperCase();
-  if (!s.includes("AIJ") && !s.startsWith("AC") && !s.includes("PERÍCIA") && !s.includes("PERICIA")) return null;
+  const s = (p.andamento || "").toUpperCase().trim();
+  const isPericia = s === "PERÍCIA" || s === "PERICIA";
+  if (!s.includes("AIJ") && !s.startsWith("AC") && !isPericia) return null;
   if (!p.data) return null;
   const [y, mo, d] = p.data.split("-").map(Number);
   const [h, min] = (p.hora || "08:00").split(":").map(Number);
