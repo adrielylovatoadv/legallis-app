@@ -8,7 +8,11 @@ import {
   type Cliente, type Processo, type Inicial,
 } from "@/lib/controle";
 import { ConfirmModal } from "@/components/ConfirmModal";
-import { generateProcuracaoPDF, generateContratoHonorariosPDF, type AdvogadoDoc } from "@/lib/document-templates";
+import {
+  generateProcuracaoDocx, generateContratoHonorariosDocx,
+  generateDeclaracaoIsencaoIRDocx, generateDeclaracaoHipossuficienciaDocx,
+  type AdvogadoDoc,
+} from "@/lib/document-templates";
 
 type ClienteComProcs = Cliente & { _ativos?: Processo[]; _finalizados?: Processo[]; _iniciais?: Inicial[] };
 
@@ -63,6 +67,7 @@ function ClienteForm({ initial, onSave, onCancel }: {
     nome:"",telefone:"",cpf:"",email:"",endereco:"",tipo_aposentadoria:"",informacoes:"",senha_gov:"",senha_serasa:"",
     tipo_pessoa:"fisica" as "fisica"|"juridica", cnpj:"", tratamento:"",
     etiquetas:[] as string[], telefones_adicionais:[] as string[], emails_adicionais:[] as string[],
+    rg:"", profissao:"", estado_civil:"", nacionalidade:"brasileiro(a)",
   };
   const [form, setForm] = useState({ ...blank, ...(initial||{}) });
   const [etiquetasTexto, setEtiquetasTexto] = useState((initial?.etiquetas || []).join(", "));
@@ -101,6 +106,14 @@ function ClienteForm({ initial, onSave, onCancel }: {
         }
         <div><Lbl>E-mail</Lbl><Inp type="email" value={form.email} onChange={e => set("email",e.target.value)} /></div>
         <div className="sm:col-span-2"><Lbl>Endereço</Lbl><Inp value={form.endereco} onChange={e => set("endereco",e.target.value)} /></div>
+        {form.tipo_pessoa === "fisica" && (
+          <>
+            <div><Lbl>RG</Lbl><Inp value={form.rg} onChange={e => set("rg",e.target.value)} /></div>
+            <div><Lbl>Nacionalidade</Lbl><Inp value={form.nacionalidade} onChange={e => set("nacionalidade",e.target.value)} /></div>
+            <div><Lbl>Estado civil</Lbl><Inp value={form.estado_civil} placeholder="ex: solteiro(a), casado(a), viúvo(a)" onChange={e => set("estado_civil",e.target.value)} /></div>
+            <div><Lbl>Profissão</Lbl><Inp value={form.profissao} onChange={e => set("profissao",e.target.value)} /></div>
+          </>
+        )}
         <div><Lbl>Tipo Aposentadoria</Lbl><Inp value={form.tipo_aposentadoria} onChange={e => set("tipo_aposentadoria",e.target.value)} /></div>
         <div>
           <Lbl>Etiquetas (separadas por vírgula)</Lbl>
@@ -135,9 +148,11 @@ function ClienteForm({ initial, onSave, onCancel }: {
   );
 }
 
+type TipoDocumento = "procuracao" | "contrato" | "isencao_ir" | "hipossuficiencia";
+
 function GerarDocumentoMenu({ cliente, processo }: { cliente: Cliente; processo?: Processo }) {
   const { data: session } = useSession();
-  const [gerando, setGerando] = useState<"procuracao" | "contrato" | null>(null);
+  const [gerando, setGerando] = useState<TipoDocumento | null>(null);
   const [erro, setErro] = useState("");
 
   async function getAdvogado(): Promise<AdvogadoDoc> {
@@ -147,38 +162,35 @@ function GerarDocumentoMenu({ cliente, processo }: { cliente: Cliente; processo?
     const u = await res.json();
     return {
       nome: u.name, escritorio: u.company?.name, enderecoEscritorio: u.company?.address,
-      cnpjEscritorio: u.company?.cnpj,
       oabs: (u.oab || []).map((o: { state: string; number: string }) => ({ estado: o.state, numero: o.number })),
     };
   }
 
-  const gerarProcuracao = async () => {
-    setGerando("procuracao"); setErro("");
-    try { await generateProcuracaoPDF(cliente, await getAdvogado()); }
-    catch { setErro("Erro ao gerar procuração."); }
+  const gerar = async (tipo: TipoDocumento) => {
+    setGerando(tipo); setErro("");
+    try {
+      const advogado = await getAdvogado();
+      if (tipo === "procuracao") await generateProcuracaoDocx(cliente, advogado, { objeto: processo?.objeto });
+      else if (tipo === "contrato") await generateContratoHonorariosDocx(cliente, advogado, { objeto: processo?.objeto });
+      else if (tipo === "isencao_ir") await generateDeclaracaoIsencaoIRDocx(cliente, advogado);
+      else await generateDeclaracaoHipossuficienciaDocx(cliente, advogado);
+    } catch { setErro("Erro ao gerar documento."); }
     finally { setGerando(null); }
   };
 
-  const gerarContrato = async () => {
-    setGerando("contrato"); setErro("");
-    try {
-      await generateContratoHonorariosPDF(cliente, await getAdvogado(), {
-        processoNumero: processo?.numero_processo, objeto: processo?.objeto,
-      });
-    } catch { setErro("Erro ao gerar contrato."); }
-    finally { setGerando(null); }
-  };
+  const btn = (tipo: TipoDocumento, label: string) => (
+    <button onClick={() => gerar(tipo)} disabled={!!gerando} className="text-xs px-3 py-1.5 rounded-lg font-medium disabled:opacity-50"
+      style={{ background: "var(--surface2)", color: "var(--text2)", border: "1px solid var(--border)" }}>
+      {gerando === tipo ? "⏳ Gerando..." : `📄 ${label}`}
+    </button>
+  );
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <button onClick={gerarProcuracao} disabled={!!gerando} className="text-xs px-3 py-1.5 rounded-lg font-medium disabled:opacity-50"
-        style={{ background: "var(--surface2)", color: "var(--text2)", border: "1px solid var(--border)" }}>
-        {gerando === "procuracao" ? "⏳ Gerando..." : "📄 Procuração"}
-      </button>
-      <button onClick={gerarContrato} disabled={!!gerando} className="text-xs px-3 py-1.5 rounded-lg font-medium disabled:opacity-50"
-        style={{ background: "var(--surface2)", color: "var(--text2)", border: "1px solid var(--border)" }}>
-        {gerando === "contrato" ? "⏳ Gerando..." : "📄 Contrato de Honorários"}
-      </button>
+      {btn("procuracao", "Procuração")}
+      {btn("contrato", "Contrato de Honorários")}
+      {btn("isencao_ir", "Declaração de Isenção de IR")}
+      {btn("hipossuficiencia", "Declaração de Hipossuficiência")}
       {erro && <span className="text-xs text-red-400">{erro}</span>}
     </div>
   );

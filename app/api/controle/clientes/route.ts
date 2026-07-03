@@ -53,6 +53,8 @@ export async function POST(req: NextRequest) {
     tipo_pessoa: body.tipo_pessoa || "fisica", cnpj: body.cnpj || "", tratamento: body.tratamento || "",
     etiquetas: body.etiquetas || [], telefones_adicionais: body.telefones_adicionais || [],
     emails_adicionais: body.emails_adicionais || [],
+    rg: body.rg || "", profissao: body.profissao || "", estado_civil: body.estado_civil || "",
+    nacionalidade: body.nacionalidade || "brasileiro(a)",
     criado_em: new Date().toISOString(),
   };
   data.clientes.push(novo);

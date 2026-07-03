@@ -21,6 +21,7 @@ export interface Cliente {
   informacoes: string; senha_gov: string; senha_serasa: string; criado_em: string;
   tipo_pessoa?: "fisica" | "juridica"; cnpj?: string; tratamento?: string;
   etiquetas?: string[]; telefones_adicionais?: string[]; emails_adicionais?: string[];
+  rg?: string; profissao?: string; estado_civil?: string; nacionalidade?: string;
 }
 
 export interface Inicial {
@@ -84,7 +85,8 @@ function parseRaw(d: Partial<ControleData>): ControleData {
       ...{ telefone: "", cpf: "", email: "", endereco: "",
         tipo_aposentadoria: "", informacoes: "", senha_gov: "", senha_serasa: "",
         tipo_pessoa: "fisica" as const, cnpj: "", tratamento: "",
-        etiquetas: [], telefones_adicionais: [], emails_adicionais: [] },
+        etiquetas: [], telefones_adicionais: [], emails_adicionais: [],
+        rg: "", profissao: "", estado_civil: "", nacionalidade: "brasileiro(a)" },
       ...c,
       senha_gov: decryptField(c.senha_gov || ""),
       senha_serasa: decryptField(c.senha_serasa || ""),

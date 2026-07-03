@@ -42,6 +42,7 @@ export interface Cliente {
   informacoes: string; senha_gov: string; senha_serasa: string; criado_em: string;
   tipo_pessoa?: "fisica" | "juridica"; cnpj?: string; tratamento?: string;
   etiquetas?: string[]; telefones_adicionais?: string[]; emails_adicionais?: string[];
+  rg?: string; profissao?: string; estado_civil?: string; nacionalidade?: string;
 }
 
 export interface Inicial {
