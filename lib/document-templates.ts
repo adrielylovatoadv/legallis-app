@@ -148,14 +148,13 @@ function nomeArquivoDe(nome: string, prefixo: string) {
 
 // ── Procuração "Ad Judicia" ──────────────────────────────────────────────────
 
-export async function generateProcuracaoDocx(cliente: ClienteDoc, advogado: AdvogadoDoc, opts: { objeto?: string } = {}) {
+export async function generateProcuracaoDocx(cliente: ClienteDoc, advogado: AdvogadoDoc) {
   const mod = await criarDoc(await import("docx"));
-  const objetoTexto = opts.objeto ? ` em especial, para ${opts.objeto}.` : "";
 
   const children = [
     paragrafoTitulo(mod, 'PROCURAÇÃO "AD JUDICIA"'),
     paragrafoTexto(mod,
-      `${qualificacaoCliente(cliente)}, nomeia e constitui ${qualificacaoAdvogado(advogado)}, a quem confere amplos poderes para o foro em geral, inclusive os da cláusula "ad judicia", e mais os poderes de desistir, transigir, firmar compromisso, acordar, receber e dar quitação, substabelecer, com ou sem reservas de iguais poderes, para em qualquer juízo, instância, ou tribunal, representar e defender os direitos e interesses do(a) outorgante no foro em geral, podendo propor contra quem de direito as ações competentes, defendê-lo(a) nas que lhe forem movidas, seguindo umas e outras até final decisão, usando dos recursos legais, produzindo provas, podendo ainda, requerer em seu nome pedido de Assistência Judiciária Gratuita, variar de ações, requerer medidas preventivas, preparatórias e incidentes, praticar todos os atos necessários ao bom, fiel e cabal cumprimento deste mandato em todos os processos judiciais onde seja parte, tanto autor(a) como ré(u)${objetoTexto}`
+      `${qualificacaoCliente(cliente)}, nomeia e constitui ${qualificacaoAdvogado(advogado)}, a quem confere amplos poderes para o foro em geral, inclusive os da cláusula "ad judicia", e mais os poderes de desistir, transigir, firmar compromisso, acordar, receber e dar quitação, substabelecer, com ou sem reservas de iguais poderes, para em qualquer juízo, instância, ou tribunal, representar e defender os direitos e interesses do(a) outorgante no foro em geral, podendo propor contra quem de direito as ações competentes, defendê-lo(a) nas que lhe forem movidas, seguindo umas e outras até final decisão, usando dos recursos legais, produzindo provas, podendo ainda, requerer em seu nome pedido de Assistência Judiciária Gratuita, variar de ações, requerer medidas preventivas, preparatórias e incidentes, praticar todos os atos necessários ao bom, fiel e cabal cumprimento deste mandato em todos os processos judiciais onde seja parte, tanto autor(a) como ré(u) em especial, para`
     ),
     paragrafoCentralizado(mod, localEData(advogado.cidadeEscritorio)),
     ...blocoAssinaturaUnica(mod, cliente.nome),

@@ -170,7 +170,7 @@ function GerarDocumentoMenu({ cliente, processo }: { cliente: Cliente; processo?
     setGerando(tipo); setErro("");
     try {
       const advogado = await getAdvogado();
-      if (tipo === "procuracao") await generateProcuracaoDocx(cliente, advogado, { objeto: processo?.objeto });
+      if (tipo === "procuracao") await generateProcuracaoDocx(cliente, advogado);
       else if (tipo === "contrato") await generateContratoHonorariosDocx(cliente, advogado, { objeto: processo?.objeto });
       else if (tipo === "isencao_ir") await generateDeclaracaoIsencaoIRDocx(cliente, advogado);
       else await generateDeclaracaoHipossuficienciaDocx(cliente, advogado);
