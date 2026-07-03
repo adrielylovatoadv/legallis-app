@@ -150,7 +150,7 @@ function ClienteForm({ initial, onSave, onCancel }: {
 
 type TipoDocumento = "procuracao" | "contrato" | "isencao_ir" | "hipossuficiencia";
 
-function GerarDocumentoMenu({ cliente, processo }: { cliente: Cliente; processo?: Processo }) {
+function GerarDocumentoMenu({ cliente }: { cliente: Cliente }) {
   const { data: session } = useSession();
   const [gerando, setGerando] = useState<TipoDocumento | null>(null);
   const [erro, setErro] = useState("");
@@ -171,7 +171,7 @@ function GerarDocumentoMenu({ cliente, processo }: { cliente: Cliente; processo?
     try {
       const advogado = await getAdvogado();
       if (tipo === "procuracao") await generateProcuracaoDocx(cliente, advogado);
-      else if (tipo === "contrato") await generateContratoHonorariosDocx(cliente, advogado, { objeto: processo?.objeto });
+      else if (tipo === "contrato") await generateContratoHonorariosDocx(cliente, advogado);
       else if (tipo === "isencao_ir") await generateDeclaracaoIsencaoIRDocx(cliente, advogado);
       else await generateDeclaracaoHipossuficienciaDocx(cliente, advogado);
     } catch { setErro("Erro ao gerar documento."); }
@@ -311,7 +311,7 @@ function ClienteCard({ c, onEdit, onDelete }: {
           </div>
 
           {/* Gerar documento */}
-          <GerarDocumentoMenu cliente={c} processo={ativos[0]} />
+          <GerarDocumentoMenu cliente={c} />
 
           {/* Informações */}
           {c.informacoes && (

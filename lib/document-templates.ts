@@ -128,10 +128,16 @@ const PAGINA = {
   margin: { top: 1134, right: 1701, bottom: 1702, left: 1701 },
 };
 
-async function gerarEBaixar(mod: DocxModule, children: unknown[], nomeArquivo: string) {
+// Margens mais estreitas para o contrato de honorários caber em 2 folhas.
+const PAGINA_CONTRATO = {
+  size: { width: 11906, height: 16838 }, // A4
+  margin: { top: 922, right: 1080, bottom: 738, left: 1080 },
+};
+
+async function gerarEBaixar(mod: DocxModule, children: unknown[], nomeArquivo: string, pagina: typeof PAGINA = PAGINA) {
   const doc = new mod.Document({
     styles: { default: { document: { run: { font: "Calibri", size: 24 } } } },
-    sections: [{ properties: { page: PAGINA }, children: children as InstanceType<typeof mod.Paragraph>[] }],
+    sections: [{ properties: { page: pagina }, children: children as InstanceType<typeof mod.Paragraph>[] }],
   });
   const blob = await mod.Packer.toBlob(doc);
   const url = URL.createObjectURL(blob);
@@ -168,7 +174,7 @@ export async function generateProcuracaoDocx(cliente: ClienteDoc, advogado: Advo
 export async function generateContratoHonorariosDocx(
   cliente: ClienteDoc,
   advogado: AdvogadoDoc,
-  opts: { objeto?: string; percentualExito?: number; percentualAcordo?: number } = {}
+  opts: { percentualExito?: number; percentualAcordo?: number } = {}
 ) {
   const mod = await criarDoc(await import("docx"));
   const pExito = opts.percentualExito ?? 35;
@@ -186,7 +192,7 @@ export async function generateContratoHonorariosDocx(
       'Sendo o CONTRATANTE e a CONTRATADA doravante designados, individualmente, como "Parte" e, em conjunto, como "Partes"; Resolvem, de comum acordo, firmar o presente Contrato de Prestação de Serviços e Honorários Advocatícios ("Contrato"), mediante as seguintes cláusulas e condições:',
       { indent: false }
     ),
-    paragrafoTexto(mod, `Cláusula 1ª: O CONTRATANTE, por meio do presente Contrato, contrata os serviços profissionais da CONTRATADA para ${opts.objeto || "atuar na causa descrita nos autos"}.`),
+    paragrafoTexto(mod, "Cláusula 1ª: O CONTRATANTE, por meio do presente Contrato, contrata os serviços profissionais da CONTRATADA para tentativas administrativas e para ingressar com ação judicial de  _______"),
     paragrafoTexto(mod, "Cláusula 2ª: Não haverá remuneração inicial para início dos trabalhos."),
     paragrafoTexto(mod, `Parágrafo primeiro: Para todos os fins do procedimento administrativo e judicial, os honorários serão cobrados somente com o resultado de procedência, ou seja, no êxito, perfazendo o importe de ${pExito}% (${pExito === 35 ? "trinta e cinco" : pExito} por cento) sobre o valor indenizatório, além de ${pAcordo}% em casos de acordos extrajudiciais.`),
     paragrafoTexto(mod, "Cláusula 3ª: As custas processuais, salários periciais, ônus sucumbenciais e demais despesas (viagens, fotocópias, taxas, certidões, registros, correspondência, honorários de correspondente etc.) serão totalmente suportadas pelo CONTRATANTE."),
@@ -207,7 +213,7 @@ export async function generateContratoHonorariosDocx(
     ),
   ];
 
-  await gerarEBaixar(mod, children, nomeArquivoDe(cliente.nome, "contrato_honorarios"));
+  await gerarEBaixar(mod, children, nomeArquivoDe(cliente.nome, "contrato_honorarios"), PAGINA_CONTRATO);
 }
 
 // ── Declaração de Isenção do Imposto de Renda ────────────────────────────────
