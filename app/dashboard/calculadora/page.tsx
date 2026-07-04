@@ -335,20 +335,6 @@ export default function CalculadoraPage() {
   const [honResult, setHonResult] = useState<HonorarioResult | null>(null);
   const [revResult, setRevResult] = useState<RevisionalResult | null>(null);
   const [processoInfo, setProcessoInfo] = useState({ numero: "", parte: "", advogado: "" });
-  const [indicesStatus, setIndicesStatus] = useState<{
-    ultima_atualizacao: string | null;
-    proxima_atualizacao_tjsp: string | null;
-    cobertura: { inpc: string; ipcae: string; selic: string; tjsp: string; tjsp_raw: string | null } | null;
-  }>({ ultima_atualizacao: null, proxima_atualizacao_tjsp: null, cobertura: null });
-
-  const fetchIndicesStatus = async () => {
-    try {
-      const r = await fetch("/api/calculadora/indices/status");
-      if (r.ok) setIndicesStatus(await r.json());
-    } catch { /* silencioso */ }
-  };
-
-  useEffect(() => { fetchIndicesStatus(); }, []);
 
   const parseBRL = (s: string) => parseFloat(s.replace(/\./g, "").replace(",", ".")) || 0;
   const totalSeguros = (seg: Record<string, string>) =>
@@ -453,35 +439,6 @@ export default function CalculadoraPage() {
               PDF
             </button>
           )}
-          <div className="flex items-center gap-2">
-            {indicesStatus.proxima_atualizacao_tjsp && (() => {
-              const [d, m, y] = indicesStatus.proxima_atualizacao_tjsp!.split("/").map(Number);
-              const proximaDate = new Date(y, m - 1, d);
-              const hoje = new Date();
-              hoje.setHours(0, 0, 0, 0);
-              const diasRestantes = Math.ceil((proximaDate.getTime() - hoje.getTime()) / 86400000);
-              const vencida = diasRestantes < 0;
-              const urgente = diasRestantes >= 0 && diasRestantes <= 7;
-              return (
-                <div className="flex flex-col items-start"
-                  title={`INPC: ${indicesStatus.cobertura?.inpc} · IPCA-E: ${indicesStatus.cobertura?.ipcae} · Selic: ${indicesStatus.cobertura?.selic} · TJSP: ${indicesStatus.cobertura?.tjsp}`}>
-                  <span className="text-xs leading-none mb-0.5" style={{ color: "var(--text3)" }}>
-                    TJSP — próxima atualização
-                  </span>
-                  <span className="text-xs font-semibold leading-none px-2 py-1 rounded"
-                    style={{
-                      background: vencida ? "rgba(239,68,68,0.12)" : urgente ? "rgba(245,158,11,0.12)" : "rgba(34,197,94,0.10)",
-                      color: vencida ? "#f87171" : urgente ? "#f59e0b" : "#4ade80",
-                      border: `1px solid ${vencida ? "rgba(239,68,68,0.3)" : urgente ? "rgba(245,158,11,0.3)" : "rgba(34,197,94,0.25)"}`,
-                    }}>
-                    {vencida ? "⚠ Vencida — " : urgente ? "⏰ " : "✓ "}
-                    {indicesStatus.proxima_atualizacao_tjsp}
-                    {!vencida && diasRestantes <= 30 && ` (${diasRestantes}d)`}
-                  </span>
-                </div>
-              );
-            })()}
-          </div>
         </div>
       </div>
 
