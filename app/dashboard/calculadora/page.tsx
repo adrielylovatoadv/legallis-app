@@ -334,7 +334,6 @@ export default function CalculadoraPage() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [honResult, setHonResult] = useState<HonorarioResult | null>(null);
   const [revResult, setRevResult] = useState<RevisionalResult | null>(null);
-  const [atualizando, setAtualizando] = useState(false);
   const [processoInfo, setProcessoInfo] = useState({ numero: "", parte: "", advogado: "" });
   const [indicesStatus, setIndicesStatus] = useState<{
     ultima_atualizacao: string | null;
@@ -427,14 +426,6 @@ export default function CalculadoraPage() {
     revPV, revPMT, revN, revDataContrat, revDataCalc, revTaxaBacen, isRevisional,
     segurosVeiculo, segurosContrato]);
 
-  const atualizarIndices = async () => {
-    setAtualizando(true);
-    try { await fetchAPI("/calculadora/indices/atualizar", { method: "POST" }); }
-    catch { /* ignore */ }
-    await fetchIndicesStatus();
-    setAtualizando(false);
-  };
-
   const exportarPDF = () => {
     if (!canExport(plan, "pdf")) { alert("Seu plano não inclui exportação em PDF."); return; }
     window.print();
@@ -463,15 +454,6 @@ export default function CalculadoraPage() {
             </button>
           )}
           <div className="flex items-center gap-2">
-            <button onClick={atualizarIndices} disabled={atualizando}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors"
-              style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text2)" }}>
-              <svg className={`w-4 h-4 ${atualizando ? "animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              {atualizando ? "Atualizando..." : "Atualizar índices"}
-            </button>
             {indicesStatus.proxima_atualizacao_tjsp && (() => {
               const [d, m, y] = indicesStatus.proxima_atualizacao_tjsp!.split("/").map(Number);
               const proximaDate = new Date(y, m - 1, d);

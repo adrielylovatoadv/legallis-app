@@ -48,6 +48,7 @@ export interface Cliente {
 export interface Inicial {
   id: string; cliente: string; reu: string; objeto: string;
   andamento: string; responsavel: string; observacoes: string; criado_em: string;
+  data: string; hora: string;
 }
 
 export interface DashboardData {
@@ -120,7 +121,7 @@ export function badgeAndamento(status: string): string {
 
 export function fmtData(iso: string): string {
   if (!iso || iso.length < 10) return "";
-  const [y, m, d] = iso.split("-");
+  const [y, m, d] = iso.slice(0, 10).split("-");
   return `${d}/${m}/${y}`;
 }
 

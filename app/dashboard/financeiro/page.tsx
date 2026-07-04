@@ -69,9 +69,6 @@ export default function FinanceiroPage() {
         </div>
       </div>
 
-      {/* Alertas */}
-      <AlertasPendentes />
-
       {/* Abas */}
       <div className="flex gap-2 flex-wrap">
         {ABAS.map((label, i) => (
@@ -84,7 +81,9 @@ export default function FinanceiroPage() {
       </div>
 
       {/* Conteúdo */}
-      {aba === 0 && (dash ? <DashView data={dash} /> : <div className="py-8 text-center" style={{ color:"var(--text3)" }}>Carregando...</div>)}
+      {aba === 0 && (dash
+        ? <div className="space-y-5"><DashView data={dash} /><AlertasPendentes /></div>
+        : <div className="py-8 text-center" style={{ color:"var(--text3)" }}>Carregando...</div>)}
       {aba === 1 && <AcordosView reload={loadDash} filtroMes={filtroAtivo} />}
       {aba === 2 && <ExecucoesView reload={loadDash} filtroMes={filtroAtivo} />}
       {aba === 3 && <HonIniciaisView reload={loadDash} />}

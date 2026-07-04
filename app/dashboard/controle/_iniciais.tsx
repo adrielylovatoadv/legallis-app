@@ -103,7 +103,7 @@ export function IniciaisTab() {
       r = r.filter(i => (i.cliente||"").toLowerCase().includes(b) || (i.reu||"").toLowerCase().includes(b) || (i.objeto||"").toLowerCase().includes(b));
     }
     if (filtroAnd !== "Todos") r = r.filter(i => i.andamento === filtroAnd);
-    return r;
+    return r.sort((a, b) => (a.data || "9999").localeCompare(b.data || "9999"));
   };
 
   const pendentes = filtrar(iniciais.filter(i => !ANDAMENTOS_CONCLUIDOS.includes((i.andamento||"").toUpperCase().trim())));

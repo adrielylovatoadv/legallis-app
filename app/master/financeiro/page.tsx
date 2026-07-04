@@ -12,7 +12,7 @@ interface FinanceStats {
   byPlan: { basic: number; pro: number; profissional: number };
 }
 
-const PLAN_PRICES: Record<string, number> = { basic: 49, pro: 99, profissional: 199 };
+const PLAN_PRICES: Record<string, number> = { basic: 97, profissional: 197, pro: 347 };
 
 export default function MasterFinanceiroPage() {
   const [stats, setStats] = useState<FinanceStats | null>(null);
@@ -54,8 +54,8 @@ export default function MasterFinanceiroPage() {
             <div className="space-y-4">
               {[
                 { key: "basic", label: "Básico", color: "var(--text3)", count: stats.byPlan.basic },
-                { key: "pro", label: "Pro", color: "var(--gold)", count: stats.byPlan.pro },
-                { key: "profissional", label: "Profissional", color: "#818cf8", count: stats.byPlan.profissional },
+                { key: "profissional", label: "Profissional", color: "var(--gold)", count: stats.byPlan.profissional },
+                { key: "pro", label: "Pro", color: "#818cf8", count: stats.byPlan.pro },
               ].map(p => {
                 const revenue = p.count * (PLAN_PRICES[p.key] ?? 0);
                 const total = stats.monthlyRevenue || 1;

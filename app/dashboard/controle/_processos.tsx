@@ -157,7 +157,7 @@ function ProcessoRow({ p, onEdit, onDelete, onOk, onToggleAtencao }: {
         }
       </td>
       <td className="py-2">
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-nowrap items-center gap-1 whitespace-nowrap">
           <button onClick={() => onOk(p.id)} title="Marcar OK"
             className="text-xs px-2 py-1 rounded"
             style={{ background:"rgba(34,197,94,0.12)", color:"#4ade80" }}>✅</button>

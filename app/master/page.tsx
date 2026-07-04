@@ -101,9 +101,9 @@ export default function MasterPage() {
               <h2 className="font-semibold mb-4" style={{ color: "var(--text)" }}>Assinaturas por Plano</h2>
               <div className="space-y-3">
                 {[
-                  { key: "basic", label: "Básico", color: "var(--text3)", price: 49, count: stats.byPlan.basic },
-                  { key: "pro", label: "Pro", color: "var(--gold)", price: 99, count: stats.byPlan.pro },
-                  { key: "profissional", label: "Profissional", color: "#818cf8", price: 199, count: stats.byPlan.profissional },
+                  { key: "basic", label: "Básico", color: "var(--text3)", price: 97, count: stats.byPlan.basic },
+                  { key: "profissional", label: "Profissional", color: "var(--gold)", price: 197, count: stats.byPlan.profissional },
+                  { key: "pro", label: "Pro", color: "#818cf8", price: 347, count: stats.byPlan.pro },
                 ].map(p => (
                   <div key={p.key} className="flex items-center gap-3">
                     <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: p.color }} />
