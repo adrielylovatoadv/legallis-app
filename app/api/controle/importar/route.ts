@@ -7,6 +7,9 @@ import {
   newId as newFinanceiroId,
   type Acordo, type Execucao, type HonorarioInicial,
 } from "@/lib/financeiro-data";
+import * as acordosRepo from "@/lib/repo/acordos";
+import * as execucoesRepo from "@/lib/repo/execucoes";
+import * as honorariosRepo from "@/lib/repo/honorarios-iniciais";
 import * as XLSX from "xlsx";
 
 function clean(v: unknown): string {
@@ -300,5 +303,12 @@ export async function POST(req: NextRequest) {
 
   await saveDataAsync(data, tid);
   await saveFinanceiroDataAsync(finData, tid);
+  // acordos/execucoes/honorarios_iniciais também vivem nas tabelas relacionais (Fase 2 da
+  // migração) — sem isso, dados importados ficariam invisíveis nas abas que já leem das tabelas.
+  await Promise.all([
+    acordosRepo.upsertMany(tid, finData.acordos),
+    execucoesRepo.upsertMany(tid, finData.execucoes),
+    honorariosRepo.upsertMany(tid, finData.honorarios_iniciais),
+  ]);
   return NextResponse.json({ ok: true, stats, erros: erros.length > 0 ? erros : undefined });
 }

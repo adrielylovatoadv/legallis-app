@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDataAsync as getControleData, isFinalizado } from "@/lib/controle-data";
-import { getDataAsync as getFinanceiroData, calcAcordo, MESES } from "@/lib/financeiro-data";
+import { calcAcordo, MESES } from "@/lib/financeiro-data";
+import * as acordosRepo from "@/lib/repo/acordos";
+import * as execucoesRepo from "@/lib/repo/execucoes";
+import * as honorariosRepo from "@/lib/repo/honorarios-iniciais";
 
 function countBy<T>(items: T[], keyFn: (i: T) => string): Record<string, number> {
   const out: Record<string, number> = {};
@@ -33,7 +36,9 @@ export async function GET() {
   const tid = session.user.tenantId;
 
   const controle = await getControleData(tid);
-  const financeiro = await getFinanceiroData(tid);
+  const [acordosRaw, execucoes, honorarios_iniciais] = await Promise.all([
+    acordosRepo.list(tid), execucoesRepo.list(tid), honorariosRepo.list(tid),
+  ]);
 
   const ativos = controle.processos.filter(p => !isFinalizado(p));
   const iniciaisPendentes = controle.iniciais.filter(
@@ -68,15 +73,15 @@ export async function GET() {
   const casos_criados_por_mes = meses6.map(m => ({ mes: m.label, valor: criadosPorChave[m.chave] || 0 }));
 
   // Honorários recebidos por mês (mesma fonte usada em /api/financeiro/dashboard)
-  const acordos = financeiro.acordos.map(a => ({ ...a, honorarios: a.honorarios || calcAcordo(a.valor_acordo || 0) }));
+  const acordos = acordosRaw.map(a => ({ ...a, honorarios: a.honorarios || calcAcordo(a.valor_acordo || 0) }));
   const honorariosPorMes: Record<string, number> = {};
   const soma = (mes: string | undefined, valor: number, status: string) => {
     if (!mes || status === "pendente") return;
     honorariosPorMes[mes] = (honorariosPorMes[mes] || 0) + valor;
   };
   for (const a of acordos) soma(a.mes, a.honorarios, a.status);
-  for (const e of financeiro.execucoes) soma(e.mes, e.honorarios, e.status);
-  for (const h of financeiro.honorarios_iniciais) soma(h.mes, h.valor, h.status === "pago" ? "pago" : "pendente");
+  for (const e of execucoes) soma(e.mes, e.honorarios, e.status);
+  for (const h of honorarios_iniciais) soma(h.mes, h.valor, h.status === "pago" ? "pago" : "pendente");
   const financeiro_por_mes = MESES.filter(m => honorariosPorMes[m] !== undefined)
     .map(m => ({ mes: m, valor: Math.round((honorariosPorMes[m] || 0) * 100) / 100 }));
 

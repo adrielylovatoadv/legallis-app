@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hasFinanceiroAccess } from "@/lib/acl";
-import { getDataAsync as getData, saveDataAsync as saveData, newId } from "@/lib/financeiro-data";
+import * as honorariosRepo from "@/lib/repo/honorarios-iniciais";
 import { honorarioInicialCreateSchema } from "@/lib/validation/financeiro";
 import { parseBody } from "@/lib/validation/helpers";
 
@@ -10,7 +10,8 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   if (!hasFinanceiroAccess(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para o módulo financeiro" }, { status: 403 });
   const tid = session.user.tenantId;
-  const d = await getData(tid); return NextResponse.json(d.honorarios_iniciais);
+  const lista = await honorariosRepo.list(tid);
+  return NextResponse.json(lista);
 }
 
 export async function POST(req: NextRequest) {
@@ -20,9 +21,6 @@ export async function POST(req: NextRequest) {
   const tid = session.user.tenantId;
   const { data: body, error } = parseBody(honorarioInicialCreateSchema, await req.json());
   if (error) return error;
-  const d = await getData(tid);
-  const h = { ...body, id: newId() };
-  d.honorarios_iniciais.push(h);
-  await saveData(d, tid);
+  const h = await honorariosRepo.create(tid, body);
   return NextResponse.json(h, { status: 201 });
 }

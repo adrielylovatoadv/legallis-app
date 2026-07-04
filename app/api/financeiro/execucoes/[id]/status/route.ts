@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hasFinanceiroAccess } from "@/lib/acl";
-import { getDataAsync as getData, saveDataAsync as saveData } from "@/lib/financeiro-data";
+import * as execucoesRepo from "@/lib/repo/execucoes";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -10,10 +10,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const tid = session.user.tenantId;
   const { id } = await params;
   const { status } = await req.json();
-  const d = await getData(tid);
-  const e = d.execucoes.find(e => e.id === id);
-  if (!e) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
-  e.status = status;
-  await saveData(d, tid);
-  return NextResponse.json(e);
+  const exec = await execucoesRepo.update(tid, id, { status });
+  if (!exec) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
+  return NextResponse.json(exec);
 }

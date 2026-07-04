@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hasFinanceiroAccess } from "@/lib/acl";
 import { getDataAsync as getData, COLS, MESES, calcAcordo } from "@/lib/financeiro-data";
+import * as acordosRepo from "@/lib/repo/acordos";
+import * as execucoesRepo from "@/lib/repo/execucoes";
+import * as honorariosRepo from "@/lib/repo/honorarios-iniciais";
+import * as variaveisRepo from "@/lib/repo/variaveis";
 
 const COL_TO_MES: Record<string, string> = {
   "Out":"Out/2025","Nov":"Nov/2025","Dez":"Dez/2025",
@@ -17,23 +21,25 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   if (!hasFinanceiroAccess(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para o módulo financeiro" }, { status: 403 });
   const tid = session.user.tenantId;
-  const d = await getData(tid);
+  const [d, acordosRaw, execucoes, honorarios_iniciais, variaveis] = await Promise.all([
+    getData(tid), acordosRepo.list(tid), execucoesRepo.list(tid), honorariosRepo.list(tid), variaveisRepo.list(tid),
+  ]);
   // Alguns acordos antigos têm "honorarios" zerado mesmo com valor_acordo preenchido —
   // recalcula na hora, igual a rota /api/financeiro/acordos já faz.
-  const acordos = d.acordos.map(a => ({ ...a, honorarios: a.honorarios || calcAcordo(a.valor_acordo || 0) }));
+  const acordos = acordosRaw.map(a => ({ ...a, honorarios: a.honorarios || calcAcordo(a.valor_acordo || 0) }));
 
   // Receitas recebidas (não pendentes)
   const receitasPagas = [
     ...acordos.filter(a => a.status !== "pendente").map(a => ({ mes: a.mes, valor: a.honorarios })),
-    ...d.execucoes.filter(e => e.status !== "pendente").map(e => ({ mes: e.mes, valor: e.honorarios })),
-    ...d.honorarios_iniciais.filter(h => h.status === "pago").map(h => ({ mes: h.mes || "", valor: h.valor })),
+    ...execucoes.filter(e => e.status !== "pendente").map(e => ({ mes: e.mes, valor: e.honorarios })),
+    ...honorarios_iniciais.filter(h => h.status === "pago").map(h => ({ mes: h.mes || "", valor: h.valor })),
   ];
 
   // Receitas pendentes
   const receitasPendentes = [
     ...acordos.filter(a => a.status === "pendente").map(a => ({ tipo: "acordo", cliente: a.cliente, mes: a.mes, valor: a.honorarios, processo: a.processo })),
-    ...d.execucoes.filter(e => e.status === "pendente").map(e => ({ tipo: "execucao", cliente: e.cliente, mes: e.mes, valor: e.honorarios, processo: e.processo })),
-    ...d.honorarios_iniciais.filter(h => h.status === "pendente").map(h => ({ tipo: "inicial", cliente: h.cliente, mes: h.mes || "", valor: h.valor, observacao: h.observacao })),
+    ...execucoes.filter(e => e.status === "pendente").map(e => ({ tipo: "execucao", cliente: e.cliente, mes: e.mes, valor: e.honorarios, processo: e.processo })),
+    ...honorarios_iniciais.filter(h => h.status === "pendente").map(h => ({ tipo: "inicial", cliente: h.cliente, mes: h.mes || "", valor: h.valor, observacao: h.observacao })),
   ];
 
   const total_recebido = r2(receitasPagas.reduce((s, r) => s + r.valor, 0));
@@ -48,7 +54,7 @@ export async function GET() {
   }
   total_fixas = r2(total_fixas);
 
-  const total_variaveis = r2(d.variaveis.reduce((s, v) => s + v.valor, 0));
+  const total_variaveis = r2(variaveis.reduce((s, v) => s + v.valor, 0));
   const saldo = r2(total_recebido - total_fixas - total_variaveis);
 
   // Balanço por mês — inclui TODOS os registros (recebidos + pendentes)
@@ -64,13 +70,13 @@ export async function GET() {
     if (a.status !== "pendente") mesMap[a.mes].honorarios_recebido += a.honorarios;
     else mesMap[a.mes].honorarios_pendente += a.honorarios;
   }
-  for (const e of d.execucoes) {
+  for (const e of execucoes) {
     if (!e.mes) continue;
     ensureMes(e.mes);
     if (e.status !== "pendente") mesMap[e.mes].honorarios_recebido += e.honorarios;
     else mesMap[e.mes].honorarios_pendente += e.honorarios;
   }
-  for (const h of d.honorarios_iniciais) {
+  for (const h of honorarios_iniciais) {
     const mes = h.mes || "";
     if (!mes) continue;
     ensureMes(mes);
@@ -89,7 +95,7 @@ export async function GET() {
     }
   }
 
-  for (const v of d.variaveis) {
+  for (const v of variaveis) {
     for (const [col, val] of Object.entries(v.meses || {})) {
       if (val > 0) {
         const mes = COL_TO_MES[col];
@@ -105,14 +111,14 @@ export async function GET() {
       const honorarios = r2(r.honorarios_recebido);
       const honorarios_pendente = r2(r.honorarios_pendente);
       const fixas = r2(r.fixas);
-      const variaveis = r2(r.variaveis);
+      const variaveisVal = r2(r.variaveis);
       return {
         mes: m,
         honorarios,
         honorarios_pendente,
         fixas,
-        variaveis,
-        saldo: r2(honorarios - fixas - variaveis),
+        variaveis: variaveisVal,
+        saldo: r2(honorarios - fixas - variaveisVal),
       };
     });
 
