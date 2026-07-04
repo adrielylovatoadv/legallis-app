@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDataAsync as getData, saveDataAsync as saveData, newId } from "@/lib/controle-data";
+import * as redesignacoesRepo from "@/lib/repo/redesignacoes";
 import { addSystemMessage, getOrCreateDM, addMessage } from "@/lib/chat";
 import { logEvent } from "@/lib/audit";
 import { getUserByIdAsync } from "@/lib/users";
@@ -10,10 +11,8 @@ export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   const tid = session.user.tenantId;
-  const data = await getData(tid);
-  const recebidas = (data.redesignacoes || []).filter(
-    r => r.paraUserId === session.user.id && r.status === "pendente"
-  );
+  const todas = await redesignacoesRepo.list(tid);
+  const recebidas = todas.filter(r => r.paraUserId === session.user.id && r.status === "pendente");
   return NextResponse.json({ recebidas });
 }
 
