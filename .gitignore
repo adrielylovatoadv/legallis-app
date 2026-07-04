@@ -45,3 +45,6 @@ next-env.d.ts
 /data/controle_data.json
 /data/financeiro_data.json
 /data/reset_tokens.json
+
+# backups de migração (dados reais de produção) — nunca versionar
+/backups/
