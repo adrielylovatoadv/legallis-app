@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getDataAsync as getData, saveDataAsync as saveData, newId } from "@/lib/controle-data";
+import * as iniciaisRepo from "@/lib/repo/iniciais";
 import { inicialCreateSchema } from "@/lib/validation/controle";
 import { parseBody } from "@/lib/validation/helpers";
 
@@ -13,8 +13,7 @@ export async function GET(req: NextRequest) {
   const andamento = searchParams.get("andamento") || "";
   const responsavel = searchParams.get("responsavel") || "";
 
-  const data = await getData(tid);
-  let lista = data.iniciais;
+  let lista = await iniciaisRepo.list(tid);
 
   if (busca) {
     const b = busca.toLowerCase();
@@ -36,13 +35,6 @@ export async function POST(req: NextRequest) {
   const tid = session.user.tenantId;
   const { data: body, error } = parseBody(inicialCreateSchema, await req.json());
   if (error) return error;
-  const data = await getData(tid);
-  const novo = {
-    id: newId(),
-    ...body,
-    criado_em: new Date().toISOString(),
-  };
-  data.iniciais.push(novo);
-  await saveData(data, tid);
+  const novo = await iniciaisRepo.create(tid, body);
   return NextResponse.json(novo, { status: 201 });
 }

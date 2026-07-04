@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hasControleRestrito } from "@/lib/acl";
-import { getDataAsync as getControleData } from "@/lib/controle-data";
+import * as processosRepo from "@/lib/repo/processos";
 import * as acordosRepo from "@/lib/repo/acordos";
 import * as execucoesRepo from "@/lib/repo/execucoes";
 import * as honorariosRepo from "@/lib/repo/honorarios-iniciais";
@@ -14,8 +14,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const tid = session.user.tenantId;
   const { id } = await params;
 
-  const controle = await getControleData(tid);
-  const processo = controle.processos.find(p => p.id === id);
+  const processo = await processosRepo.get(tid, id);
   if (!processo) return NextResponse.json({ error: "Processo não encontrado" }, { status: 404 });
 
   const [acordos, execucoes, honorarios_iniciais, timesheets] = await Promise.all([

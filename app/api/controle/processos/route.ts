@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hasControleRestrito } from "@/lib/acl";
-import { getDataAsync as getData, saveDataAsync as saveData, newId, isFinalizado } from "@/lib/controle-data";
+import { isFinalizado } from "@/lib/controle-data";
 import { normalizeData } from "@/lib/controle";
+import * as processosRepo from "@/lib/repo/processos";
 import { processoCreateSchema } from "@/lib/validation/controle";
 import { parseBody } from "@/lib/validation/helpers";
 
@@ -17,8 +18,7 @@ export async function GET(req: NextRequest) {
   const responsavel = searchParams.get("responsavel") || "";
   const tipo = searchParams.get("tipo") || "";
 
-  const data = await getData(tid);
-  let lista = data.processos;
+  let lista = await processosRepo.list(tid);
 
   if (busca) {
     const b = busca.toLowerCase();
@@ -60,13 +60,6 @@ export async function POST(req: NextRequest) {
   const tid = session.user.tenantId;
   const { data: body, error } = parseBody(processoCreateSchema, await req.json());
   if (error) return error;
-  const data = await getData(tid);
-  const novo = {
-    id: newId(),
-    ...body,
-    criado_em: new Date().toISOString(),
-  };
-  data.processos.push(novo);
-  await saveData(data, tid);
+  const novo = await processosRepo.create(tid, body);
   return NextResponse.json(novo, { status: 201 });
 }

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { saveDataAsync, type ControleData } from "@/lib/controle-data";
+import * as processosRepo from "@/lib/repo/processos";
+import * as clientesRepo from "@/lib/repo/clientes";
+import * as iniciaisRepo from "@/lib/repo/iniciais";
 
 // POST /api/controle/seed — admin only
 export async function POST(req: NextRequest) {
@@ -25,6 +28,11 @@ export async function POST(req: NextRequest) {
   };
 
   await saveDataAsync(safeData, tid);
+  await Promise.all([
+    processosRepo.upsertMany(tid, safeData.processos),
+    clientesRepo.upsertMany(tid, safeData.clientes),
+    iniciaisRepo.upsertMany(tid, safeData.iniciais),
+  ]);
 
   return NextResponse.json({
     ok: true,

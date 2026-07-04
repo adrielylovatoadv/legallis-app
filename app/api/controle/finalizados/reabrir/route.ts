@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hasControleRestrito } from "@/lib/acl";
 import { getDataAsync, saveDataAsync } from "@/lib/controle-data";
+import * as processosRepo from "@/lib/repo/processos";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -14,13 +15,10 @@ export async function POST(req: NextRequest) {
   if (index < 0 || index >= list.length) return NextResponse.json({ error: "Índice inválido" }, { status: 400 });
   const entry = list[index];
 
-  const proc = entry.processo
-    ? data.processos.find(p => p.numero_processo === entry.processo)
-    : undefined;
-  if (proc) {
-    proc.andamento = "";
-    proc.finalizado = false;
-  }
+  // processos já vive nas tabelas relacionais — busca e atualiza por fora do blob.
+  const processos = entry.processo ? await processosRepo.list(tid) : [];
+  const proc = processos.find(p => p.numero_processo === entry.processo);
+  if (proc) await processosRepo.update(tid, proc.id, { andamento: "", finalizado: false });
 
   list.splice(index, 1);
   data.finalizados_externos_sem_honor = list;

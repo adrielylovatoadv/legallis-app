@@ -28,6 +28,8 @@ export interface Inicial {
   id: string; cliente: string; reu: string; objeto: string;
   andamento: string; responsavel: string; observacoes: string; criado_em: string;
   data?: string; hora?: string;
+  numero_processo?: string;
+  protocolo?: { numero_processo: string; data_protocolo: string; observacoes: string; registrado_por: string; registrado_em: string };
 }
 
 export interface FinalizadoSemHonor {

@@ -10,6 +10,9 @@ import {
 import * as acordosRepo from "@/lib/repo/acordos";
 import * as execucoesRepo from "@/lib/repo/execucoes";
 import * as honorariosRepo from "@/lib/repo/honorarios-iniciais";
+import * as processosRepo from "@/lib/repo/processos";
+import * as clientesRepo from "@/lib/repo/clientes";
+import * as iniciaisRepo from "@/lib/repo/iniciais";
 import * as XLSX from "xlsx";
 
 function clean(v: unknown): string {
@@ -303,9 +306,13 @@ export async function POST(req: NextRequest) {
 
   await saveDataAsync(data, tid);
   await saveFinanceiroDataAsync(finData, tid);
-  // acordos/execucoes/honorarios_iniciais também vivem nas tabelas relacionais (Fase 2 da
-  // migração) — sem isso, dados importados ficariam invisíveis nas abas que já leem das tabelas.
+  // processos/clientes/iniciais e acordos/execucoes/honorarios_iniciais também vivem nas
+  // tabelas relacionais (Fases 2 e 3 da migração) — sem isso, dados importados ficariam
+  // invisíveis nas abas que já leem das tabelas.
   await Promise.all([
+    processosRepo.upsertMany(tid, data.processos),
+    clientesRepo.upsertMany(tid, data.clientes),
+    iniciaisRepo.upsertMany(tid, data.iniciais),
     acordosRepo.upsertMany(tid, finData.acordos),
     execucoesRepo.upsertMany(tid, finData.execucoes),
     honorariosRepo.upsertMany(tid, finData.honorarios_iniciais),

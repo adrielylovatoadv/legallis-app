@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getDataAsync as getData, saveDataAsync as saveData } from "@/lib/controle-data";
+import * as clientesRepo from "@/lib/repo/clientes";
 import { clienteUpdateSchema } from "@/lib/validation/controle";
 import { parseBody } from "@/lib/validation/helpers";
 
@@ -11,12 +11,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params;
   const { data: body, error } = parseBody(clienteUpdateSchema, await req.json());
   if (error) return error;
-  const data = await getData(tid);
-  const idx = data.clientes.findIndex(x => x.id === id);
-  if (idx === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  data.clientes[idx] = { ...data.clientes[idx], ...body };
-  await saveData(data, tid);
-  return NextResponse.json(data.clientes[idx]);
+  const cliente = await clientesRepo.update(tid, id, body);
+  if (!cliente) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return NextResponse.json(cliente);
 }
 
 export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -24,8 +21,6 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   const tid = session.user.tenantId;
   const { id } = await params;
-  const data = await getData(tid);
-  data.clientes = data.clientes.filter(x => x.id !== id);
-  await saveData(data, tid);
+  await clientesRepo.remove(tid, id);
   return NextResponse.json({ ok: true });
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getDataAsync as getData, saveDataAsync as saveData, newId } from "@/lib/controle-data";
+import * as iniciaisRepo from "@/lib/repo/iniciais";
+import * as processosRepo from "@/lib/repo/processos";
 import { addSystemMessage } from "@/lib/chat";
 import { logEvent } from "@/lib/audit";
 
@@ -11,18 +12,22 @@ export async function POST(req: NextRequest) {
 
   const { id, numero_processo, data_protocolo, observacoes } = await req.json();
   const tid = session.user.tenantId;
-  const data = await getData(tid);
-  const inicial = data.iniciais.find(i => i.id === id) as (typeof data.iniciais[0] & { protocolo?: object; numero_processo?: string });
-  if (!inicial) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
+  const inicialAnterior = await iniciaisRepo.get(tid, id);
+  if (!inicialAnterior) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
 
   // Marca a inicial como protocolada (sai da lista de pendentes)
-  inicial.andamento = "PROTOCOLADO";
-  if (numero_processo) inicial.numero_processo = numero_processo;
-  inicial.protocolo = { numero_processo, data_protocolo, observacoes, registrado_por: session.user.name, registrado_em: new Date().toISOString() };
+  const inicial = await iniciaisRepo.update(tid, id, {
+    andamento: "PROTOCOLADO",
+    numero_processo: numero_processo || inicialAnterior.numero_processo,
+    protocolo: {
+      numero_processo, data_protocolo, observacoes,
+      registrado_por: session.user.name ?? "?", registrado_em: new Date().toISOString(),
+    },
+  });
+  if (!inicial) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
 
   // Cria o processo automaticamente a partir da inicial
-  const novoProcesso = {
-    id: newId(),
+  const novoProcesso = await processosRepo.create(tid, {
     autor: inicial.cliente || "",
     reu: inicial.reu || "",
     objeto: inicial.objeto || "",
@@ -34,11 +39,7 @@ export async function POST(req: NextRequest) {
     observacoes: observacoes || inicial.observacoes || "",
     atencao: false,
     finalizado: false,
-    criado_em: new Date().toISOString(),
-  };
-  data.processos.push(novoProcesso);
-
-  await saveData(data, tid);
+  });
 
   const msg = `${session.user.name} protocolou: ${inicial.cliente} x ${inicial.reu}. Nº ${numero_processo}. Processo criado com status: AGUARDANDO DESPACHO.`;
   await addSystemMessage(msg, "system", tid);

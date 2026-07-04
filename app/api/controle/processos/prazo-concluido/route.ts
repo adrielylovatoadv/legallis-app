@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hasControleRestrito } from "@/lib/acl";
-import { getDataAsync as getData, saveDataAsync as saveData } from "@/lib/controle-data";
+import * as processosRepo from "@/lib/repo/processos";
 import { addSystemMessage } from "@/lib/chat";
 import { logEvent } from "@/lib/audit";
 
@@ -13,15 +13,13 @@ export async function POST(req: NextRequest) {
 
   const { id } = await req.json();
   const tid = session.user.tenantId;
-  const data = await getData(tid);
-  const processo = data.processos.find(p => p.id === id);
-  if (!processo) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
+  const anterior = await processosRepo.get(tid, id);
+  if (!anterior) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
 
-  processo.andamento = "AGUARDANDO DESPACHO";
-  processo.data = "";
-  processo.hora = "";
-  processo.responsavel = "";
-  await saveData(data, tid);
+  const processo = await processosRepo.update(tid, id, {
+    andamento: "AGUARDANDO DESPACHO", data: "", hora: "", responsavel: "",
+  });
+  if (!processo) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
 
   const msg = `${session.user.name} concluiu prazo do processo ${processo.autor} x ${processo.reu} (${processo.numero_processo}). Status: AGUARDANDO DESPACHO.`;
   await addSystemMessage(msg, "system", tid);

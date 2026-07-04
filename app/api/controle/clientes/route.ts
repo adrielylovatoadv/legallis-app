@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getDataAsync as getData, saveDataAsync as saveData, newId, normNome, isFinalizado } from "@/lib/controle-data";
+import { normNome, isFinalizado } from "@/lib/controle-data";
+import * as clientesRepo from "@/lib/repo/clientes";
+import * as processosRepo from "@/lib/repo/processos";
+import * as iniciaisRepo from "@/lib/repo/iniciais";
 import { clienteCreateSchema } from "@/lib/validation/controle";
 import { parseBody } from "@/lib/validation/helpers";
 
@@ -12,8 +15,7 @@ export async function GET(req: NextRequest) {
   const busca = searchParams.get("busca") || "";
   const comProcessos = searchParams.get("com_processos") === "1";
 
-  const data = await getData(tid);
-  let lista = [...data.clientes].sort((a, b) => a.nome.localeCompare(b.nome));
+  let lista = (await clientesRepo.list(tid)).sort((a, b) => a.nome.localeCompare(b.nome));
 
   if (busca) {
     const b = busca.toLowerCase();
@@ -28,12 +30,13 @@ export async function GET(req: NextRequest) {
   const sanitize = ({ senha_gov: _g, senha_serasa: _s, ...rest }: typeof lista[number]) => rest;
 
   if (comProcessos) {
+    const [processos, iniciaisTodas] = await Promise.all([processosRepo.list(tid), iniciaisRepo.list(tid)]);
     return NextResponse.json(lista.map(c => {
       const cn = normNome(c.nome);
-      const procs = data.processos.filter(p => normNome(p.autor || "").includes(cn));
+      const procs = processos.filter(p => normNome(p.autor || "").includes(cn));
       const ativos = procs.filter(p => !isFinalizado(p));
       const finalizados = procs.filter(p => isFinalizado(p));
-      const iniciais = data.iniciais.filter(i => normNome(i.cliente || "").includes(cn));
+      const iniciais = iniciaisTodas.filter(i => normNome(i.cliente || "").includes(cn));
       return { ...sanitize(c), _ativos: ativos, _finalizados: finalizados, _iniciais: iniciais };
     }));
   }
@@ -47,13 +50,6 @@ export async function POST(req: NextRequest) {
   const tid = session.user.tenantId;
   const { data: body, error } = parseBody(clienteCreateSchema, await req.json());
   if (error) return error;
-  const data = await getData(tid);
-  const novo = {
-    id: newId(),
-    ...body,
-    criado_em: new Date().toISOString(),
-  };
-  data.clientes.push(novo);
-  await saveData(data, tid);
+  const novo = await clientesRepo.create(tid, body);
   return NextResponse.json(novo, { status: 201 });
 }

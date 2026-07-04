@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getDataAsync as getControleData, isFinalizado } from "@/lib/controle-data";
+import { isFinalizado } from "@/lib/controle-data";
 import { calcAcordo, MESES } from "@/lib/financeiro-data";
 import * as acordosRepo from "@/lib/repo/acordos";
 import * as execucoesRepo from "@/lib/repo/execucoes";
 import * as honorariosRepo from "@/lib/repo/honorarios-iniciais";
+import * as processosRepo from "@/lib/repo/processos";
+import * as clientesRepo from "@/lib/repo/clientes";
+import * as iniciaisRepo from "@/lib/repo/iniciais";
 
 function countBy<T>(items: T[], keyFn: (i: T) => string): Record<string, number> {
   const out: Record<string, number> = {};
@@ -35,13 +38,13 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   const tid = session.user.tenantId;
 
-  const controle = await getControleData(tid);
-  const [acordosRaw, execucoes, honorarios_iniciais] = await Promise.all([
+  const [processos, clientes, iniciais, acordosRaw, execucoes, honorarios_iniciais] = await Promise.all([
+    processosRepo.list(tid), clientesRepo.list(tid), iniciaisRepo.list(tid),
     acordosRepo.list(tid), execucoesRepo.list(tid), honorariosRepo.list(tid),
   ]);
 
-  const ativos = controle.processos.filter(p => !isFinalizado(p));
-  const iniciaisPendentes = controle.iniciais.filter(
+  const ativos = processos.filter(p => !isFinalizado(p));
+  const iniciaisPendentes = iniciais.filter(
     i => !["PROTOCOLADO", "ARQUIVADO"].includes((i.andamento || "").toUpperCase().trim())
   );
 
@@ -67,7 +70,7 @@ export async function GET() {
     return isNaN(d.getTime()) ? "" : `${d.getFullYear()}-${d.getMonth()}`;
   };
   const criadosPorChave = countBy(
-    [...controle.processos.map(p => p.criado_em), ...controle.iniciais.map(i => i.criado_em)].filter(Boolean),
+    [...processos.map(p => p.criado_em), ...iniciais.map(i => i.criado_em)].filter(Boolean),
     chaveDe
   );
   const casos_criados_por_mes = meses6.map(m => ({ mes: m.label, valor: criadosPorChave[m.chave] || 0 }));
@@ -87,7 +90,7 @@ export async function GET() {
 
   return NextResponse.json({
     total_processos_ativos: ativos.length,
-    total_clientes: controle.clientes.length,
+    total_clientes: clientes.length,
     processos_por_responsavel,
     iniciais_por_responsavel,
     processos_por_andamento,

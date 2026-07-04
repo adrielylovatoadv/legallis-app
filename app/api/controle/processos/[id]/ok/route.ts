@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hasControleRestrito } from "@/lib/acl";
-import { getDataAsync as getData, saveDataAsync as saveData } from "@/lib/controle-data";
+import * as processosRepo from "@/lib/repo/processos";
 
 export async function POST(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -9,13 +9,9 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
   if (hasControleRestrito(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para este módulo" }, { status: 403 });
   const tid = session.user.tenantId;
   const { id } = await params;
-  const data = await getData(tid);
-  const idx = data.processos.findIndex(x => x.id === id);
-  if (idx === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  data.processos[idx] = {
-    ...data.processos[idx],
+  const atualizado = await processosRepo.update(tid, id, {
     data: "", hora: "", andamento: "AGUARDANDO DESPACHO", responsavel: "", dashboard_ok: true,
-  };
-  await saveData(data, tid);
-  return NextResponse.json(data.processos[idx]);
+  });
+  if (!atualizado) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return NextResponse.json(atualizado);
 }
