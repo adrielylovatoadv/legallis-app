@@ -127,7 +127,7 @@ function buildControleSheets(wb: XLSX.WorkBook, processos: Awaited<ReturnType<ty
 export async function exportTudo() {
   const [acordos, execucoes, honIniciais, fixas, variaveis, processos, clientes, iniciais] = await Promise.all([
     getAcordos(), getExecucoes(), getHonIniciais(), getFixas(), getVariaveis(),
-    getProcessos(), getClientes(), getIniciais(),
+    getProcessos({ tipo: "ativos" }), getClientes(), getIniciais(),
   ]);
 
   const wb = XLSX.utils.book_new();
@@ -231,7 +231,7 @@ export async function exportFinanceiro() {
 
 export async function exportControle() {
   const [processos, clientes, iniciais] = await Promise.all([
-    getProcessos(), getClientes(), getIniciais(),
+    getProcessos({ tipo: "ativos" }), getClientes(), getIniciais(),
   ]);
 
   const wb = XLSX.utils.book_new();
