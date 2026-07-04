@@ -1,5 +1,4 @@
 import { neon } from "@neondatabase/serverless";
-import { initSchema } from "./schema";
 
 let _sql: ReturnType<typeof neon> | null = null;
 
@@ -19,7 +18,10 @@ export async function dbInit() {
       updated_at TIMESTAMPTZ DEFAULT NOW()
     )
   `;
-  await initSchema(sql);
+  // initSchema() (lib/schema.ts) foi retirado daqui: rodava ~15 CREATE TABLE/INDEX em toda
+  // chamada de leitura/escrita (dbInit é chamado a cada getDataAsync), o que é um suspeito
+  // forte para lentidão/timeout em produção. As tabelas da migração relacional serão criadas
+  // por um passo explícito e único (script de migração), não a cada request.
 }
 
 // Returns null quando a chave não existe. Propaga (throw) qualquer erro de conexão/consulta —
