@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getDataAsync as getData, saveDataAsync as saveData, newId } from "@/lib/controle-data";
+import { hasControleRestrito } from "@/lib/acl";
+import { getDataAsync as getData, saveDataAsync as saveData } from "@/lib/controle-data";
+import { processoUpdateSchema } from "@/lib/validation/controle";
+import { parseBody } from "@/lib/validation/helpers";
 
 const ANDAMENTOS_FINAIS = ["ACORDO", "ARQUIVADO", "DESISTÊNCIA", "DESISTENCIA", "IMPROCEDÊNCIA", "IMPROCEDENCIA", "EXTINÇÃO", "EXTINCAO", "CANCELADO"];
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  if (hasControleRestrito(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para este módulo" }, { status: 403 });
   const tid = session.user.tenantId;
   const { id } = await params;
   const data = await getData(tid);
@@ -18,9 +22,11 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  if (hasControleRestrito(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para este módulo" }, { status: 403 });
   const tid = session.user.tenantId;
   const { id } = await params;
-  const body = await req.json();
+  const { data: body, error } = parseBody(processoUpdateSchema, await req.json());
+  if (error) return error;
   const data = await getData(tid);
   const idx = data.processos.findIndex(x => x.id === id);
   if (idx === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -56,6 +62,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  if (hasControleRestrito(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para este módulo" }, { status: 403 });
   const tid = session.user.tenantId;
   const { id } = await params;
   const data = await getData(tid);

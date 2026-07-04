@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { hasFinanceiroAccess } from "@/lib/acl";
 import { getDataAsync as getFinanceiroData } from "@/lib/financeiro-data";
 
 // Usado por telas que não têm um Processo.id real pra vincular (ex.: registros
@@ -7,6 +8,7 @@ import { getDataAsync as getFinanceiroData } from "@/lib/financeiro-data";
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  if (!hasFinanceiroAccess(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para o módulo financeiro" }, { status: 403 });
   const tid = session.user.tenantId;
   const { searchParams } = new URL(req.url);
   const numero = searchParams.get("numero") || "";

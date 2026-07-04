@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { hasFinanceiroAccess } from "@/lib/acl";
 import { getDataAsync as getData, COLS, MESES, calcAcordo } from "@/lib/financeiro-data";
 
 const COL_TO_MES: Record<string, string> = {
@@ -14,6 +15,7 @@ function r2(v: number) { return Math.round(v * 100) / 100; }
 export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  if (!hasFinanceiroAccess(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para o módulo financeiro" }, { status: 403 });
   const tid = session.user.tenantId;
   const d = await getData(tid);
   // Alguns acordos antigos têm "honorarios" zerado mesmo com valor_acordo preenchido —

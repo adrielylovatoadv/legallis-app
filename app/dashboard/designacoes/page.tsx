@@ -8,33 +8,7 @@ import {
   ANDAMENTOS_PROCESSO,
   type Processo, type Inicial,
 } from "@/lib/controle";
-
-function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={`rounded-xl p-5 ${className}`}
-      style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-      {children}
-    </div>
-  );
-}
-
-function MetricCard({ value, label, color }: { value: number; label: string; color: string }) {
-  return (
-    <div className="rounded-xl p-4 flex flex-col gap-1"
-      style={{ background: "var(--surface)", borderLeft: `4px solid ${color}`, border: "1px solid var(--border)" }}>
-      <span className="text-2xl font-bold tabular-nums" style={{ color }}>{value}</span>
-      <span className="text-xs" style={{ color: "var(--text3)" }}>{label}</span>
-    </div>
-  );
-}
-
-function Inp({ ...p }: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...p} className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-    style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }} />;
-}
-function Lbl({ children }: { children: React.ReactNode }) {
-  return <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>{children}</span>;
-}
+import { Card, MetricCard, Input as Inp, FieldLabel as Lbl } from "@/components/ui";
 
 // ── Modal cadastrar processo a partir de inicial ─────────────────────────────
 function ModalCadastroProcesso({ initialData, onClose, onSaved, responsaveis = [] }: {

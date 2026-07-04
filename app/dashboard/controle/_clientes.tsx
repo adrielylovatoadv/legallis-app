@@ -13,24 +13,9 @@ import {
   generateDeclaracaoIsencaoIRDocx, generateDeclaracaoHipossuficienciaDocx,
   type AdvogadoDoc,
 } from "@/lib/document-templates";
+import { Input as Inp, Select as Sel, FieldLabel as Lbl } from "@/components/ui";
 
 type ClienteComProcs = Cliente & { _ativos?: Processo[]; _finalizados?: Processo[]; _iniciais?: Inicial[] };
-
-function Inp({ ...p }: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...p} className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-    style={{ background:"var(--surface2)", border:"1px solid var(--border)", color:"var(--text)" }} />;
-}
-function Lbl({ children }: { children: React.ReactNode }) {
-  return <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>{children}</span>;
-}
-function Sel({ children, ...p }: React.SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <select {...p} className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-      style={{ background:"var(--surface2)", border:"1px solid var(--border)", color:"var(--text)" }}>
-      {children}
-    </select>
-  );
-}
 
 const TRATAMENTOS = ["", "Senhor", "Senhora", "Doutor", "Doutora", "Excelentíssimo"];
 

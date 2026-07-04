@@ -95,8 +95,12 @@ export function updateUser(id: string, data: Partial<Omit<User, "id">>): User | 
 
 export function createUser(data: Omit<User, "id" | "createdAt">): User {
   const users = getUsers();
+  const hashedPassword = data.password && !data.password.startsWith("$2")
+    ? bcrypt.hashSync(data.password, 10)
+    : data.password;
   const user: User = {
     ...data,
+    password: hashedPassword,
     id: String(Date.now()),
     createdAt: new Date().toISOString(),
   };
@@ -122,17 +126,12 @@ function migrateUser(u: Partial<User> & { id: string }): User {
 export async function getUsersAsync(): Promise<User[]> {
   if (hasDb()) {
     await dbInit();
-    try {
-      const d = await dbGet<User[]>(USERS_DB_KEY);
-      if (d) return d.map(migrateUser);
-      // Primeira vez: semeia com os usuários do arquivo (admins criados no setup)
-      const fromFile = getUsers();
-      await dbSet(USERS_DB_KEY, fromFile);
-      return fromFile;
-    } catch (e) {
-      console.error(`[users] Erro ao ler banco, usando fallback: ${e}`);
-      return getUsers();
-    }
+    const d = await dbGet<User[]>(USERS_DB_KEY);
+    if (d) return d.map(migrateUser);
+    // Primeira vez: semeia com os usuários do arquivo (admins criados no setup)
+    const fromFile = getUsers();
+    await dbSet(USERS_DB_KEY, fromFile);
+    return fromFile;
   }
   return getUsers();
 }
@@ -141,7 +140,7 @@ export async function saveUsersAsync(users: User[]): Promise<void> {
   if (hasDb()) {
     await dbInit();
     const ok = await dbSet(USERS_DB_KEY, users);
-    if (!ok) console.error("[users] FALHA ao salvar no banco");
+    if (!ok) throw new Error("Falha ao salvar usuários no banco de dados");
     return;
   }
   saveUsers(users);

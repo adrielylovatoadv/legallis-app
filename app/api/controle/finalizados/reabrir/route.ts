@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { hasControleRestrito } from "@/lib/acl";
 import { getDataAsync, saveDataAsync } from "@/lib/controle-data";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  if (hasControleRestrito(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para este módulo" }, { status: 403 });
   const tid = session.user.tenantId;
   const { index }: { index: number } = await req.json();
   const data = await getDataAsync(tid);

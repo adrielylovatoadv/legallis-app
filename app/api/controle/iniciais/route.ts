@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDataAsync as getData, saveDataAsync as saveData, newId } from "@/lib/controle-data";
+import { inicialCreateSchema } from "@/lib/validation/controle";
+import { parseBody } from "@/lib/validation/helpers";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -32,13 +34,12 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   const tid = session.user.tenantId;
-  const body = await req.json();
+  const { data: body, error } = parseBody(inicialCreateSchema, await req.json());
+  if (error) return error;
   const data = await getData(tid);
   const novo = {
-    id: newId(), cliente: body.cliente || "", reu: body.reu || "",
-    objeto: body.objeto || "", andamento: body.andamento || "FAZER INICIAL",
-    responsavel: body.responsavel || "", observacoes: body.observacoes || "",
-    data: body.data || "", hora: body.hora || "",
+    id: newId(),
+    ...body,
     criado_em: new Date().toISOString(),
   };
   data.iniciais.push(novo);

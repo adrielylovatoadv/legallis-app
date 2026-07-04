@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { hasControleRestrito } from "@/lib/acl";
 import { getDataAsync as getControleData } from "@/lib/controle-data";
 import { getDataAsync as getFinanceiroData } from "@/lib/financeiro-data";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  if (hasControleRestrito(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para este módulo" }, { status: 403 });
   const tid = session.user.tenantId;
   const { id } = await params;
 

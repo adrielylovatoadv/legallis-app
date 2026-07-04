@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { hasFinanceiroAccess } from "@/lib/acl";
 import { getDataAsync as getData, saveDataAsync as saveData } from "@/lib/financeiro-data";
 
 export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  if (!hasFinanceiroAccess(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para o módulo financeiro" }, { status: 403 });
   const tid = session.user.tenantId;
   const d = await getData(tid);
   return NextResponse.json(d.config_escritorio || { tipo: "individual", socios: [] });
@@ -13,6 +15,7 @@ export async function GET() {
 export async function PUT(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  if (!hasFinanceiroAccess(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para o módulo financeiro" }, { status: 403 });
   const tid = session.user.tenantId;
   const body = await req.json();
   const d = await getData(tid);

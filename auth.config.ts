@@ -11,6 +11,7 @@ declare module "next-auth" {
     isActive?: boolean;
     tenantId?: string;
     sexo?: string;
+    cargo?: string;
   }
   interface Session {
     user: {
@@ -24,6 +25,7 @@ declare module "next-auth" {
       theme?: string;
       tenantId: string;
       sexo?: string;
+      cargo?: string;
     };
   }
 }
@@ -87,6 +89,7 @@ export const authConfig = {
         token.isActive = user.isActive;
         token.tenantId = user.tenantId;
         token.sexo = user.sexo;
+        token.cargo = user.cargo;
       }
       return token;
     },
@@ -100,6 +103,7 @@ export const authConfig = {
         session.user.theme = token.theme as string | undefined;
         session.user.tenantId = (token.tenantId as string) ?? `t_${token.sub}`;
         session.user.sexo = token.sexo as string | undefined;
+        session.user.cargo = token.cargo as string | undefined;
       }
       return session;
     },

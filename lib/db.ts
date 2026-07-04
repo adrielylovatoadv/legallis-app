@@ -20,33 +20,28 @@ export async function dbInit() {
   `;
 }
 
-// Returns null when key not found, throws on DB error
+// Returns null quando a chave não existe. Propaga (throw) qualquer erro de conexão/consulta —
+// nunca deve ser confundido com "chave não encontrada", pois isso levaria quem chama a
+// tratar uma falha transitória do banco como se fosse a primeira execução (dado vazio) e
+// sobrescrever o registro real no Neon com um estado vazio/desatualizado.
 export async function dbGet<T>(key: string): Promise<T | null> {
   const sql = getSql();
   if (!sql) return null;
-  try {
-    const rows = await sql`SELECT value FROM kv_store WHERE key = ${key}` as Array<{value: T}>;
-    if (!Array.isArray(rows) || rows.length === 0) return null;
-    return rows[0].value as T;
-  } catch (e) {
-    console.error("dbGet error:", e);
-    return null;
-  }
+  const rows = await sql`SELECT value FROM kv_store WHERE key = ${key}` as Array<{value: T}>;
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  return rows[0].value as T;
 }
 
+// Lança exceção em caso de falha — quem chama não deve interpretar retorno como sucesso
+// silencioso quando o banco está configurado (hasDb() === true).
 export async function dbSet<T>(key: string, value: T): Promise<boolean> {
   const sql = getSql();
   if (!sql) return false;
-  try {
-    await sql`
-      INSERT INTO kv_store (key, value) VALUES (${key}, ${JSON.stringify(value) as unknown as object})
-      ON CONFLICT (key) DO UPDATE SET value = ${JSON.stringify(value) as unknown as object}, updated_at = NOW()
-    `;
-    return true;
-  } catch (e) {
-    console.error("dbSet error:", e);
-    return false;
-  }
+  await sql`
+    INSERT INTO kv_store (key, value) VALUES (${key}, ${JSON.stringify(value) as unknown as object})
+    ON CONFLICT (key) DO UPDATE SET value = ${JSON.stringify(value) as unknown as object}, updated_at = NOW()
+  `;
+  return true;
 }
 
 export function hasDb(): boolean {

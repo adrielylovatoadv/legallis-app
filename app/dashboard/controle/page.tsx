@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import {
   getDashboard, marcarOk, fmtData, gcalUrl, badgeAndamento,
   ANDAMENTOS_PROCESSO, updateProcesso,
@@ -10,25 +11,11 @@ import { ProcessosTab } from "./_processos";
 import { IniciaisTab } from "./_iniciais";
 import { ClientesTab } from "./_clientes";
 import { FinalizadosTab } from "./_finalizados";
-
-// ── componentes base ──────────────────────────────────────────────────────────
-function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={`rounded-xl p-5 ${className}`}
-      style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-      {children}
-    </div>
-  );
-}
+import { Card, MetricCard as MetricCardBase } from "@/components/ui";
+import { hasControleRestrito } from "@/lib/acl";
 
 function MetricCard({ value, label, color }: { value: number; label: string; color: string }) {
-  return (
-    <div className="rounded-xl p-5 flex flex-col items-center justify-center gap-1"
-      style={{ background: "var(--surface)", borderLeft: `4px solid ${color}`, border: "1px solid var(--border)" }}>
-      <span className="text-3xl font-bold tabular-nums" style={{ color }}>{value}</span>
-      <span className="text-xs text-center" style={{ color: "var(--text3)" }}>{label}</span>
-    </div>
-  );
+  return <MetricCardBase value={value} label={label} color={color} size="lg" align="center" />;
 }
 
 function ProcessoCard({ p, onOk, onEdit }: {
@@ -325,19 +312,23 @@ function VisaoGeral() {
 type Tab = "inicio" | "processos" | "iniciais" | "clientes" | "finalizados";
 
 export default function ControlePage() {
+  const { data: session } = useSession();
+  const restrito = hasControleRestrito(session?.user?.cargo);
   const [tab, setTab] = useState<Tab>("inicio");
+  const effectiveTab: Tab = restrito && tab !== "iniciais" && tab !== "clientes" ? "iniciais" : tab;
 
-  const TABS = [
+  const ALL_TABS = [
     { id: "inicio", label: "📊 Visão Geral" },
     { id: "processos", label: "⚖️ Processos" },
     { id: "iniciais", label: "📝 Iniciais" },
     { id: "clientes", label: "👥 Clientes" },
     { id: "finalizados", label: "✅ Finalizados" },
   ] as const;
+  const TABS = restrito ? ALL_TABS.filter(t => t.id === "iniciais" || t.id === "clientes") : ALL_TABS;
 
   const tabStyle = (id: Tab) => ({
-    background: tab === id ? "var(--gold)" : "var(--surface2)",
-    color: tab === id ? "#1a1a1a" : "var(--text2)",
+    background: effectiveTab === id ? "var(--gold)" : "var(--surface2)",
+    color: effectiveTab === id ? "#1a1a1a" : "var(--text2)",
     border: "1px solid var(--border)",
   });
 
@@ -361,11 +352,11 @@ export default function ControlePage() {
       </div>
 
       {/* Content */}
-      {tab === "inicio" && <VisaoGeral />}
-      {tab === "processos" && <ProcessosTab />}
-      {tab === "iniciais" && <IniciaisTab />}
-      {tab === "clientes" && <ClientesTab />}
-      {tab === "finalizados" && <FinalizadosTab />}
+      {effectiveTab === "inicio" && <VisaoGeral />}
+      {effectiveTab === "processos" && <ProcessosTab />}
+      {effectiveTab === "iniciais" && <IniciaisTab />}
+      {effectiveTab === "clientes" && <ClientesTab />}
+      {effectiveTab === "finalizados" && <FinalizadosTab />}
     </div>
   );
 }

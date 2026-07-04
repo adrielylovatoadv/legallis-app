@@ -8,27 +8,10 @@ import {
 } from "@/lib/controle";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { DateField } from "@/components/ui/DateField";
+import { Input, FieldLabel as Label, Select as SelectField } from "@/components/ui";
 
 const ANDAMENTOS_PENDENTES = ["FAZER INICIAL","EM ANDAMENTO","AGUARDAR","AGUARDAR DOCS","AGUARDAR CONTRATO","AGUARDAR LIMINAR","ENVIAR NOTIFICAÇÃO","AGUARDAR NOTIFICAÇÃO","ASSINAR PROCURAÇÃO"];
 const ANDAMENTOS_CONCLUIDOS = ["PROTOCOLADO","ARQUIVADO"];
-
-function Input({ ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input {...props} className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-      style={{ background:"var(--surface2)", border:"1px solid var(--border)", color:"var(--text)" }} />
-  );
-}
-function Label({ children }: { children: React.ReactNode }) {
-  return <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>{children}</span>;
-}
-function SelectField({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <select {...props} className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-      style={{ background:"var(--surface2)", border:"1px solid var(--border)", color:"var(--text)" }}>
-      {children}
-    </select>
-  );
-}
 
 function InicialForm({ initial, onSave, onCancel, responsaveis = [] }: {
   initial?: Partial<Inicial>; onSave: (i: Omit<Inicial,"id"|"criado_em">) => Promise<void>; onCancel: () => void; responsaveis?: string[];

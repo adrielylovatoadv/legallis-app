@@ -5,6 +5,7 @@ import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
+import { MetricCard as MetricCardBase } from "@/components/ui";
 
 interface Indicadores {
   total_processos_ativos: number;
@@ -19,13 +20,7 @@ interface Indicadores {
 const CORES = ["#C9A84C", "#22c55e", "#60a5fa", "#f87171", "#818cf8", "#f97316", "#a78bfa"];
 
 function MetricCard({ value, label, color }: { value: number | string; label: string; color: string }) {
-  return (
-    <div className="rounded-xl p-5 flex flex-col items-center justify-center gap-1"
-      style={{ background: "var(--surface)", borderLeft: `4px solid ${color}`, border: "1px solid var(--border)" }}>
-      <span className="text-3xl font-bold tabular-nums" style={{ color }}>{value}</span>
-      <span className="text-xs text-center" style={{ color: "var(--text3)" }}>{label}</span>
-    </div>
-  );
+  return <MetricCardBase value={value} label={label} color={color} size="lg" align="center" />;
 }
 
 function ChartCard({ title, children, empty }: { title: string; children: React.ReactNode; empty?: boolean }) {

@@ -10,6 +10,7 @@ import {
   createAcordo, createExecucao, createHonInicial, createTimesheet,
   fmtBRL, statusBadge, statusLabel, type ProcessoFinanceiro,
 } from "@/lib/financeiro";
+import { Select as Sel } from "@/components/ui";
 
 export interface AlvoFinanceiro {
   processoId?: string;
@@ -18,15 +19,6 @@ export interface AlvoFinanceiro {
   reu?: string;
   objeto?: string;
   responsavel?: string;
-}
-
-function Sel({ children, ...p }: React.SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <select {...p} className="px-3 py-2 rounded-lg text-sm outline-none"
-      style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
-      {children}
-    </select>
-  );
 }
 
 type TipoLancamento = "honorario_inicial" | "acordo" | "execucao" | "timesheet";
@@ -65,7 +57,7 @@ function LancamentoForm({ alvo, onSaved, onCancel }: {
 
   return (
     <div className="rounded-lg p-3 space-y-2" style={{ background: "var(--surface2)", border: "1px dashed var(--border)" }}>
-      <Sel value={tipo} onChange={e => setTipo(e.target.value as TipoLancamento)} style={{ fontSize: 12, padding: "4px 8px" }}>
+      <Sel fullWidth={false} value={tipo} onChange={e => setTipo(e.target.value as TipoLancamento)} style={{ fontSize: 12, padding: "4px 8px" }}>
         <option value="honorario_inicial">Honorário Inicial</option>
         <option value="acordo">Acordo</option>
         <option value="execucao">Execução</option>

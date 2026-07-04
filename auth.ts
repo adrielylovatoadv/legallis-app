@@ -32,6 +32,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           isActive: user.isActive ?? true,
           tenantId: user.tenantId ?? `t_${user.id}`,
           sexo: user.sexo,
+          cargo: user.cargo,
         };
       },
     }),

@@ -116,17 +116,12 @@ export async function getDataAsync(tenantId = "default"): Promise<FinanceiroData
   const key = `${DB_KEY_PREFIX}_${tenantId}`;
   if (hasDb()) {
     await dbInit();
-    try {
-      const d = await dbGet<Partial<FinanceiroData>>(key);
-      if (d) return parseRaw(d);
-      // Primeira vez: semeia com dados vazios (não sobrescreve com arquivo do build)
-      const empty = emptyData();
-      await dbSet(key, empty);
-      return empty;
-    } catch (e) {
-      console.error(`[financeiro] Erro ao ler banco, usando fallback: ${e}`);
-      return readFromFile(tenantId);
-    }
+    const d = await dbGet<Partial<FinanceiroData>>(key);
+    if (d) return parseRaw(d);
+    // Primeira vez: semeia com dados vazios (não sobrescreve com arquivo do build)
+    const empty = emptyData();
+    await dbSet(key, empty);
+    return empty;
   }
   return readFromFile(tenantId);
 }
@@ -135,7 +130,7 @@ export async function saveDataAsync(data: FinanceiroData, tenantId = "default"):
   const key = `${DB_KEY_PREFIX}_${tenantId}`;
   if (hasDb()) {
     const ok = await dbSet(key, data);
-    if (!ok) console.error(`[financeiro] FALHA ao salvar no banco: chave=${key}`);
+    if (!ok) throw new Error(`Falha ao salvar dados financeiros no banco: chave=${key}`);
     return;
   }
   const { main, tmp } = fileForTenant(tenantId);

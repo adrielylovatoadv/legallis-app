@@ -7,6 +7,7 @@ import { canExport } from "@/lib/plans";
 import type { Plan } from "@/lib/plans";
 import { exportarExcel, exportarPDF } from "@/lib/export-calc";
 import type { ExportDoc } from "@/lib/export-calc";
+import { Input, Select, Card, FieldLabel as Label } from "@/components/ui";
 
 // ── tipos ─────────────────────────────────────────────────────
 interface Lancamento { id: number; data: string; valor: string; }
@@ -43,35 +44,6 @@ interface RevisionalResult {
 }
 
 // ── componentes base ───────────────────────────────────────────
-function Label({ children }: { children: React.ReactNode }) {
-  return <span className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--text3)" }}>{children}</span>;
-}
-function Input({ className = "", ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input {...props}
-      className={`w-full px-3 py-2 rounded-lg text-sm outline-none transition-colors ${className}`}
-      style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}
-      onFocus={e => (e.target.style.borderColor = "var(--gold)")}
-      onBlur={e => (e.target.style.borderColor = "var(--border)")} />
-  );
-}
-function Select({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <select {...props}
-      className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-      style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
-      {children}
-    </select>
-  );
-}
-function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={`rounded-xl p-5 ${className}`}
-      style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-      {children}
-    </div>
-  );
-}
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div className="px-3 py-1.5 rounded-lg mb-4 text-sm font-semibold"

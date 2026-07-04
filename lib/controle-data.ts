@@ -139,17 +139,12 @@ export async function getDataAsync(tenantId = "default"): Promise<ControleData> 
   const key = `${DB_KEY_PREFIX}_${tenantId}`;
   if (hasDb()) {
     await dbInit();
-    try {
-      const d = await dbGet<Partial<ControleData>>(key);
-      if (d) return parseRaw(d);
-      // Primeira vez: semeia com dados vazios (não sobrescreve com arquivo do build)
-      const empty = emptyData();
-      await dbSet(key, empty);
-      return empty;
-    } catch (e) {
-      console.error(`[controle] Erro ao ler banco, usando fallback: ${e}`);
-      return readFromFile(tenantId);
-    }
+    const d = await dbGet<Partial<ControleData>>(key);
+    if (d) return parseRaw(d);
+    // Primeira vez: semeia com dados vazios (não sobrescreve com arquivo do build)
+    const empty = emptyData();
+    await dbSet(key, empty);
+    return empty;
   }
   return readFromFile(tenantId);
 }
@@ -159,7 +154,7 @@ export async function saveDataAsync(data: ControleData, tenantId = "default"): P
   const encrypted = encryptClientes(data);
   if (hasDb()) {
     const ok = await dbSet(key, encrypted);
-    if (!ok) console.error(`[controle] FALHA ao salvar no banco: chave=${key}`);
+    if (!ok) throw new Error(`Falha ao salvar dados de controle no banco: chave=${key}`);
     return;
   }
   const { main, tmp } = fileForTenant(tenantId);

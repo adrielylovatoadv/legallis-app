@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { hasFinanceiroAccess } from "@/lib/acl";
 
 const CARDS = [
   { icon: "⚖️", title: "Controle Processual", desc: "Processos · Prazos · Audiências · Acordos", href: "/dashboard/controle", color: "#C9A84C" },
-  { icon: "💼", title: "Financeiro", desc: "Honorários · Acordos · Repasses · Fluxo de caixa", href: "/dashboard/financeiro", color: "#C9A84C" },
+  { icon: "💼", title: "Financeiro", desc: "Honorários · Acordos · Repasses · Fluxo de caixa", href: "/dashboard/financeiro", color: "#C9A84C", moduleKey: "financeiro" as const },
   { icon: "🧮", title: "Calculadora Jurídica", desc: "TJMG · TJSP · Correção monetária · Juros", href: "/dashboard/calculadora", color: "#C9A84C" },
 ];
 
 export default function DashboardPage() {
   const { data: session } = useSession();
+  const cards = CARDS.filter(c => c.moduleKey !== "financeiro" || hasFinanceiroAccess(session?.user?.cargo));
   const sexo = session?.user?.sexo;
   const firstName = session?.user?.name?.split(" ")[0] ?? "";
   const saudacao = sexo === "feminino" ? "Bem-vinda" : sexo === "masculino" ? "Bem-vindo" : "Bem-vindo(a)";
@@ -28,7 +30,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {CARDS.map((card) => (
+        {cards.map((card) => (
           <Link
             key={card.href}
             href={card.href}

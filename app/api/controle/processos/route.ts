@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { hasControleRestrito } from "@/lib/acl";
 import { getDataAsync as getData, saveDataAsync as saveData, newId, isFinalizado } from "@/lib/controle-data";
+import { processoCreateSchema } from "@/lib/validation/controle";
+import { parseBody } from "@/lib/validation/helpers";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  if (hasControleRestrito(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para este módulo" }, { status: 403 });
   const tid = session.user.tenantId;
   const { searchParams } = new URL(req.url);
   const busca = searchParams.get("busca") || "";
@@ -51,22 +55,14 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  if (hasControleRestrito(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para este módulo" }, { status: 403 });
   const tid = session.user.tenantId;
-  const body = await req.json();
+  const { data: body, error } = parseBody(processoCreateSchema, await req.json());
+  if (error) return error;
   const data = await getData(tid);
   const novo = {
     id: newId(),
-    autor: body.autor || "",
-    reu: body.reu || "",
-    objeto: body.objeto || "",
-    numero_processo: body.numero_processo || "",
-    data: body.data || "",
-    hora: body.hora || "",
-    andamento: body.andamento || "",
-    responsavel: body.responsavel || "",
-    observacoes: body.observacoes || "",
-    atencao: !!body.atencao,
-    finalizado: !!body.finalizado,
+    ...body,
     criado_em: new Date().toISOString(),
   };
   data.processos.push(novo);

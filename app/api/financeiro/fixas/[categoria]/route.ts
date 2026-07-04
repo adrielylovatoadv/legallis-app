@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { hasFinanceiroAccess } from "@/lib/acl";
 import { getDataAsync as getData, saveDataAsync as saveData } from "@/lib/financeiro-data";
+import { fixaUpdateSchema } from "@/lib/validation/financeiro";
+import { parseBody } from "@/lib/validation/helpers";
 
 type Params = { params: Promise<{ categoria: string }> };
 
 export async function PUT(req: NextRequest, { params }: Params) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  if (!hasFinanceiroAccess(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para o módulo financeiro" }, { status: 403 });
   const tid = session.user.tenantId;
   const { categoria } = await params;
   const cat = decodeURIComponent(categoria);
-  const body = await req.json();
+  const { data: body, error } = parseBody(fixaUpdateSchema, await req.json());
+  if (error) return error;
   const d = await getData(tid);
   if (!d.fixas[cat] && d.fixas[cat] !== undefined ? false : !Object.keys(d.fixas).includes(cat)) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
@@ -44,6 +49,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
 export async function DELETE(_req: NextRequest, { params }: Params) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  if (!hasFinanceiroAccess(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para o módulo financeiro" }, { status: 403 });
   const tid = session.user.tenantId;
   const { categoria } = await params;
   const cat = decodeURIComponent(categoria);

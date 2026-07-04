@@ -7,27 +7,12 @@ import {
   type Processo,
 } from "@/lib/controle";
 import { DateField } from "@/components/ui/DateField";
+import { Input as Inp, Select as Sel, FieldLabel as Lbl } from "@/components/ui";
 import { FinanceiroPanel } from "./_financeiro-panel";
 
 const POR_PAGINA = 50;
 
 type Aba = "ativos" | "audiencias" | "prazos" | "standby" | "suspenso" | "procedente" | "novo";
-
-function Sel({ children, ...p }: React.SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <select {...p} className="px-3 py-2 rounded-lg text-sm outline-none"
-      style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
-      {children}
-    </select>
-  );
-}
-function Inp({ ...p }: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...p} className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-    style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }} />;
-}
-function Lbl({ children }: { children: React.ReactNode }) {
-  return <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>{children}</span>;
-}
 
 function ProcessoForm({ initial, onSave, onCancel, responsaveis = [] }: {
   initial?: Partial<Processo>;
@@ -417,11 +402,11 @@ export function ProcessosTab() {
             placeholder="🔍 Buscar por nome, processo, réu..."
             className="px-3 py-2 rounded-lg text-sm flex-1 min-w-48"
             style={{ background:"var(--surface2)", border:"1px solid var(--border)", color:"var(--text)" }} />
-          <Sel value={filtroAnd} onChange={e => setFiltroAnd(e.target.value)}>
+          <Sel fullWidth={false} value={filtroAnd} onChange={e => setFiltroAnd(e.target.value)}>
             <option value="Todos">Andamento: Todos</option>
             {ANDAMENTOS_PROCESSO.map(a => <option key={a} value={a}>{a}</option>)}
           </Sel>
-          <Sel value={filtroResp} onChange={e => setFiltroResp(e.target.value)}>
+          <Sel fullWidth={false} value={filtroResp} onChange={e => setFiltroResp(e.target.value)}>
             <option value="Todos">Responsável: Todos</option>
             {users.map(r => <option key={r} value={r}>{r}</option>)}
           </Sel>

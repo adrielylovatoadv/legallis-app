@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDataAsync as getData, saveDataAsync as saveData, newId, normNome, isFinalizado } from "@/lib/controle-data";
+import { clienteCreateSchema } from "@/lib/validation/controle";
+import { parseBody } from "@/lib/validation/helpers";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -43,18 +45,12 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   const tid = session.user.tenantId;
-  const body = await req.json();
+  const { data: body, error } = parseBody(clienteCreateSchema, await req.json());
+  if (error) return error;
   const data = await getData(tid);
   const novo = {
-    id: newId(), nome: body.nome || "", telefone: body.telefone || "",
-    cpf: body.cpf || "", email: body.email || "", endereco: body.endereco || "",
-    tipo_aposentadoria: body.tipo_aposentadoria || "", informacoes: body.informacoes || "",
-    senha_gov: body.senha_gov || "", senha_serasa: body.senha_serasa || "",
-    tipo_pessoa: body.tipo_pessoa || "fisica", cnpj: body.cnpj || "", tratamento: body.tratamento || "",
-    etiquetas: body.etiquetas || [], telefones_adicionais: body.telefones_adicionais || [],
-    emails_adicionais: body.emails_adicionais || [],
-    rg: body.rg || "", profissao: body.profissao || "", estado_civil: body.estado_civil || "",
-    nacionalidade: body.nacionalidade || "brasileiro(a)",
+    id: newId(),
+    ...body,
     criado_em: new Date().toISOString(),
   };
   data.clientes.push(novo);
