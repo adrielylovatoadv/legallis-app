@@ -1,8 +1,9 @@
 import { neon } from "@neondatabase/serverless";
+import { initSchema } from "./schema";
 
 let _sql: ReturnType<typeof neon> | null = null;
 
-function getSql() {
+export function getSql() {
   if (!process.env.POSTGRES_URL) return null;
   if (!_sql) _sql = neon(process.env.POSTGRES_URL);
   return _sql;
@@ -18,6 +19,7 @@ export async function dbInit() {
       updated_at TIMESTAMPTZ DEFAULT NOW()
     )
   `;
+  await initSchema(sql);
 }
 
 // Returns null quando a chave não existe. Propaga (throw) qualquer erro de conexão/consulta —
