@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hasControleRestrito } from "@/lib/acl";
 import { getDataAsync as getData, saveDataAsync as saveData, newId, isFinalizado } from "@/lib/controle-data";
+import { normalizeData } from "@/lib/controle";
 import { processoCreateSchema } from "@/lib/validation/controle";
 import { parseBody } from "@/lib/validation/helpers";
 
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest) {
     const hoje = new Date().toISOString().split("T")[0];
     lista = lista.filter(p => {
       const a = (p.andamento || "").toUpperCase();
-      return (a.includes("AIJ") || a.startsWith("AC")) && p.data >= hoje && !isFinalizado(p);
+      return (a.includes("AIJ") || a.startsWith("AC")) && normalizeData(p.data) >= hoje && !isFinalizado(p);
     });
   } else if (tipo === "standby") {
     lista = lista.filter(p => !p.data && !isFinalizado(p));
@@ -46,7 +47,7 @@ export async function GET(req: NextRequest) {
   lista = lista.sort((a, b) => {
     if (a.atencao && !b.atencao) return -1;
     if (!a.atencao && b.atencao) return 1;
-    return (a.data || "9999").localeCompare(b.data || "9999");
+    return (normalizeData(a.data) || "9999").localeCompare(normalizeData(b.data) || "9999");
   });
 
   return NextResponse.json(lista);

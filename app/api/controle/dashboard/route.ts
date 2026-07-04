@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDataAsync as getData, isFinalizado } from "@/lib/controle-data";
+import { normalizeData } from "@/lib/controle";
 
 export async function GET() {
   const session = await auth();
@@ -11,8 +12,8 @@ export async function GET() {
   const em3 = new Date(Date.now() + 3 * 86400000).toISOString().split("T")[0];
 
   const ativos = data.processos.filter(p => !isFinalizado(p));
-  const prazos_hoje = ativos.filter(p => p.data?.slice(0, 10) === hoje);
-  const prazos_3dias = ativos.filter(p => p.data > hoje && p.data <= em3);
+  const prazos_hoje = ativos.filter(p => normalizeData(p.data) === hoje);
+  const prazos_3dias = ativos.filter(p => { const d = normalizeData(p.data); return d > hoje && d <= em3; });
   const iniciais_pendentes = data.iniciais.filter(
     i => !["PROTOCOLADO", "ARQUIVADO"].includes((i.andamento || "").toUpperCase())
   );

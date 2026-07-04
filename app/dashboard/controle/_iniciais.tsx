@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   getIniciais, createInicial, updateInicial, deleteInicial,
-  ANDAMENTOS_INICIAL, badgeAndamento,
+  ANDAMENTOS_INICIAL, badgeAndamento, normalizeData,
   type Inicial,
 } from "@/lib/controle";
 import { ConfirmModal } from "@/components/ConfirmModal";
@@ -17,7 +17,7 @@ function InicialForm({ initial, onSave, onCancel, responsaveis = [] }: {
   initial?: Partial<Inicial>; onSave: (i: Omit<Inicial,"id"|"criado_em">) => Promise<void>; onCancel: () => void; responsaveis?: string[];
 }) {
   const blank = { cliente:"",reu:"",objeto:"",andamento:"FAZER INICIAL",responsavel:"",observacoes:"",data:"",hora:"" };
-  const [form, setForm] = useState({ ...blank, ...(initial||{}) });
+  const [form, setForm] = useState({ ...blank, ...(initial||{}), data: normalizeData(initial?.data || "") });
   const [saving, setSaving] = useState(false);
 
   const set = (k: string, v: string) => setForm(prev => ({ ...prev, [k]: v }));
@@ -103,7 +103,7 @@ export function IniciaisTab() {
       r = r.filter(i => (i.cliente||"").toLowerCase().includes(b) || (i.reu||"").toLowerCase().includes(b) || (i.objeto||"").toLowerCase().includes(b));
     }
     if (filtroAnd !== "Todos") r = r.filter(i => i.andamento === filtroAnd);
-    return r.sort((a, b) => (a.data || "9999").localeCompare(b.data || "9999"));
+    return r.sort((a, b) => (normalizeData(a.data) || "9999").localeCompare(normalizeData(b.data) || "9999"));
   };
 
   const pendentes = filtrar(iniciais.filter(i => !ANDAMENTOS_CONCLUIDOS.includes((i.andamento||"").toUpperCase().trim())));

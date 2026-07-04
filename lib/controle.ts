@@ -119,9 +119,21 @@ export function badgeAndamento(status: string): string {
   return "bg-[var(--surface2)] text-[var(--text2)]";
 }
 
+// Normaliza qualquer data recebida (ISO "YYYY-MM-DD[...]" ou BR "DD/MM/YYYY") para "YYYY-MM-DD".
+export function normalizeData(raw: string): string {
+  if (!raw) return "";
+  const s = raw.trim();
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+  return "";
+}
+
 export function fmtData(iso: string): string {
-  if (!iso || iso.length < 10) return "";
-  const [y, m, d] = iso.slice(0, 10).split("-");
+  const n = normalizeData(iso);
+  if (!n) return "";
+  const [y, m, d] = n.split("-");
   return `${d}/${m}/${y}`;
 }
 
@@ -130,7 +142,9 @@ export function gcalUrl(p: Processo): string | null {
   const isPericia = s === "PERÍCIA" || s === "PERICIA";
   if (!s.includes("AIJ") && !s.startsWith("AC") && !isPericia) return null;
   if (!p.data) return null;
-  const [y, mo, d] = p.data.split("-").map(Number);
+  const dataIso = normalizeData(p.data);
+  if (!dataIso) return null;
+  const [y, mo, d] = dataIso.split("-").map(Number);
   const [h, min] = (p.hora || "08:00").split(":").map(Number);
   const fmt = (n: number) => String(n).padStart(2, "0");
   const start = `${y}${fmt(mo)}${fmt(d)}T${fmt(h)}${fmt(min)}00`;

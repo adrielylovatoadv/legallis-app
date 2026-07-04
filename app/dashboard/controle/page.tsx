@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
-  getDashboard, marcarOk, fmtData, gcalUrl, badgeAndamento,
+  getDashboard, marcarOk, fmtData, gcalUrl, badgeAndamento, normalizeData,
   ANDAMENTOS_PROCESSO, updateProcesso,
   type DashboardData, type Processo,
 } from "@/lib/controle";
@@ -237,7 +237,7 @@ function VisaoGeral() {
           {audiencias_3d.length > 0 && (
             <>
               <p className="text-xs mb-2 mt-3 font-medium uppercase tracking-wider" style={{ color: "var(--text3)" }}>Próximos 3 dias</p>
-              {audiencias_3d.sort((a, b) => (a.data + a.hora).localeCompare(b.data + b.hora)).map(p => (
+              {audiencias_3d.sort((a, b) => (normalizeData(a.data) + a.hora).localeCompare(normalizeData(b.data) + b.hora)).map(p => (
                 <div key={p.id}>
                   <span className="text-xs font-medium" style={{ color: "var(--gold)" }}>{fmtData(p.data)} </span>
                   <ProcessoCard p={p} onOk={handleOk} onEdit={setEditing} />
@@ -268,7 +268,7 @@ function VisaoGeral() {
           {outros_3d.length > 0 && (
             <>
               <p className="text-xs mb-2 mt-3 font-medium uppercase tracking-wider" style={{ color: "var(--text3)" }}>Próximos 3 dias</p>
-              {outros_3d.sort((a, b) => (a.data + a.hora).localeCompare(b.data + b.hora)).map(p => (
+              {outros_3d.sort((a, b) => (normalizeData(a.data) + a.hora).localeCompare(normalizeData(b.data) + b.hora)).map(p => (
                 <div key={p.id}>
                   <span className="text-xs font-medium" style={{ color: "var(--gold)" }}>{fmtData(p.data)} </span>
                   <ProcessoCard p={p} onOk={handleOk} onEdit={setEditing} />

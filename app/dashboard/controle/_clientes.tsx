@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
   getClientes, createCliente, updateCliente, deleteCliente,
-  fmtData, badgeAndamento,
+  fmtData, badgeAndamento, normalizeData,
   type Cliente, type Processo, type Inicial,
 } from "@/lib/controle";
 import { ConfirmModal } from "@/components/ConfirmModal";
@@ -310,7 +310,7 @@ function ClienteCard({ c, onEdit, onDelete }: {
             <div>
               <p className="text-xs uppercase tracking-wider mb-2 font-semibold" style={{ color:"var(--text3)" }}>Processos ativos</p>
               <div className="space-y-1.5">
-                {ativos.sort((a,b) => (a.data||"9999").localeCompare(b.data||"9999")).map(p => (
+                {ativos.sort((a,b) => (normalizeData(a.data)||"9999").localeCompare(normalizeData(b.data)||"9999")).map(p => (
                   <div key={p.id} className="flex items-start gap-2 text-xs p-2 rounded-lg"
                     style={{ background: p.atencao ? "rgba(239,68,68,0.06)" : "var(--surface2)", borderLeft: `3px solid ${p.atencao ? "#ef4444" : "var(--border)"}` }}>
                     <span>{p.atencao ? "🚨" : "⚖️"}</span>

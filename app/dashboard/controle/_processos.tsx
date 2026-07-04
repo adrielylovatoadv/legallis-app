@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   getProcessos, createProcesso, updateProcesso, deleteProcesso, marcarOk,
-  ANDAMENTOS_PROCESSO, fmtData, badgeAndamento, gcalUrl, normText,
+  ANDAMENTOS_PROCESSO, fmtData, badgeAndamento, gcalUrl, normText, normalizeData,
   type Processo,
 } from "@/lib/controle";
 import { DateField } from "@/components/ui/DateField";
@@ -21,7 +21,7 @@ function ProcessoForm({ initial, onSave, onCancel, responsaveis = [] }: {
   responsaveis?: string[];
 }) {
   const blank = { autor:"",reu:"",objeto:"",numero_processo:"",data:"",hora:"",andamento:"",responsavel:"",observacoes:"",atencao:false,finalizado:false };
-  const [form, setForm] = useState({ ...blank, ...(initial || {}) });
+  const [form, setForm] = useState({ ...blank, ...(initial || {}), data: normalizeData(initial?.data || "") });
   const [saving, setSaving] = useState(false);
   const [erroAutor, setErroAutor] = useState(false);
   const set = (k: string, v: string | boolean) => {
@@ -111,7 +111,7 @@ function ProcessoRow({ p, onEdit, onDelete, onOk, onToggleAtencao }: {
   const [financeiroAberto, setFinanceiroAberto] = useState(false);
   const url = gcalUrl(p);
   const hoje = new Date().toISOString().split("T")[0];
-  const d = p.data?.slice(0, 10);
+  const d = normalizeData(p.data);
   const diasAte = d ? Math.floor((new Date(d).getTime() - new Date(hoje).getTime()) / 86400000) : null;
   const alertaCor = diasAte !== null ? (diasAte <= 0 ? "#ef4444" : diasAte <= 3 ? "#f97316" : undefined) : undefined;
 
@@ -242,7 +242,7 @@ export function ProcessosTab() {
     return r.sort((a, b) => {
       if (a.atencao && !b.atencao) return -1;
       if (!a.atencao && b.atencao) return 1;
-      return (a.data || "9999").localeCompare(b.data || "9999");
+      return (normalizeData(a.data) || "9999").localeCompare(normalizeData(b.data) || "9999");
     });
   }, [busca, filtroAnd, filtroResp, soAtencao]);
 
@@ -250,7 +250,7 @@ export function ProcessosTab() {
   const ativos = filtrar(processos.filter(p => !isFin(p)));
   const audiencias = filtrar(processos.filter(p => {
     const a = (p.andamento||"").toUpperCase();
-    return (a.includes("AIJ") || a.startsWith("AC")) && p.data >= hoje && !isFin(p);
+    return (a.includes("AIJ") || a.startsWith("AC")) && normalizeData(p.data) >= hoje && !isFin(p);
   }));
   const prazos = filtrar(processos.filter(p => {
     const a = (p.andamento || "").toUpperCase();
@@ -260,7 +260,7 @@ export function ProcessosTab() {
   const standby = filtrar(processos.filter(p => {
     const a = (p.andamento||"").toUpperCase();
     const isAud = a.includes("AIJ") || a.startsWith("AC");
-    return ((!p.data) || (isAud && p.data < hoje)) && !isFin(p) && !isSuspenso(p) && !isProcedente(p);
+    return ((!p.data) || (isAud && normalizeData(p.data) < hoje)) && !isFin(p) && !isSuspenso(p) && !isProcedente(p);
   }));
   const suspensos = filtrar(processos.filter(p => isSuspenso(p) && !isFin(p)));
   const procedentes = filtrar(processos.filter(p => isProcedente(p) && !isFin(p)));
@@ -279,9 +279,9 @@ export function ProcessosTab() {
 
   const ABAS: { id: Aba; label: string }[] = [
     { id:"ativos", label:`📋 Ativos (${processos.filter(p => !isFin(p)).length})` },
-    { id:"audiencias", label:`🔴 Audiências (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); return (a.includes("AIJ")||a.startsWith("AC"))&&p.data>=hoje&&!isFin(p); }).length})` },
+    { id:"audiencias", label:`🔴 Audiências (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); return (a.includes("AIJ")||a.startsWith("AC"))&&normalizeData(p.data)>=hoje&&!isFin(p); }).length})` },
     { id:"prazos", label:`📅 Prazos (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); return !!p.data&&!a.includes("AIJ")&&!a.startsWith("AC")&&!isFin(p)&&a!=="PROCEDENTE"; }).length})` },
-    { id:"standby", label:`⏸️ Standby (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); const isAud=a.includes("AIJ")||a.startsWith("AC"); return ((!p.data)||(isAud&&p.data<hoje))&&!isFin(p)&&a!=="SUSPENSO"&&a!=="PROCEDENTE"; }).length})` },
+    { id:"standby", label:`⏸️ Standby (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); const isAud=a.includes("AIJ")||a.startsWith("AC"); return ((!p.data)||(isAud&&normalizeData(p.data)<hoje))&&!isFin(p)&&a!=="SUSPENSO"&&a!=="PROCEDENTE"; }).length})` },
     { id:"suspenso", label:`⏸ Suspenso (${processos.filter(p => (p.andamento||"").toUpperCase()==="SUSPENSO"&&!isFin(p)).length})` },
     { id:"procedente", label:`✅ Procedente (${processos.filter(p => (p.andamento||"").toUpperCase()==="PROCEDENTE"&&!isFin(p)).length})` },
     { id:"novo", label:"➕ Novo" },

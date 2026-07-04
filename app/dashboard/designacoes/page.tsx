@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
   getProcessos, getIniciais, updateProcesso, marcarOk, createProcesso,
-  fmtData, badgeAndamento, gcalUrl,
+  fmtData, badgeAndamento, gcalUrl, normalizeData,
   ANDAMENTOS_PROCESSO,
   type Processo, type Inicial,
 } from "@/lib/controle";
@@ -234,15 +234,15 @@ export default function DesignacoesPage() {
       : true;
   });
 
-  const prazosHoje = meusProcessos.filter(p => p.data === hoje && !isFinalizado(p));
-  const prazos3d = meusProcessos.filter(p => p.data > hoje && p.data <= em3Dias && !isFinalizado(p));
+  const prazosHoje = meusProcessos.filter(p => normalizeData(p.data) === hoje && !isFinalizado(p));
+  const prazos3d = meusProcessos.filter(p => { const d = normalizeData(p.data); return d > hoje && d <= em3Dias && !isFinalizado(p); });
   const audiencias = meusProcessos.filter(p => {
     const a = (p.andamento || "").toUpperCase();
     return (a.includes("AIJ") || a.startsWith("AC")) && !!p.data && !isFinalizado(p);
   });
 
   const filtradosFiltroData = meusProcessos.filter(p =>
-    filtroData ? p.data === filtroData : true
+    filtroData ? normalizeData(p.data) === filtroData : true
   );
 
   const handleOk = async (id: string) => { await marcarOk(id); load(); };
@@ -447,7 +447,7 @@ export default function DesignacoesPage() {
         <Card>
           <h2 className="font-semibold mb-3" style={{ color: "#818cf8" }}>📅 Audiências</h2>
           <div className="space-y-2">
-            {audiencias.sort((a, b) => (a.data + (a.hora || "")).localeCompare(b.data + (b.hora || ""))).map(p => (
+            {audiencias.sort((a, b) => (normalizeData(a.data) + (a.hora || "")).localeCompare(normalizeData(b.data) + (b.hora || ""))).map(p => (
               <ProcessoRow key={p.id} p={p} onOk={handleOk} onEdit={setEditando} showDate onConcluir={handleConcluir} onRedesignacao={setRedesignando} />
             ))}
           </div>
@@ -468,7 +468,7 @@ export default function DesignacoesPage() {
           ? <p className="text-sm py-4 text-center" style={{ color: "var(--text3)" }}>Nenhum processo encontrado.</p>
           : (
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {filtradosFiltroData.sort((a, b) => (a.data || "9999").localeCompare(b.data || "9999")).map(p => (
+              {filtradosFiltroData.sort((a, b) => (normalizeData(a.data) || "9999").localeCompare(normalizeData(b.data) || "9999")).map(p => (
                 <ProcessoRow key={p.id} p={p} onOk={handleOk} onEdit={setEditando} showDate onConcluir={handleConcluir} onRedesignacao={setRedesignando} />
               ))}
             </div>
