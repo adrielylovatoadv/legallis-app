@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useSidebar } from "./SidebarContext";
@@ -50,8 +50,23 @@ const NAV = [
   },
 ];
 
-function NavItem({ href, icon, label, collapsed, exact }: {
-  href: string; icon: React.ReactNode; label: string; collapsed: boolean; exact?: boolean;
+function Badge({ count, collapsed }: { count: number; collapsed: boolean }) {
+  if (count <= 0) return null;
+  return (
+    <span
+      className="flex items-center justify-center rounded-full text-[10px] font-semibold leading-none flex-shrink-0"
+      style={{
+        background: "#ef4444", color: "#fff",
+        minWidth: 16, height: 16, padding: "0 4px",
+        ...(collapsed ? { position: "absolute", top: 4, right: 4 } : { marginLeft: "auto" }),
+      }}>
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
+function NavItem({ href, icon, label, collapsed, exact, badge }: {
+  href: string; icon: React.ReactNode; label: string; collapsed: boolean; exact?: boolean; badge?: number;
 }) {
   const pathname = usePathname();
   const active = exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
@@ -66,6 +81,8 @@ function NavItem({ href, icon, label, collapsed, exact }: {
       }}>
       {icon}
       {!collapsed && <span className="text-sm font-medium truncate">{label}</span>}
+      {!collapsed && <Badge count={badge ?? 0} collapsed={false} />}
+      {collapsed && <Badge count={badge ?? 0} collapsed={true} />}
       {collapsed && (
         <span className="absolute left-full ml-3 px-2.5 py-1.5 bg-[#2A2A2A] border border-[#3A3A3A] text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">{label}</span>
       )}
@@ -102,11 +119,28 @@ export default function Sidebar() {
   const { data: session } = useSession();
   const { theme, toggle: toggleTheme } = useTheme();
   const [exporting, setExporting] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [pendingRedesignacoes, setPendingRedesignacoes] = useState(0);
 
   const handleExport = async () => {
     setExporting(true);
     try { await exportTudo(); } finally { setExporting(false); }
   };
+
+  useEffect(() => {
+    if (!session?.user) return;
+    const load = () => {
+      fetch("/api/chat/unread").then(r => r.ok ? r.json() : {})
+        .then((counts: Record<string, number>) => setUnreadMessages(Object.values(counts).reduce((s, n) => s + n, 0)))
+        .catch(() => {});
+      fetch("/api/designacoes").then(r => r.ok ? r.json() : { recebidas: [] })
+        .then((d: { recebidas?: unknown[] }) => setPendingRedesignacoes(d.recebidas?.length ?? 0))
+        .catch(() => {});
+    };
+    load();
+    const id = setInterval(load, 15000);
+    return () => clearInterval(id);
+  }, [session?.user]);
 
   return (
     <aside
@@ -135,9 +169,12 @@ export default function Sidebar() {
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
         {NAV
           .filter(item => item.moduleKey !== "financeiro" || hasFinanceiroAccess(session?.user?.cargo))
-          .map(item => (
-            <NavItem key={item.href} {...item} collapsed={collapsed} />
-          ))}
+          .map(item => {
+            const badge = item.href === "/dashboard/chat" ? unreadMessages
+              : item.href === "/dashboard/designacoes" ? pendingRedesignacoes
+              : undefined;
+            return <NavItem key={item.href} {...item} collapsed={collapsed} badge={badge} />;
+          })}
 
         {/* Importar / Exportar dados */}
         {!collapsed && <div className="my-2" style={{ borderTop: "1px solid var(--border)" }} />}

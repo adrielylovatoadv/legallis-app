@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   getIniciais, createInicial, updateInicial, deleteInicial,
-  ANDAMENTOS_INICIAL, badgeAndamento, normalizeData,
+  ANDAMENTOS_INICIAL, badgeAndamento, normalizeData, fmtData,
   type Inicial,
 } from "@/lib/controle";
 import { ConfirmModal } from "@/components/ConfirmModal";
@@ -164,6 +164,11 @@ export function IniciaisTab() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {i.responsavel && <span className="text-xs" style={{ color:"var(--text2)" }}>{i.responsavel}</span>}
+                    {i.data && (
+                      <span className="text-xs tabular-nums whitespace-nowrap" style={{ color:"var(--gold)" }}>
+                        {fmtData(i.data)}{i.hora && ` ${i.hora}`}
+                      </span>
+                    )}
                     <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${badgeAndamento(i.andamento)}`}>{i.andamento}</span>
                     {!ANDAMENTOS_CONCLUIDOS.includes((i.andamento||"").toUpperCase()) && (
                       <button onClick={() => setProtocolando(i)}
