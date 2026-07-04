@@ -96,19 +96,25 @@ function ProcessoForm({ initial, onSave, onCancel, responsaveis = [] }: {
           Cancelar
         </button>
       </div>
+      {initial?.id && (
+        <div className="pt-4 border-t" style={{ borderColor:"var(--border)" }}>
+          <Lbl>💰 Financeiro do processo</Lbl>
+          <div className="mt-2">
+            <FinanceiroPanel alvo={{ processoId: initial.id, numeroProcesso: initial.numero_processo, cliente: initial.autor || "", reu: initial.reu, objeto: initial.objeto, responsavel: initial.responsavel }} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function ProcessoRow({ p, onEdit, onDelete, onOk, onToggleAtencao }: {
+function ProcessoRow({ p, onEdit, onDelete, onOk }: {
   p: Processo;
   onEdit: (p: Processo) => void;
   onDelete: (id: string) => void;
   onOk: (id: string) => void;
-  onToggleAtencao: (id: string, val: boolean) => void;
 }) {
   const [confirming, setConfirming] = useState(false);
-  const [financeiroAberto, setFinanceiroAberto] = useState(false);
   const url = gcalUrl(p);
   const hoje = new Date().toISOString().split("T")[0];
   const d = normalizeData(p.data);
@@ -116,8 +122,7 @@ function ProcessoRow({ p, onEdit, onDelete, onOk, onToggleAtencao }: {
   const alertaCor = diasAte !== null ? (diasAte <= 0 ? "#ef4444" : diasAte <= 3 ? "#f97316" : undefined) : undefined;
 
   return (
-    <>
-    <tr style={{ borderBottom: financeiroAberto ? "none" : "1px solid var(--border)" }}
+    <tr style={{ borderBottom: "1px solid var(--border)" }}
       className={p.atencao ? "bg-red-500/5" : ""}>
       <td className="py-2 pr-3 text-sm font-medium" style={{ color: p.atencao ? "#ef4444" : "var(--text)", minWidth: 220 }}>
         <div className="truncate">
@@ -161,14 +166,6 @@ function ProcessoRow({ p, onEdit, onDelete, onOk, onToggleAtencao }: {
           <button onClick={() => onOk(p.id)} title="Marcar OK"
             className="text-xs px-2 py-1 rounded"
             style={{ background:"rgba(34,197,94,0.12)", color:"#4ade80" }}>✅</button>
-          <button onClick={() => onToggleAtencao(p.id, !p.atencao)} title="Toggle atenção"
-            className="text-xs px-2 py-1 rounded"
-            style={{ background: p.atencao ? "rgba(239,68,68,0.15)" : "var(--surface2)", color: p.atencao ? "#f87171" : "var(--text3)", border:"1px solid var(--border)" }}>
-            🚨
-          </button>
-          <button onClick={() => setFinanceiroAberto(v => !v)} title="Financeiro do processo"
-            className="text-xs px-2 py-1 rounded"
-            style={{ background: financeiroAberto ? "rgba(201,168,76,0.15)" : "var(--surface2)", color: financeiroAberto ? "var(--gold)" : "var(--text3)", border:"1px solid var(--border)" }}>💰</button>
           <button onClick={() => onEdit(p)} className="text-xs px-2 py-1 rounded"
             style={{ background:"var(--surface2)", color:"var(--text2)", border:"1px solid var(--border)" }}>✏️</button>
           {confirming
@@ -180,14 +177,6 @@ function ProcessoRow({ p, onEdit, onDelete, onOk, onToggleAtencao }: {
         </div>
       </td>
     </tr>
-    {financeiroAberto && (
-      <tr style={{ borderBottom: "1px solid var(--border)" }} className={p.atencao ? "bg-red-500/5" : ""}>
-        <td colSpan={7} className="pb-2 px-2">
-          <FinanceiroPanel alvo={{ processoId: p.id, numeroProcesso: p.numero_processo, cliente: p.autor, reu: p.reu, objeto: p.objeto, responsavel: p.responsavel }} />
-        </td>
-      </tr>
-    )}
-    </>
   );
 }
 
@@ -272,10 +261,6 @@ export function ProcessosTab() {
   };
   const handleDelete = async (id: string) => { await deleteProcesso(id); load(); };
   const handleOk = async (id: string) => { await marcarOk(id); load(); };
-  const handleToggleAtencao = async (id: string, val: boolean) => {
-    await updateProcesso(id, { atencao: val });
-    load();
-  };
 
   const ABAS: { id: Aba; label: string }[] = [
     { id:"ativos", label:`📋 Ativos (${processos.filter(p => !isFin(p)).length})` },
@@ -331,7 +316,7 @@ export function ProcessosTab() {
                         <ProcessoForm initial={editando} onSave={handleSave} onCancel={() => setEditando(null)} responsaveis={users} />
                       </td></tr>
                     : <ProcessoRow key={p.id} p={p} onEdit={setEditando} onDelete={handleDelete}
-                        onOk={handleOk} onToggleAtencao={handleToggleAtencao} />
+                        onOk={handleOk} />
                 )}
               </tbody>
             </table>
