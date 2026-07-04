@@ -235,6 +235,13 @@ export function ProcessosTab() {
     });
   }, [busca, filtroAnd, filtroResp, soAtencao]);
 
+  // Inclui no filtro qualquer valor de responsável já usado nos processos (ex.: texto livre
+  // vindo de importação), além dos usuários cadastrados — senão fica impossível filtrar por ele.
+  const responsaveisFiltro = Array.from(new Set([
+    ...users,
+    ...processos.map(p => p.responsavel).filter((r): r is string => !!r),
+  ])).sort((a, b) => a.localeCompare(b));
+
   const hoje = new Date().toISOString().split("T")[0];
   const ativos = filtrar(processos.filter(p => !isFin(p)));
   const audiencias = filtrar(processos.filter(p => {
@@ -393,7 +400,7 @@ export function ProcessosTab() {
           </Sel>
           <Sel fullWidth={false} value={filtroResp} onChange={e => setFiltroResp(e.target.value)}>
             <option value="Todos">Responsável: Todos</option>
-            {users.map(r => <option key={r} value={r}>{r}</option>)}
+            {responsaveisFiltro.map(r => <option key={r} value={r}>{r}</option>)}
           </Sel>
           <label className="flex items-center gap-2 cursor-pointer whitespace-nowrap">
             <input type="checkbox" checked={soAtencao} onChange={e => setSoAtencao(e.target.checked)} className="accent-red-500" />
