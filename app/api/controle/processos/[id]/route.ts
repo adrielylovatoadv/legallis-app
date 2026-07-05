@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hasControleRestrito } from "@/lib/acl";
-import { getDataAsync as getData, saveDataAsync as saveData } from "@/lib/controle-data";
 import * as processosRepo from "@/lib/repo/processos";
+import * as finalizadosRepo from "@/lib/repo/finalizados-sem-honor";
 import { processoUpdateSchema } from "@/lib/validation/controle";
 import { parseBody } from "@/lib/validation/helpers";
 
@@ -34,26 +34,19 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const novoAndamento = (body.andamento || "").toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
-  // Se andamento virou finalizado, adiciona em finalizados_externos_sem_honor (se ainda não existir).
-  // finalizados_externos_sem_honor ainda vive só no blob (Fase 5) — grava por fora, sem tocar em processos.
+  // Se andamento virou finalizado, adiciona em finalizados_sem_honor (se ainda não existir).
   if (ANDAMENTOS_FINAIS.includes(novoAndamento)) {
-    const data = await getData(tid);
-    const jaExiste = (data.finalizados_externos_sem_honor || []).some(
-      f => f.processo === atualizado.numero_processo
-    );
+    const existentes = await finalizadosRepo.list(tid);
+    const jaExiste = existentes.some(f => f.processo === atualizado.numero_processo);
     if (!jaExiste) {
-      data.finalizados_externos_sem_honor = [
-        ...(data.finalizados_externos_sem_honor || []),
-        {
-          cliente: atualizado.autor,
-          reu: atualizado.reu,
-          processo: atualizado.numero_processo,
-          objeto: atualizado.objeto,
-          data_fin: new Date().toISOString().slice(0, 10),
-          motivo: body.andamento || anterior.andamento,
-        },
-      ];
-      await saveData(data, tid);
+      await finalizadosRepo.create(tid, {
+        cliente: atualizado.autor,
+        reu: atualizado.reu,
+        processo: atualizado.numero_processo,
+        objeto: atualizado.objeto,
+        data_fin: new Date().toISOString().slice(0, 10),
+        motivo: body.andamento || anterior.andamento,
+      });
     }
   }
 

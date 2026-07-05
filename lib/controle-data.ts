@@ -33,7 +33,7 @@ export interface Inicial {
 }
 
 export interface FinalizadoSemHonor {
-  cliente: string; reu: string; processo: string; objeto: string;
+  id?: string; cliente: string; reu: string; processo: string; objeto: string;
   data_fin: string; motivo: string;
 }
 
@@ -97,7 +97,9 @@ function parseRaw(d: Partial<ControleData>): ControleData {
       ...{ reu: "", objeto: "", responsavel: "", observacoes: "", data: "", hora: "" },
       ...i,
     })),
-    finalizados_externos_sem_honor: d.finalizados_externos_sem_honor || [],
+    // Backfill de id por índice para registros antigos sem id (mesma técnica já usada em
+    // lib/financeiro-data.ts para acordos/execucoes/honorarios_iniciais).
+    finalizados_externos_sem_honor: (d.finalizados_externos_sem_honor || []).map((f, i) => ({ ...f, id: f.id || String(i) })),
     finalizados_externos_acordos: d.finalizados_externos_acordos || [],
     finalizados_execucao: (d as ControleData).finalizados_execucao || [],
     redesignacoes: (d as ControleData).redesignacoes || [],

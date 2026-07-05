@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hasFinanceiroAccess } from "@/lib/acl";
-import { getDataAsync as getData, COLS, MESES, calcAcordo } from "@/lib/financeiro-data";
+import { COLS, MESES, calcAcordo } from "@/lib/financeiro-data";
 import * as acordosRepo from "@/lib/repo/acordos";
 import * as execucoesRepo from "@/lib/repo/execucoes";
 import * as honorariosRepo from "@/lib/repo/honorarios-iniciais";
 import * as variaveisRepo from "@/lib/repo/variaveis";
+import * as fixasRepo from "@/lib/repo/fixas";
 
 const COL_TO_MES: Record<string, string> = {
   "Out":"Out/2025","Nov":"Nov/2025","Dez":"Dez/2025",
@@ -21,8 +22,8 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   if (!hasFinanceiroAccess(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para o módulo financeiro" }, { status: 403 });
   const tid = session.user.tenantId;
-  const [d, acordosRaw, execucoes, honorarios_iniciais, variaveis] = await Promise.all([
-    getData(tid), acordosRepo.list(tid), execucoesRepo.list(tid), honorariosRepo.list(tid), variaveisRepo.list(tid),
+  const [fixas, acordosRaw, execucoes, honorarios_iniciais, variaveis] = await Promise.all([
+    fixasRepo.list(tid), acordosRepo.list(tid), execucoesRepo.list(tid), honorariosRepo.list(tid), variaveisRepo.list(tid),
   ]);
   // Alguns acordos antigos têm "honorarios" zerado mesmo com valor_acordo preenchido —
   // recalcula na hora, igual a rota /api/financeiro/acordos já faz.
@@ -46,10 +47,9 @@ export async function GET() {
   const total_pendente = r2(receitasPendentes.reduce((s, r) => s + r.valor, 0));
 
   let total_fixas = 0;
-  for (const cat of Object.keys(d.fixas)) {
+  for (const f of fixas) {
     for (const col of COLS) {
-      const fixo = d.fixas_valor_fixo?.[cat] || 0;
-      total_fixas += fixo > 0 ? fixo : (d.fixas[cat]?.[col] || 0);
+      total_fixas += f.valor_fixo > 0 ? f.valor_fixo : (f.valores[col] || 0);
     }
   }
   total_fixas = r2(total_fixas);
@@ -84,10 +84,9 @@ export async function GET() {
     else mesMap[mes].honorarios_pendente += h.valor;
   }
 
-  for (const cat of Object.keys(d.fixas)) {
-    const fixo = d.fixas_valor_fixo?.[cat] || 0;
+  for (const f of fixas) {
     for (const col of COLS) {
-      const val = fixo > 0 ? fixo : (d.fixas[cat]?.[col] || 0);
+      const val = f.valor_fixo > 0 ? f.valor_fixo : (f.valores[col] || 0);
       if (val > 0) {
         const mes = COL_TO_MES[col];
         if (mes) { ensureMes(mes); mesMap[mes].fixas += val; }
@@ -110,15 +109,15 @@ export async function GET() {
       const r = mesMap[m];
       const honorarios = r2(r.honorarios_recebido);
       const honorarios_pendente = r2(r.honorarios_pendente);
-      const fixas = r2(r.fixas);
+      const fixasMes = r2(r.fixas);
       const variaveisVal = r2(r.variaveis);
       return {
         mes: m,
         honorarios,
         honorarios_pendente,
-        fixas,
+        fixas: fixasMes,
         variaveis: variaveisVal,
-        saldo: r2(honorarios - fixas - variaveisVal),
+        saldo: r2(honorarios - fixasMes - variaveisVal),
       };
     });
 

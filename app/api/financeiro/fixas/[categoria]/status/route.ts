@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hasFinanceiroAccess } from "@/lib/acl";
-import { getDataAsync as getData, saveDataAsync as saveData } from "@/lib/financeiro-data";
+import * as fixasRepo from "@/lib/repo/fixas";
 
 type Params = { params: Promise<{ categoria: string }> };
 
@@ -13,10 +13,6 @@ export async function POST(req: NextRequest, { params }: Params) {
   const { categoria } = await params;
   const cat = decodeURIComponent(categoria);
   const { col, status } = await req.json();
-  const d = await getData(tid);
-  if (!d.fixas_status) d.fixas_status = {};
-  if (!d.fixas_status[cat]) d.fixas_status[cat] = {};
-  d.fixas_status[cat][col] = status;
-  await saveData(d, tid);
+  await fixasRepo.setStatus(tid, cat, col, status);
   return NextResponse.json({ ok: true });
 }

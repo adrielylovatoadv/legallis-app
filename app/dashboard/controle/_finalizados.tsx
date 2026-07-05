@@ -7,6 +7,7 @@ import { DateField } from "@/components/ui/DateField";
 import { FinanceiroPanel } from "./_financeiro-panel";
 
 interface Finalizado {
+  id?: string;
   cliente: string;
   reu: string;
   processo: string;
@@ -45,12 +46,12 @@ function fmtDate(s: string) {
 }
 
 function ModalForm({ initial, onSave, onClose }: {
-  initial?: { entry: Finalizado; index: number };
-  onSave: (entry: Finalizado, index?: number) => Promise<void>;
+  initial?: Finalizado;
+  onSave: (entry: Finalizado) => Promise<void>;
   onClose: () => void;
 }) {
   const blank: Finalizado = { cliente: "", reu: "", processo: "", objeto: "", data_fin: "", motivo: "Acordo" };
-  const [form, setForm] = useState<Finalizado>(initial ? { ...initial.entry } : { ...blank });
+  const [form, setForm] = useState<Finalizado>(initial ? { ...initial } : { ...blank });
   const [saving, setSaving] = useState(false);
 
   const set = (k: keyof Finalizado, v: string) => setForm(p => ({ ...p, [k]: v }));
@@ -58,7 +59,7 @@ function ModalForm({ initial, onSave, onClose }: {
   const submit = async () => {
     if (!form.cliente.trim()) return;
     setSaving(true);
-    try { await onSave(form, initial?.index); }
+    try { await onSave(form); }
     finally { setSaving(false); }
   };
 
@@ -133,9 +134,9 @@ export function FinalizadosTab() {
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
   const [filtroMotivo, setFiltroMotivo] = useState<string>("");
-  const [modal, setModal] = useState<{ entry?: Finalizado; index?: number } | null>(null);
-  const [confirmIdx, setConfirmIdx] = useState<number | null>(null);
-  const [financeiroAbertoIdx, setFinanceiroAbertoIdx] = useState<number | null>(null);
+  const [modal, setModal] = useState<{ entry?: Finalizado } | null>(null);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [financeiroAbertoKey, setFinanceiroAbertoKey] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -150,12 +151,12 @@ export function FinalizadosTab() {
 
   useEffect(() => { load(); }, [load]);
 
-  const handleSave = async (entry: Finalizado, index?: number) => {
-    if (index !== undefined) {
+  const handleSave = async (entry: Finalizado) => {
+    if (entry.id) {
       await fetch("/api/controle/finalizados", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ index, entry }),
+        body: JSON.stringify({ id: entry.id, entry }),
       });
     } else {
       await fetch("/api/controle/finalizados", {
@@ -168,21 +169,21 @@ export function FinalizadosTab() {
     load();
   };
 
-  const handleDelete = async (index: number) => {
+  const handleDelete = async (id: string) => {
     await fetch("/api/controle/finalizados", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ index }),
+      body: JSON.stringify({ id }),
     });
-    setConfirmIdx(null);
+    setConfirmId(null);
     load();
   };
 
-  const handleReabrir = async (index: number) => {
+  const handleReabrir = async (id: string) => {
     await fetch("/api/controle/finalizados/reabrir", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ index }),
+      body: JSON.stringify({ id }),
     });
     load();
   };
@@ -207,21 +208,19 @@ export function FinalizadosTab() {
     <div className="space-y-5">
       {modal !== null && (
         <ModalForm
-          initial={modal.entry !== undefined && modal.index !== undefined
-            ? { entry: modal.entry, index: modal.index }
-            : undefined}
+          initial={modal.entry}
           onSave={handleSave}
           onClose={() => setModal(null)}
         />
       )}
 
-      {confirmIdx !== null && (
+      {confirmId !== null && (
         <ConfirmModal
           title="Excluir finalizado"
           message="Tem certeza que deseja excluir este registro?"
           confirmLabel="Excluir"
-          onConfirm={() => handleDelete(confirmIdx)}
-          onCancel={() => setConfirmIdx(null)}
+          onConfirm={() => handleDelete(confirmId)}
+          onCancel={() => setConfirmId(null)}
         />
       )}
 
@@ -281,10 +280,10 @@ export function FinalizadosTab() {
       ) : (
         <div className="space-y-2">
           {filtered.map((f, idx) => {
-            const realIdx = finalizados.indexOf(f);
+            const rowKey = f.id ?? `migrado-${idx}`;
             const c = MOTIVO_COLORS[f.motivo as Motivo] || { bg: "rgba(107,114,128,0.1)", color: "#9ca3af" };
             return (
-              <div key={idx} className="rounded-lg px-4 py-3"
+              <div key={rowKey} className="rounded-lg px-4 py-3"
                 style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <div className="min-w-0 flex-1">
@@ -308,9 +307,9 @@ export function FinalizadosTab() {
                       {f.motivo}
                     </span>
                     {f.processo && (
-                      <button onClick={() => setFinanceiroAbertoIdx(v => v === realIdx ? null : realIdx)} title="Financeiro do processo"
+                      <button onClick={() => setFinanceiroAbertoKey(v => v === rowKey ? null : rowKey)} title="Financeiro do processo"
                         className="text-xs px-2 py-1 rounded"
-                        style={{ background: financeiroAbertoIdx === realIdx ? "rgba(201,168,76,0.15)" : "var(--surface2)", color: financeiroAbertoIdx === realIdx ? "var(--gold)" : "var(--text3)", border: "1px solid var(--border)" }}>
+                        style={{ background: financeiroAbertoKey === rowKey ? "rgba(201,168,76,0.15)" : "var(--surface2)", color: financeiroAbertoKey === rowKey ? "var(--gold)" : "var(--text3)", border: "1px solid var(--border)" }}>
                         💰
                       </button>
                     )}
@@ -321,17 +320,17 @@ export function FinalizadosTab() {
                       </span>
                     ) : (
                       <>
-                        <button onClick={() => handleReabrir(realIdx)} title="Voltar para andamento"
+                        <button onClick={() => handleReabrir(f.id!)} title="Voltar para andamento"
                           className="text-xs px-2 py-1 rounded"
                           style={{ background: "rgba(96,165,250,0.12)", color: "#60a5fa", border: "1px solid var(--border)" }}>
                           ↩️ Reabrir
                         </button>
-                        <button onClick={() => setModal({ entry: f, index: realIdx })}
+                        <button onClick={() => setModal({ entry: f })}
                           className="text-xs px-2 py-1 rounded"
                           style={{ background: "var(--surface2)", color: "var(--text2)", border: "1px solid var(--border)" }}>
                           ✏️
                         </button>
-                        <button onClick={() => setConfirmIdx(realIdx)}
+                        <button onClick={() => setConfirmId(f.id!)}
                           className="text-xs px-2 py-1 rounded"
                           style={{ background: "var(--surface2)", color: "var(--text3)", border: "1px solid var(--border)" }}>
                           🗑
@@ -340,7 +339,7 @@ export function FinalizadosTab() {
                     )}
                   </div>
                 </div>
-                {financeiroAbertoIdx === realIdx && f.processo && (
+                {financeiroAbertoKey === rowKey && f.processo && (
                   <div className="mt-2 pt-2 border-t" style={{ borderColor: "var(--border)" }}>
                     <FinanceiroPanel alvo={{ numeroProcesso: f.processo, cliente: f.cliente, reu: f.reu, objeto: f.objeto }} />
                   </div>

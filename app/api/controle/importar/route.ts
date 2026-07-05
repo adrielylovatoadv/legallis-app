@@ -13,6 +13,7 @@ import * as honorariosRepo from "@/lib/repo/honorarios-iniciais";
 import * as processosRepo from "@/lib/repo/processos";
 import * as clientesRepo from "@/lib/repo/clientes";
 import * as iniciaisRepo from "@/lib/repo/iniciais";
+import * as finalizadosRepo from "@/lib/repo/finalizados-sem-honor";
 import * as XLSX from "xlsx";
 
 function clean(v: unknown): string {
@@ -231,7 +232,7 @@ export async function POST(req: NextRequest) {
           ].filter(Boolean).join(" — "),
         };
         if (bySem.has(key)) Object.assign(bySem.get(key)!, novo);
-        else { existingSem.push(novo); bySem.set(key, novo); stats.finalizados++; }
+        else { const criado = { id: newId(), ...novo }; existingSem.push(criado); bySem.set(key, criado); stats.finalizados++; }
       }
 
       // Marca o processo ativo correspondente como finalizado
@@ -313,6 +314,7 @@ export async function POST(req: NextRequest) {
     processosRepo.upsertMany(tid, data.processos),
     clientesRepo.upsertMany(tid, data.clientes),
     iniciaisRepo.upsertMany(tid, data.iniciais),
+    finalizadosRepo.upsertMany(tid, data.finalizados_externos_sem_honor),
     acordosRepo.upsertMany(tid, finData.acordos),
     execucoesRepo.upsertMany(tid, finData.execucoes),
     honorariosRepo.upsertMany(tid, finData.honorarios_iniciais),
