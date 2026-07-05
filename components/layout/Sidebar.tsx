@@ -115,7 +115,7 @@ function BottomLink({ href, icon, label, collapsed }: {
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { collapsed, toggle } = useSidebar();
+  const { collapsed, toggle, mobileOpen, closeMobile } = useSidebar();
   const { data: session } = useSession();
   const { theme, toggle: toggleTheme } = useTheme();
   const [exporting, setExporting] = useState(false);
@@ -142,11 +142,20 @@ export default function Sidebar() {
     return () => clearInterval(id);
   }, [session?.user]);
 
+  // Fecha o drawer mobile ao navegar — sem isso, trocar de página deixaria o menu
+  // aberto cobrindo o conteúdo novo.
+  useEffect(() => { closeMobile(); }, [pathname, closeMobile]);
+
   return (
-    <aside
-      className="fixed top-0 left-0 h-screen z-40 flex flex-col transition-all duration-300 ease-in-out"
-      style={{ width: collapsed ? "64px" : "240px", background: "var(--surface)", borderRight: "1px solid var(--border)" }}
-    >
+    <>
+      {/* Overlay do drawer mobile — só existe abaixo do breakpoint md */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-30 bg-black/50 md:hidden" onClick={closeMobile} />
+      )}
+      <aside
+        className={`fixed top-0 left-0 h-screen z-40 flex flex-col transition-all duration-300 ease-in-out ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
+        style={{ width: collapsed ? "64px" : "240px", background: "var(--surface)", borderRight: "1px solid var(--border)" }}
+      >
       {/* Header */}
       <div className="flex items-center h-16 flex-shrink-0 px-3" style={{ borderBottom: "1px solid var(--border)" }}>
         {!collapsed && (
@@ -155,13 +164,19 @@ export default function Sidebar() {
           </div>
         )}
         <button onClick={toggle} title={collapsed ? "Expandir menu" : "Recolher menu"}
-          className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/5 flex-shrink-0"
+          className="hidden md:flex w-8 h-8 rounded-lg items-center justify-center transition-colors hover:bg-white/5 flex-shrink-0"
           style={{ color: "var(--text3)", marginLeft: collapsed ? "auto" : "8px" }}>
           {collapsed ? (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
           ) : (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           )}
+        </button>
+        {/* Fechar o drawer — só faz sentido em telas pequenas, onde a sidebar é um overlay */}
+        <button onClick={closeMobile} title="Fechar menu" aria-label="Fechar menu"
+          className="md:hidden ml-auto w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/5 flex-shrink-0"
+          style={{ color: "var(--text3)" }}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </div>
 
@@ -299,6 +314,7 @@ export default function Sidebar() {
           )}
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
