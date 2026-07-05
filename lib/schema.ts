@@ -56,6 +56,11 @@ export async function initSchema(sql: Sql): Promise<void> {
     )
   `;
   await sql`ALTER TABLE clientes ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'`;
+  await sql`ALTER TABLE clientes ADD COLUMN IF NOT EXISTS banco TEXT`;
+  await sql`ALTER TABLE clientes ADD COLUMN IF NOT EXISTS agencia TEXT`;
+  await sql`ALTER TABLE clientes ADD COLUMN IF NOT EXISTS conta TEXT`;
+  await sql`ALTER TABLE clientes ADD COLUMN IF NOT EXISTS tipo_conta TEXT`;
+  await sql`ALTER TABLE clientes ADD COLUMN IF NOT EXISTS chave_pix TEXT`;
   await sql`CREATE INDEX IF NOT EXISTS idx_clientes_tenant ON clientes (tenant_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_clientes_nome_cpf ON clientes (tenant_id, nome, cpf)`;
 

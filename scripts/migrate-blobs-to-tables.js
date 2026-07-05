@@ -133,6 +133,8 @@ function buildPlan(tenantId, controle, financeiro) {
       cnpj: c.cnpj ?? null, tratamento: c.tratamento ?? null,
       etiquetas: c.etiquetas || [], telefones_adicionais: c.telefones_adicionais || [], emails_adicionais: c.emails_adicionais || [],
       rg: c.rg ?? null, profissao: c.profissao ?? null, estado_civil: c.estado_civil ?? null, nacionalidade: c.nacionalidade,
+      banco: c.banco ?? null, agencia: c.agencia ?? null, conta: c.conta ?? null,
+      tipo_conta: c.tipo_conta ?? "corrente", chave_pix: c.chave_pix ?? null,
       criado_em: c.criado_em || new Date().toISOString(), raw: c,
     });
   }
@@ -307,6 +309,11 @@ const DDL = [
     criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(), raw JSONB NOT NULL DEFAULT '{}',
     PRIMARY KEY (tenant_id, id))`,
   `ALTER TABLE clientes ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'`,
+  `ALTER TABLE clientes ADD COLUMN IF NOT EXISTS banco TEXT`,
+  `ALTER TABLE clientes ADD COLUMN IF NOT EXISTS agencia TEXT`,
+  `ALTER TABLE clientes ADD COLUMN IF NOT EXISTS conta TEXT`,
+  `ALTER TABLE clientes ADD COLUMN IF NOT EXISTS tipo_conta TEXT`,
+  `ALTER TABLE clientes ADD COLUMN IF NOT EXISTS chave_pix TEXT`,
   `CREATE INDEX IF NOT EXISTS idx_clientes_tenant ON clientes (tenant_id)`,
   `CREATE INDEX IF NOT EXISTS idx_clientes_nome_cpf ON clientes (tenant_id, nome, cpf)`,
   `CREATE TABLE IF NOT EXISTS iniciais (

@@ -43,6 +43,7 @@ export interface Cliente {
   tipo_pessoa?: "fisica" | "juridica"; cnpj?: string; tratamento?: string;
   etiquetas?: string[]; telefones_adicionais?: string[]; emails_adicionais?: string[];
   rg?: string; profissao?: string; estado_civil?: string; nacionalidade?: string;
+  banco?: string; agencia?: string; conta?: string; tipo_conta?: "corrente" | "poupanca"; chave_pix?: string;
 }
 
 export interface Inicial {

@@ -37,6 +37,11 @@ export const clienteCreateSchema = z.object({
   profissao: z.string().trim().default(""),
   estado_civil: z.string().trim().default(""),
   nacionalidade: z.string().trim().default("brasileiro(a)"),
+  banco: z.string().trim().default(""),
+  agencia: z.string().trim().default(""),
+  conta: z.string().trim().default(""),
+  tipo_conta: z.enum(["corrente", "poupanca"]).default("corrente"),
+  chave_pix: z.string().trim().default(""),
 });
 export const clienteUpdateSchema = clienteCreateSchema.partial();
 

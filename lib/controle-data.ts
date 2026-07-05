@@ -22,6 +22,7 @@ export interface Cliente {
   tipo_pessoa?: "fisica" | "juridica"; cnpj?: string; tratamento?: string;
   etiquetas?: string[]; telefones_adicionais?: string[]; emails_adicionais?: string[];
   rg?: string; profissao?: string; estado_civil?: string; nacionalidade?: string;
+  banco?: string; agencia?: string; conta?: string; tipo_conta?: "corrente" | "poupanca"; chave_pix?: string;
 }
 
 export interface Inicial {
@@ -88,10 +89,13 @@ function parseRaw(d: Partial<ControleData>): ControleData {
         tipo_aposentadoria: "", informacoes: "", senha_gov: "", senha_serasa: "",
         tipo_pessoa: "fisica" as const, cnpj: "", tratamento: "",
         etiquetas: [], telefones_adicionais: [], emails_adicionais: [],
-        rg: "", profissao: "", estado_civil: "", nacionalidade: "brasileiro(a)" },
+        rg: "", profissao: "", estado_civil: "", nacionalidade: "brasileiro(a)",
+        banco: "", agencia: "", conta: "", tipo_conta: "corrente" as const, chave_pix: "" },
       ...c,
       senha_gov: decryptField(c.senha_gov || ""),
       senha_serasa: decryptField(c.senha_serasa || ""),
+      conta: decryptField(c.conta || ""),
+      chave_pix: decryptField(c.chave_pix || ""),
     })),
     iniciais: (d.iniciais || []).map((i: Inicial) => ({
       ...{ reu: "", objeto: "", responsavel: "", observacoes: "", data: "", hora: "" },
@@ -135,6 +139,8 @@ function encryptClientes(data: ControleData): ControleData {
       ...c,
       senha_gov: encryptField(c.senha_gov || ""),
       senha_serasa: encryptField(c.senha_serasa || ""),
+      conta: encryptField(c.conta || ""),
+      chave_pix: encryptField(c.chave_pix || ""),
     })),
   };
 }

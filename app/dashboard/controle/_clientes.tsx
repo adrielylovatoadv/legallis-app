@@ -53,6 +53,7 @@ function ClienteForm({ initial, onSave, onCancel }: {
     tipo_pessoa:"fisica" as "fisica"|"juridica", cnpj:"", tratamento:"",
     etiquetas:[] as string[], telefones_adicionais:[] as string[], emails_adicionais:[] as string[],
     rg:"", profissao:"", estado_civil:"", nacionalidade:"brasileiro(a)",
+    banco:"", agencia:"", conta:"", tipo_conta:"corrente" as "corrente"|"poupanca", chave_pix:"",
   };
   const [form, setForm] = useState({ ...blank, ...(initial||{}) });
   const [etiquetasTexto, setEtiquetasTexto] = useState((initial?.etiquetas || []).join(", "));
@@ -111,6 +112,17 @@ function ClienteForm({ initial, onSave, onCancel }: {
           onChange={v => set("emails_adicionais", v)} placeholder="email@exemplo.com" />
         <div><Lbl>Senha Gov.br</Lbl><Inp type="password" autoComplete="new-password" value={form.senha_gov} onChange={e => set("senha_gov",e.target.value)} /></div>
         <div><Lbl>Senha Serasa</Lbl><Inp type="password" autoComplete="new-password" value={form.senha_serasa} onChange={e => set("senha_serasa",e.target.value)} /></div>
+        <div><Lbl>Banco</Lbl><Inp value={form.banco} onChange={e => set("banco",e.target.value)} /></div>
+        <div><Lbl>Agência</Lbl><Inp value={form.agencia} onChange={e => set("agencia",e.target.value)} /></div>
+        <div><Lbl>Conta</Lbl><Inp type="password" autoComplete="new-password" value={form.conta} onChange={e => set("conta",e.target.value)} /></div>
+        <div>
+          <Lbl>Tipo de conta</Lbl>
+          <Sel value={form.tipo_conta} onChange={e => set("tipo_conta",e.target.value)}>
+            <option value="corrente">Corrente</option>
+            <option value="poupanca">Poupança</option>
+          </Sel>
+        </div>
+        <div className="sm:col-span-2"><Lbl>Chave PIX</Lbl><Inp type="password" autoComplete="new-password" value={form.chave_pix} onChange={e => set("chave_pix",e.target.value)} /></div>
         <div className="sm:col-span-2">
           <Lbl>Informações relevantes</Lbl>
           <textarea rows={2} value={form.informacoes} onChange={e => set("informacoes",e.target.value)}
@@ -190,6 +202,9 @@ function ClienteCard({ c, onEdit, onDelete }: {
   const [mostraSenhas, setMostraSenhas] = useState(false);
   const [senhas, setSenhas] = useState<{ senha_gov: string; senha_serasa: string } | null>(null);
   const [loadingSenhas, setLoadingSenhas] = useState(false);
+  const [mostraBancarios, setMostraBancarios] = useState(false);
+  const [bancarios, setBancarios] = useState<{ banco: string; agencia: string; conta: string; tipo_conta: string; chave_pix: string } | null>(null);
+  const [loadingBancarios, setLoadingBancarios] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   async function toggleSenhas() {
@@ -202,6 +217,18 @@ function ClienteCard({ c, onEdit, onDelete }: {
       } finally { setLoadingSenhas(false); }
     }
     setMostraSenhas(true);
+  }
+
+  async function toggleBancarios() {
+    if (mostraBancarios) { setMostraBancarios(false); return; }
+    if (!bancarios) {
+      setLoadingBancarios(true);
+      try {
+        const res = await fetch(`/api/controle/clientes/${c.id}/dados-bancarios`);
+        if (res.ok) setBancarios(await res.json());
+      } finally { setLoadingBancarios(false); }
+    }
+    setMostraBancarios(true);
   }
   const ativos = c._ativos || [];
   const finalizados = c._finalizados || [];
@@ -294,6 +321,28 @@ function ClienteCard({ c, onEdit, onDelete }: {
               </button>
             </div>
           </div>
+
+          {/* Dados bancários / PIX */}
+          {(c.banco || c.agencia || c.conta || c.chave_pix) && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs" style={{ color:"var(--text2)" }}>
+              {c.banco && <div><span style={{ color:"var(--text3)" }}>Banco: </span>{c.banco}</div>}
+              {c.agencia && <div><span style={{ color:"var(--text3)" }}>Agência: </span>{c.agencia}</div>}
+              <div>
+                <span style={{ color:"var(--text3)" }}>Conta ({c.tipo_conta === "poupanca" ? "poupança" : "corrente"}): </span>
+                {mostraBancarios ? (bancarios?.conta || "—") : "••••••••"}
+              </div>
+              <div>
+                <span style={{ color:"var(--text3)" }}>Chave PIX: </span>
+                {mostraBancarios ? (bancarios?.chave_pix || "—") : "••••••••"}
+              </div>
+              <div>
+                <button onClick={toggleBancarios} disabled={loadingBancarios} className="text-xs underline"
+                  style={{ color:"var(--gold)" }}>
+                  {loadingBancarios ? "Carregando..." : mostraBancarios ? "Ocultar dados bancários" : "👁️ Mostrar dados bancários"}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Gerar documento */}
           <GerarDocumentoMenu cliente={c} />

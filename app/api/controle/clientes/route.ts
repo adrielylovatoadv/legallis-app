@@ -26,8 +26,9 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // Nunca expor senhas de clientes na API
-  const sanitize = ({ senha_gov: _g, senha_serasa: _s, ...rest }: typeof lista[number]) => rest;
+  // Nunca expor senhas nem dados bancários sensíveis de clientes na API principal —
+  // ver /api/controle/clientes/[id]/senhas e /dados-bancarios para acesso sob demanda.
+  const sanitize = ({ senha_gov: _g, senha_serasa: _s, conta: _c, chave_pix: _p, ...rest }: typeof lista[number]) => rest;
 
   if (comProcessos) {
     const [processos, iniciaisTodas] = await Promise.all([processosRepo.list(tid), iniciaisRepo.list(tid)]);
