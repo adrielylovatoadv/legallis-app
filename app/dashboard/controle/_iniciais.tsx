@@ -148,14 +148,23 @@ export function IniciaisTab() {
       ? <p className="py-6 text-center text-sm" style={{ color:"var(--text3)" }}>Nenhuma inicial encontrada.</p>
       : (
         <div className="space-y-2">
-          {lista.map(i => (
-            editando?.id === i.id
-              ? <InicialForm key={i.id} initial={editando} onSave={handleSave} onCancel={() => setEditando(null)} responsaveis={users} />
-              : (
-                <div key={i.id} className="flex items-center gap-3 px-4 py-3 rounded-lg"
-                  style={{ background:"var(--surface2)", border:"1px solid var(--border)" }}>
+          {lista.map(i => {
+            if (editando?.id === i.id) {
+              return <InicialForm key={i.id} initial={editando} onSave={handleSave} onCancel={() => setEditando(null)} responsaveis={users} />;
+            }
+            // Destaque visual por proximidade do prazo — mesmo critério e cores já usados
+            // em _processos.tsx (vermelho: vencido/hoje, laranja: até 3 dias).
+            const hoje = new Date().toISOString().split("T")[0];
+            const d = normalizeData(i.data);
+            const diasAte = d ? Math.floor((new Date(d).getTime() - new Date(hoje).getTime()) / 86400000) : null;
+            const atrasada = diasAte !== null && diasAte <= 0;
+            const alertaCor = diasAte !== null ? (diasAte <= 0 ? "#ef4444" : diasAte <= 3 ? "#f97316" : undefined) : undefined;
+            return (
+                <div key={i.id} className={`flex items-center gap-3 px-4 py-3 rounded-lg ${atrasada ? "bg-red-500/5" : ""}`}
+                  style={{ background: atrasada ? undefined : "var(--surface2)", border: `1px solid ${atrasada ? "rgba(239,68,68,0.3)" : "var(--border)"}` }}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
+                      {atrasada && <span title="Prazo vencido">⚠️</span>}
                       <span className="font-medium text-sm truncate" style={{ color:"var(--text)" }}>{i.cliente}</span>
                       {i.reu && <span className="text-xs" style={{ color:"var(--text3)" }}>× {i.reu}</span>}
                     </div>
@@ -165,7 +174,7 @@ export function IniciaisTab() {
                   <div className="flex items-center gap-2 shrink-0">
                     {i.responsavel && <span className="text-xs" style={{ color:"var(--text2)" }}>{i.responsavel}</span>}
                     {i.data && (
-                      <span className="text-xs tabular-nums whitespace-nowrap" style={{ color:"var(--gold)" }}>
+                      <span className="text-xs tabular-nums whitespace-nowrap font-semibold" style={{ color: alertaCor || "var(--gold)" }}>
                         {fmtData(i.data)}{i.hora && ` ${i.hora}`}
                       </span>
                     )}
@@ -184,8 +193,8 @@ export function IniciaisTab() {
                       style={{ background:"var(--surface)", color:"var(--text3)", border:"1px solid var(--border)" }}>🗑</button>
                   </div>
                 </div>
-              )
-          ))}
+            );
+          })}
         </div>
       )
   );
