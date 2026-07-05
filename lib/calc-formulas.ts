@@ -151,7 +151,7 @@ export function calculateCharge(
       const corrIdx = getCorrectionIndex(y, m, idx);
       correctionFactor *= 1 + corrIdx / 100;
       months++;
-      indicesUsados.push(y < 2024 || (y === 2024 && m <= 8) ? "INPC" : "IPCAe");
+      indicesUsados.push(y < 2024 || (y === 2024 && m <= 8) ? "INPC" : "IPCA-E/Selic");
     }
     corrected = value * correctionFactor;
     // Juros: a partir de moraStart (pode ser data da citação)
