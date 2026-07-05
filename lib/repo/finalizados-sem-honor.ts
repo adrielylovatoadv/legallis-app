@@ -80,16 +80,24 @@ export async function update(tenantId: string, id: string, patch: Partial<Finali
   return merged;
 }
 
-// Upsert em lote preservando ids existentes — usado por controle/importar/route.ts.
-export async function upsertMany(tenantId: string, rows: FinalizadoSemHonor[]): Promise<void> {
-  if (!hasDb() || rows.length === 0) return;
+// Constrói (sem executar) os upserts em lote — usado por upsertMany() e por
+// controle/importar/route.ts, que agrupa os statements de todas as entidades importadas
+// numa única transação (Fase 6 da migração).
+export function buildUpsertManyStatements(tenantId: string, rows: FinalizadoSemHonor[]) {
   const sql = getSql()!;
-  const statements = rows.filter(r => r.id).map(row => sql`
+  return rows.filter(r => r.id).map(row => sql`
     INSERT INTO finalizados_sem_honor (tenant_id, id, cliente, reu, processo, objeto, data_fin, motivo)
     VALUES (${tenantId}, ${row.id}, ${row.cliente}, ${row.reu}, ${row.processo}, ${row.objeto}, ${row.data_fin}, ${row.motivo})
     ON CONFLICT (tenant_id, id) DO UPDATE SET cliente = EXCLUDED.cliente, reu = EXCLUDED.reu, processo = EXCLUDED.processo,
       objeto = EXCLUDED.objeto, data_fin = EXCLUDED.data_fin, motivo = EXCLUDED.motivo
   `);
+}
+
+// Upsert em lote preservando ids existentes.
+export async function upsertMany(tenantId: string, rows: FinalizadoSemHonor[]): Promise<void> {
+  if (!hasDb() || rows.length === 0) return;
+  const sql = getSql()!;
+  const statements = buildUpsertManyStatements(tenantId, rows);
   for (let i = 0; i < statements.length; i += 200) {
     await sql.transaction(statements.slice(i, i + 200));
   }

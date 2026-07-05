@@ -106,11 +106,12 @@ export async function remove(tenantId: string, id: string): Promise<boolean> {
   return rows.length > 0;
 }
 
-// Upsert em lote preservando ids existentes — usado por controle/importar/route.ts.
-export async function upsertMany(tenantId: string, rows: Processo[]): Promise<void> {
-  if (!hasDb() || rows.length === 0) return;
+// Constrói (sem executar) os upserts em lote — usado por upsertMany() e por
+// controle/importar/route.ts, que agrupa os statements de todas as entidades importadas
+// numa única transação (Fase 6 da migração).
+export function buildUpsertManyStatements(tenantId: string, rows: Processo[]) {
   const sql = getSql()!;
-  const statements = rows.map(row => sql`
+  return rows.map(row => sql`
     INSERT INTO processos (tenant_id, id, autor, reu, objeto, numero_processo, data, hora, andamento,
                             responsavel, observacoes, atencao, finalizado, dashboard_ok, vara, tribunal, criado_em)
     VALUES (${tenantId}, ${row.id}, ${row.autor}, ${row.reu}, ${row.objeto}, ${row.numero_processo}, ${row.data},
@@ -122,6 +123,13 @@ export async function upsertMany(tenantId: string, rows: Processo[]): Promise<vo
       atencao = EXCLUDED.atencao, finalizado = EXCLUDED.finalizado, dashboard_ok = EXCLUDED.dashboard_ok,
       vara = EXCLUDED.vara, tribunal = EXCLUDED.tribunal
   `);
+}
+
+// Upsert em lote preservando ids existentes — usado por controle/seed/route.ts.
+export async function upsertMany(tenantId: string, rows: Processo[]): Promise<void> {
+  if (!hasDb() || rows.length === 0) return;
+  const sql = getSql()!;
+  const statements = buildUpsertManyStatements(tenantId, rows);
   for (let i = 0; i < statements.length; i += 200) {
     await sql.transaction(statements.slice(i, i + 200));
   }

@@ -82,11 +82,10 @@ export async function remove(tenantId: string, id: string): Promise<boolean> {
   return rows.length > 0;
 }
 
-// Upsert em lote preservando ids existentes — ver comentário equivalente em lib/repo/acordos.ts.
-export async function upsertMany(tenantId: string, rows: HonorarioInicial[]): Promise<void> {
-  if (!hasDb() || rows.length === 0) return;
+// Constrói (sem executar) os upserts em lote — ver comentário equivalente em lib/repo/acordos.ts.
+export function buildUpsertManyStatements(tenantId: string, rows: HonorarioInicial[]) {
   const sql = getSql()!;
-  const statements = rows.map(row => sql`
+  return rows.map(row => sql`
     INSERT INTO honorarios_iniciais (tenant_id, id, mes, cliente, processo, processo_id, valor,
                                       data_pagamento, observacao, status)
     VALUES (${tenantId}, ${row.id}, ${row.mes ?? null}, ${row.cliente}, ${row.processo}, ${row.processoId ?? null},
@@ -95,6 +94,13 @@ export async function upsertMany(tenantId: string, rows: HonorarioInicial[]): Pr
       processo = EXCLUDED.processo, processo_id = EXCLUDED.processo_id, valor = EXCLUDED.valor,
       data_pagamento = EXCLUDED.data_pagamento, observacao = EXCLUDED.observacao, status = EXCLUDED.status
   `);
+}
+
+// Upsert em lote preservando ids existentes.
+export async function upsertMany(tenantId: string, rows: HonorarioInicial[]): Promise<void> {
+  if (!hasDb() || rows.length === 0) return;
+  const sql = getSql()!;
+  const statements = buildUpsertManyStatements(tenantId, rows);
   for (let i = 0; i < statements.length; i += 200) {
     await sql.transaction(statements.slice(i, i + 200));
   }

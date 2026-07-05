@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { hasDb, getSql } from "@/lib/db";
 import { getDataAsync, saveDataAsync, newId, type ControleData } from "@/lib/controle-data";
 import {
   getDataAsync as getFinanceiroDataAsync,
@@ -307,17 +308,23 @@ export async function POST(req: NextRequest) {
 
   await saveDataAsync(data, tid);
   await saveFinanceiroDataAsync(finData, tid);
-  // processos/clientes/iniciais e acordos/execucoes/honorarios_iniciais também vivem nas
-  // tabelas relacionais (Fases 2 e 3 da migração) — sem isso, dados importados ficariam
-  // invisíveis nas abas que já leem das tabelas.
-  await Promise.all([
-    processosRepo.upsertMany(tid, data.processos),
-    clientesRepo.upsertMany(tid, data.clientes),
-    iniciaisRepo.upsertMany(tid, data.iniciais),
-    finalizadosRepo.upsertMany(tid, data.finalizados_externos_sem_honor),
-    acordosRepo.upsertMany(tid, finData.acordos),
-    execucoesRepo.upsertMany(tid, finData.execucoes),
-    honorariosRepo.upsertMany(tid, finData.honorarios_iniciais),
-  ]);
+  // processos/clientes/iniciais/finalizados e acordos/execucoes/honorarios_iniciais também
+  // vivem nas tabelas relacionais — sem isso, dados importados ficariam invisíveis nas abas
+  // que já leem das tabelas. No modo banco, todas as linhas de todas as entidades entram numa
+  // única transação (Fase 6 da migração): se qualquer statement falhar no meio de uma planilha
+  // grande, nada fica parcialmente importado nas tabelas relacionais.
+  if (hasDb()) {
+    const sql = getSql()!;
+    const statements = [
+      ...processosRepo.buildUpsertManyStatements(tid, data.processos),
+      ...clientesRepo.buildUpsertManyStatements(tid, data.clientes),
+      ...iniciaisRepo.buildUpsertManyStatements(tid, data.iniciais),
+      ...finalizadosRepo.buildUpsertManyStatements(tid, data.finalizados_externos_sem_honor),
+      ...acordosRepo.buildUpsertManyStatements(tid, finData.acordos),
+      ...execucoesRepo.buildUpsertManyStatements(tid, finData.execucoes),
+      ...honorariosRepo.buildUpsertManyStatements(tid, finData.honorarios_iniciais),
+    ];
+    if (statements.length > 0) await sql.transaction(statements);
+  }
   return NextResponse.json({ ok: true, stats, erros: erros.length > 0 ? erros : undefined });
 }

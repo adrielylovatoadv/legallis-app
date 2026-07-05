@@ -108,13 +108,14 @@ export async function remove(tenantId: string, id: string): Promise<boolean> {
   return rows.length > 0;
 }
 
-// Upsert em lote preservando ids existentes — usado por controle/importar/route.ts.
-// Recebe senha_gov/senha_serasa em texto puro (igual ao que getDataAsync já descriptografa
-// para uso em memória) — encryptField() cuida de criptografar antes de gravar.
-export async function upsertMany(tenantId: string, rows: Cliente[]): Promise<void> {
-  if (!hasDb() || rows.length === 0) return;
+// Constrói (sem executar) os upserts em lote — usado por upsertMany() e por
+// controle/importar/route.ts, que agrupa os statements de todas as entidades importadas
+// numa única transação (Fase 6 da migração). Recebe senha_gov/senha_serasa em texto puro
+// (igual ao que getDataAsync já descriptografa para uso em memória) — encryptField() cuida
+// de criptografar antes de gravar.
+export function buildUpsertManyStatements(tenantId: string, rows: Cliente[]) {
   const sql = getSql()!;
-  const statements = rows.map(row => sql`
+  return rows.map(row => sql`
     INSERT INTO clientes (tenant_id, id, nome, telefone, cpf, email, endereco, tipo_aposentadoria, informacoes,
                            senha_gov, senha_serasa, tipo_pessoa, cnpj, tratamento, etiquetas, telefones_adicionais,
                            emails_adicionais, rg, profissao, estado_civil, nacionalidade, criado_em)
@@ -133,6 +134,13 @@ export async function upsertMany(tenantId: string, rows: Cliente[]): Promise<voi
       emails_adicionais = EXCLUDED.emails_adicionais, rg = EXCLUDED.rg, profissao = EXCLUDED.profissao,
       estado_civil = EXCLUDED.estado_civil, nacionalidade = EXCLUDED.nacionalidade
   `);
+}
+
+// Upsert em lote preservando ids existentes — usado por controle/seed/route.ts.
+export async function upsertMany(tenantId: string, rows: Cliente[]): Promise<void> {
+  if (!hasDb() || rows.length === 0) return;
+  const sql = getSql()!;
+  const statements = buildUpsertManyStatements(tenantId, rows);
   for (let i = 0; i < statements.length; i += 200) {
     await sql.transaction(statements.slice(i, i + 200));
   }
