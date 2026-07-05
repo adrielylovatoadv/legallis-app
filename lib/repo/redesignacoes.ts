@@ -58,6 +58,20 @@ export async function create(tenantId: string, input: Omit<Redesignacao, "id" | 
   return row;
 }
 
+// Constrói (sem executar) o UPDATE — usado por update() e por designacoes/route.ts POST
+// (responder_redesignacao), que grava a resposta e atualiza o responsável do processo/inicial
+// correspondente numa única transação.
+export function buildUpdateStatement(tenantId: string, merged: Redesignacao) {
+  const sql = getSql()!;
+  return sql`
+    UPDATE redesignacoes SET tipo = ${merged.tipo}, item_id = ${merged.itemId}, label = ${merged.label},
+      de_user_id = ${merged.deUserId}, de_user_name = ${merged.deUserName},
+      para_user_id = ${merged.paraUserId}, para_user_name = ${merged.paraUserName},
+      motivo = ${merged.motivo}, status = ${merged.status}, respondido_em = ${merged.respondido_em ?? null}
+    WHERE tenant_id = ${tenantId} AND id = ${merged.id}
+  `;
+}
+
 export async function update(tenantId: string, id: string, patch: Partial<Redesignacao>): Promise<Redesignacao | null> {
   if (!hasDb()) {
     const data = await getDataAsync(tenantId);
@@ -70,14 +84,7 @@ export async function update(tenantId: string, id: string, patch: Partial<Redesi
   const current = await get(tenantId, id);
   if (!current) return null;
   const merged = { ...current, ...patch };
-  const sql = getSql()!;
-  await sql`
-    UPDATE redesignacoes SET tipo = ${merged.tipo}, item_id = ${merged.itemId}, label = ${merged.label},
-      de_user_id = ${merged.deUserId}, de_user_name = ${merged.deUserName},
-      para_user_id = ${merged.paraUserId}, para_user_name = ${merged.paraUserName},
-      motivo = ${merged.motivo}, status = ${merged.status}, respondido_em = ${merged.respondido_em ?? null}
-    WHERE tenant_id = ${tenantId} AND id = ${id}
-  `;
+  await buildUpdateStatement(tenantId, merged);
   return merged;
 }
 

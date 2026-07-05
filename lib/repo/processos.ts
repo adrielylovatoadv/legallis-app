@@ -36,6 +36,20 @@ export async function get(tenantId: string, id: string): Promise<Processo | null
   return rows[0] ? rowToProcesso(rows[0]) : null;
 }
 
+// Constrói (sem executar) o INSERT de um processo — usado por create() e por rotas que
+// precisam agrupar essa escrita com a de outra entidade numa única transação (ex.:
+// iniciais/protocolo, que marca a inicial como protocolada e cria o processo ao mesmo tempo).
+export function buildCreateStatement(tenantId: string, row: Processo) {
+  const sql = getSql()!;
+  return sql`
+    INSERT INTO processos (tenant_id, id, autor, reu, objeto, numero_processo, data, hora, andamento,
+                            responsavel, observacoes, atencao, finalizado, dashboard_ok, vara, tribunal, criado_em)
+    VALUES (${tenantId}, ${row.id}, ${row.autor}, ${row.reu}, ${row.objeto}, ${row.numero_processo}, ${row.data},
+            ${row.hora}, ${row.andamento}, ${row.responsavel}, ${row.observacoes}, ${row.atencao}, ${row.finalizado},
+            ${row.dashboard_ok ?? null}, ${row.vara ?? null}, ${row.tribunal ?? null}, ${row.criado_em})
+  `;
+}
+
 export async function create(tenantId: string, input: Omit<Processo, "id" | "criado_em">): Promise<Processo> {
   const row: Processo = { ...input, id: newId(), criado_em: new Date().toISOString() };
   if (!hasDb()) {
@@ -44,15 +58,23 @@ export async function create(tenantId: string, input: Omit<Processo, "id" | "cri
     await saveDataAsync(data, tenantId);
     return row;
   }
-  const sql = getSql()!;
-  await sql`
-    INSERT INTO processos (tenant_id, id, autor, reu, objeto, numero_processo, data, hora, andamento,
-                            responsavel, observacoes, atencao, finalizado, dashboard_ok, vara, tribunal, criado_em)
-    VALUES (${tenantId}, ${row.id}, ${row.autor}, ${row.reu}, ${row.objeto}, ${row.numero_processo}, ${row.data},
-            ${row.hora}, ${row.andamento}, ${row.responsavel}, ${row.observacoes}, ${row.atencao}, ${row.finalizado},
-            ${row.dashboard_ok ?? null}, ${row.vara ?? null}, ${row.tribunal ?? null}, ${row.criado_em})
-  `;
+  await buildCreateStatement(tenantId, row);
   return row;
+}
+
+// Constrói (sem executar) o UPDATE de um processo — usado tanto por update() (chamada solta)
+// quanto por rotas que precisam agrupar esse UPDATE com escritas de outra entidade numa
+// única transação (ex.: processos/[id] PUT, que também pode inserir em finalizados_sem_honor).
+export function buildUpdateStatement(tenantId: string, merged: Processo) {
+  const sql = getSql()!;
+  return sql`
+    UPDATE processos SET autor = ${merged.autor}, reu = ${merged.reu}, objeto = ${merged.objeto},
+      numero_processo = ${merged.numero_processo}, data = ${merged.data}, hora = ${merged.hora},
+      andamento = ${merged.andamento}, responsavel = ${merged.responsavel}, observacoes = ${merged.observacoes},
+      atencao = ${merged.atencao}, finalizado = ${merged.finalizado}, dashboard_ok = ${merged.dashboard_ok ?? null},
+      vara = ${merged.vara ?? null}, tribunal = ${merged.tribunal ?? null}
+    WHERE tenant_id = ${tenantId} AND id = ${merged.id}
+  `;
 }
 
 export async function update(tenantId: string, id: string, patch: Partial<Processo>): Promise<Processo | null> {
@@ -67,15 +89,7 @@ export async function update(tenantId: string, id: string, patch: Partial<Proces
   const current = await get(tenantId, id);
   if (!current) return null;
   const merged = { ...current, ...patch };
-  const sql = getSql()!;
-  await sql`
-    UPDATE processos SET autor = ${merged.autor}, reu = ${merged.reu}, objeto = ${merged.objeto},
-      numero_processo = ${merged.numero_processo}, data = ${merged.data}, hora = ${merged.hora},
-      andamento = ${merged.andamento}, responsavel = ${merged.responsavel}, observacoes = ${merged.observacoes},
-      atencao = ${merged.atencao}, finalizado = ${merged.finalizado}, dashboard_ok = ${merged.dashboard_ok ?? null},
-      vara = ${merged.vara ?? null}, tribunal = ${merged.tribunal ?? null}
-    WHERE tenant_id = ${tenantId} AND id = ${id}
-  `;
+  await buildUpdateStatement(tenantId, merged);
   return merged;
 }
 

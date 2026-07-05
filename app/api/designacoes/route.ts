@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { hasDb, getSql } from "@/lib/db";
 import * as redesignacoesRepo from "@/lib/repo/redesignacoes";
 import * as processosRepo from "@/lib/repo/processos";
 import * as iniciaisRepo from "@/lib/repo/iniciais";
@@ -33,16 +34,36 @@ export async function POST(req: NextRequest) {
     if (pedido.paraUserId !== userId) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
     if (pedido.status !== "pendente") return NextResponse.json({ error: "Solicitação já respondida" }, { status: 400 });
 
-    await redesignacoesRepo.update(tid, redesignacaoId, {
-      status: aceitar ? "aceita" : "recusada",
+    const redesignacaoMerged = {
+      ...pedido,
+      status: (aceitar ? "aceita" : "recusada") as typeof pedido.status,
       respondido_em: new Date().toISOString(),
-    });
-
+    };
     // Aceita: transfere para quem respondeu. Recusa: volta sem responsável,
     // pra não ficar "esquecido" com quem já pediu pra se livrar da tarefa.
     const novoResponsavel = aceitar ? pedido.paraUserName : "";
-    if (pedido.tipo === "processo") await processosRepo.update(tid, pedido.itemId, { responsavel: novoResponsavel });
-    else await iniciaisRepo.update(tid, pedido.itemId, { responsavel: novoResponsavel });
+
+    // No modo banco, gravar a resposta da redesignação e atualizar o responsável do
+    // processo/inicial viram uma única transação — nunca fica uma respondida sem o outro lado atualizado.
+    if (hasDb()) {
+      const sql = getSql()!;
+      const statements = [redesignacoesRepo.buildUpdateStatement(tid, redesignacaoMerged)];
+      if (pedido.tipo === "processo") {
+        const item = await processosRepo.get(tid, pedido.itemId);
+        if (item) statements.push(processosRepo.buildUpdateStatement(tid, { ...item, responsavel: novoResponsavel }));
+      } else {
+        const item = await iniciaisRepo.get(tid, pedido.itemId);
+        if (item) statements.push(iniciaisRepo.buildUpdateStatement(tid, { ...item, responsavel: novoResponsavel }));
+      }
+      await sql.transaction(statements);
+    } else {
+      await redesignacoesRepo.update(tid, redesignacaoId, {
+        status: redesignacaoMerged.status,
+        respondido_em: redesignacaoMerged.respondido_em,
+      });
+      if (pedido.tipo === "processo") await processosRepo.update(tid, pedido.itemId, { responsavel: novoResponsavel });
+      else await iniciaisRepo.update(tid, pedido.itemId, { responsavel: novoResponsavel });
+    }
 
     const msg = aceitar
       ? `${userName} aceitou a redesignação de "${pedido.label}" solicitada por ${pedido.deUserName}.`

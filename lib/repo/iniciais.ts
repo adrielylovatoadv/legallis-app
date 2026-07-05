@@ -51,6 +51,20 @@ export async function create(tenantId: string, input: Omit<Inicial, "id" | "cria
   return row;
 }
 
+// Constrói (sem executar) o UPDATE — usado por update() e por rotas que precisam agrupar
+// essa escrita com a de outra entidade numa única transação (ex.: iniciais/protocolo, que
+// marca a inicial como protocolada e cria o processo correspondente ao mesmo tempo).
+export function buildUpdateStatement(tenantId: string, merged: Inicial) {
+  const sql = getSql()!;
+  return sql`
+    UPDATE iniciais SET cliente = ${merged.cliente}, reu = ${merged.reu}, objeto = ${merged.objeto},
+      andamento = ${merged.andamento}, responsavel = ${merged.responsavel}, observacoes = ${merged.observacoes},
+      data = ${merged.data ?? null}, hora = ${merged.hora ?? null}, numero_processo = ${merged.numero_processo ?? null},
+      protocolo = ${merged.protocolo ? JSON.stringify(merged.protocolo) : null}
+    WHERE tenant_id = ${tenantId} AND id = ${merged.id}
+  `;
+}
+
 export async function update(tenantId: string, id: string, patch: Partial<Inicial>): Promise<Inicial | null> {
   if (!hasDb()) {
     const data = await getDataAsync(tenantId);
@@ -63,14 +77,7 @@ export async function update(tenantId: string, id: string, patch: Partial<Inicia
   const current = await get(tenantId, id);
   if (!current) return null;
   const merged = { ...current, ...patch };
-  const sql = getSql()!;
-  await sql`
-    UPDATE iniciais SET cliente = ${merged.cliente}, reu = ${merged.reu}, objeto = ${merged.objeto},
-      andamento = ${merged.andamento}, responsavel = ${merged.responsavel}, observacoes = ${merged.observacoes},
-      data = ${merged.data ?? null}, hora = ${merged.hora ?? null}, numero_processo = ${merged.numero_processo ?? null},
-      protocolo = ${merged.protocolo ? JSON.stringify(merged.protocolo) : null}
-    WHERE tenant_id = ${tenantId} AND id = ${id}
-  `;
+  await buildUpdateStatement(tenantId, merged);
   return merged;
 }
 

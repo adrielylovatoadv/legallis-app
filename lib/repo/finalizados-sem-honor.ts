@@ -27,6 +27,24 @@ export async function get(tenantId: string, id: string): Promise<FinalizadoSemHo
   return rows[0] ? rowToFinalizado(rows[0]) : null;
 }
 
+// Constrói (sem executar) o INSERT — usado por create() e por rotas que precisam agrupar
+// essa escrita com a de outra entidade numa única transação (ex.: processos/[id] PUT,
+// que finaliza um processo e insere em finalizados_sem_honor ao mesmo tempo).
+export function buildCreateStatement(tenantId: string, row: FinalizadoSemHonor) {
+  const sql = getSql()!;
+  return sql`
+    INSERT INTO finalizados_sem_honor (tenant_id, id, cliente, reu, processo, objeto, data_fin, motivo)
+    VALUES (${tenantId}, ${row.id}, ${row.cliente}, ${row.reu}, ${row.processo}, ${row.objeto}, ${row.data_fin}, ${row.motivo})
+  `;
+}
+
+// Constrói (sem executar) o DELETE — usado por remove() e por finalizados/reabrir/route.ts,
+// que remove o finalizado e reabre o processo correspondente numa única transação.
+export function buildRemoveStatement(tenantId: string, id: string) {
+  const sql = getSql()!;
+  return sql`DELETE FROM finalizados_sem_honor WHERE tenant_id = ${tenantId} AND id = ${id} RETURNING id`;
+}
+
 export async function create(tenantId: string, input: Omit<FinalizadoSemHonor, "id">): Promise<FinalizadoSemHonor> {
   const row: FinalizadoSemHonor = { ...input, id: newId() };
   if (!hasDb()) {
@@ -35,11 +53,7 @@ export async function create(tenantId: string, input: Omit<FinalizadoSemHonor, "
     await saveDataAsync(data, tenantId);
     return row;
   }
-  const sql = getSql()!;
-  await sql`
-    INSERT INTO finalizados_sem_honor (tenant_id, id, cliente, reu, processo, objeto, data_fin, motivo)
-    VALUES (${tenantId}, ${row.id}, ${row.cliente}, ${row.reu}, ${row.processo}, ${row.objeto}, ${row.data_fin}, ${row.motivo})
-  `;
+  await buildCreateStatement(tenantId, row);
   return row;
 }
 
@@ -90,7 +104,6 @@ export async function remove(tenantId: string, id: string): Promise<boolean> {
     await saveDataAsync(data, tenantId);
     return (data.finalizados_externos_sem_honor?.length ?? 0) < before;
   }
-  const sql = getSql()!;
-  const rows = await sql`DELETE FROM finalizados_sem_honor WHERE tenant_id = ${tenantId} AND id = ${id} RETURNING id` as unknown[];
+  const rows = await buildRemoveStatement(tenantId, id) as unknown[];
   return rows.length > 0;
 }
