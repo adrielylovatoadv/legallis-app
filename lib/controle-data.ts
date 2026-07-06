@@ -192,7 +192,7 @@ export function newId() {
 export function isFinalizado(p: Processo): boolean {
   if (p.finalizado) return true;
   const a = (p.andamento || "").toUpperCase();
-  return a === "ACORDO" || a === "ARQUIVADO" || a === "DESISTÊNCIA" || a === "DESISTENCIA";
+  return a === "ACORDO" || a === "ARQUIVADO" || a === "DESISTÊNCIA" || a === "DESISTENCIA" || a === "IMPROCEDENTE";
 }
 
 export function normNome(s: string): string {

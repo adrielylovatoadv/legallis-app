@@ -207,7 +207,7 @@ export default function DesignacoesPage() {
   const isFinalizado = (p: Processo) => {
     if (p.finalizado) return true;
     const a = (p.andamento || "").toUpperCase();
-    return a === "ACORDO" || a === "ARQUIVADO" || a.startsWith("DESISTÊN") || a.startsWith("DESISTEN");
+    return a === "ACORDO" || a === "ARQUIVADO" || a.startsWith("DESISTÊN") || a.startsWith("DESISTEN") || a === "IMPROCEDENTE";
   };
 
   const meusProcessos = processos.filter(p => {

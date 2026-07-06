@@ -210,7 +210,7 @@ export function ProcessosTab() {
   const isFin = (p: Processo) => {
     if (p.finalizado) return true;
     const a = (p.andamento || "").toUpperCase();
-    return a === "ACORDO" || a === "ARQUIVADO" || a === "DESISTÊNCIA" || a === "DESISTENCIA";
+    return a === "ACORDO" || a === "ARQUIVADO" || a === "DESISTÊNCIA" || a === "DESISTENCIA" || a === "IMPROCEDENTE";
   };
   const isSuspenso = (p: Processo) => (p.andamento || "").toUpperCase() === "SUSPENSO";
   const isProcedente = (p: Processo) => (p.andamento || "").toUpperCase() === "PROCEDENTE";
