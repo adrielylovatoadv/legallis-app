@@ -14,6 +14,7 @@ export const processoCreateSchema = z.object({
   finalizado: z.boolean().default(false),
   vara: z.string().trim().optional(),
   tribunal: z.string().trim().optional(),
+  prazo_fatal: z.string().trim().optional(),
 });
 export const processoUpdateSchema = processoCreateSchema.partial();
 

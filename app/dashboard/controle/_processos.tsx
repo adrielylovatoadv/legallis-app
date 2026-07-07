@@ -20,8 +20,8 @@ function ProcessoForm({ initial, onSave, onCancel, responsaveis = [] }: {
   onCancel: () => void;
   responsaveis?: string[];
 }) {
-  const blank = { autor:"",reu:"",objeto:"",numero_processo:"",data:"",hora:"",andamento:"",responsavel:"",observacoes:"",atencao:false,finalizado:false };
-  const [form, setForm] = useState({ ...blank, ...(initial || {}), data: normalizeData(initial?.data || "") });
+  const blank = { autor:"",reu:"",objeto:"",numero_processo:"",data:"",hora:"",andamento:"",responsavel:"",observacoes:"",atencao:false,finalizado:false,prazo_fatal:"" };
+  const [form, setForm] = useState({ ...blank, ...(initial || {}), data: normalizeData(initial?.data || ""), prazo_fatal: normalizeData(initial?.prazo_fatal || "") });
   const [saving, setSaving] = useState(false);
   const [erroAutor, setErroAutor] = useState(false);
   const set = (k: string, v: string | boolean) => {
@@ -54,6 +54,10 @@ function ProcessoForm({ initial, onSave, onCancel, responsaveis = [] }: {
         <div><Lbl>Nº Processo</Lbl><Inp value={form.numero_processo} onChange={e => set("numero_processo",e.target.value)} /></div>
         <DateField label="Data" value={form.data} onChange={v => set("data", v)} />
         <div><Lbl>Hora</Lbl><Inp value={form.hora} placeholder="HH:MM" onChange={e => set("hora",e.target.value)} /></div>
+        <div>
+          <DateField label="⛔ Prazo fatal" value={form.prazo_fatal} onChange={v => set("prazo_fatal", v)} />
+          <p className="text-xs mt-1" style={{ color:"var(--text3)" }}>Prazo processual que não pode ser perdido — separado da data de acompanhamento acima.</p>
+        </div>
         <div>
           <Lbl>Andamento</Lbl>
           <Sel value={form.andamento} onChange={e => set("andamento",e.target.value)} style={{ width:"100%" }}>
@@ -120,6 +124,8 @@ function ProcessoRow({ p, onEdit, onDelete, onOk }: {
   const d = normalizeData(p.data);
   const diasAte = d ? Math.floor((new Date(d).getTime() - new Date(hoje).getTime()) / 86400000) : null;
   const alertaCor = diasAte !== null ? (diasAte <= 0 ? "#ef4444" : diasAte <= 3 ? "#f97316" : undefined) : undefined;
+  const dFatal = normalizeData(p.prazo_fatal || "");
+  const diasAteFatal = dFatal ? Math.floor((new Date(dFatal).getTime() - new Date(hoje).getTime()) / 86400000) : null;
 
   return (
     <tr style={{ borderBottom: "1px solid var(--border)" }}
@@ -132,6 +138,15 @@ function ProcessoRow({ p, onEdit, onDelete, onOk }: {
         {p.responsavel && <div className="text-xs" style={{ color:"var(--text3)" }}>{p.responsavel}</div>}
         {p.numero_processo && (
           <div className="text-xs font-mono whitespace-nowrap" style={{ color:"var(--text3)" }}>{p.numero_processo}</div>
+        )}
+        {dFatal && (
+          <div className="text-xs font-semibold whitespace-nowrap"
+            style={{ color: diasAteFatal !== null && diasAteFatal <= 3 ? "#ef4444" : "#f97316" }}>
+            ⛔ Prazo fatal: {fmtData(p.prazo_fatal || "")}
+            {diasAteFatal !== null && (diasAteFatal < 0
+              ? ` (vencido há ${Math.abs(diasAteFatal)}d)`
+              : diasAteFatal === 0 ? " (hoje!)" : ` (faltam ${diasAteFatal}d)`)}
+          </div>
         )}
       </td>
       <td className="py-2 pr-3 text-sm" style={{ color:"var(--text2)", minWidth: 80 }}>{p.reu}</td>
@@ -229,6 +244,11 @@ export function ProcessosTab() {
     if (filtroResp !== "Todos") r = r.filter(p => (p.responsavel||"") === filtroResp);
     if (soAtencao) r = r.filter(p => p.atencao);
     return r.sort((a, b) => {
+      const fa = normalizeData(a.prazo_fatal || "");
+      const fb = normalizeData(b.prazo_fatal || "");
+      if (fa && fb) return fa.localeCompare(fb);
+      if (fa && !fb) return -1;
+      if (!fa && fb) return 1;
       if (a.atencao && !b.atencao) return -1;
       if (!a.atencao && b.atencao) return 1;
       return (normalizeData(a.data) || "9999").localeCompare(normalizeData(b.data) || "9999");
@@ -358,8 +378,8 @@ export function ProcessosTab() {
   };
 
   const exportCSV = (lista: Processo[]) => {
-    const headers = ["Autor","Réu","Objeto","Processo","Data","Hora","Andamento","Responsável","Observações"];
-    const rows = lista.map(p => [p.autor,p.reu,p.objeto,p.numero_processo,p.data,p.hora,p.andamento,p.responsavel,p.observacoes].map(v => `"${(v||"").replace(/"/g,'""')}"`));
+    const headers = ["Autor","Réu","Objeto","Processo","Data","Hora","Prazo Fatal","Andamento","Responsável","Observações"];
+    const rows = lista.map(p => [p.autor,p.reu,p.objeto,p.numero_processo,p.data,p.hora,p.prazo_fatal||"",p.andamento,p.responsavel,p.observacoes].map(v => `"${(v||"").replace(/"/g,'""')}"`));
     const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob(["﻿"+csv], { type:"text/csv;charset=utf-8" }));

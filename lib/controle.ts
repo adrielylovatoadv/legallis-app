@@ -33,7 +33,7 @@ export interface Processo {
   numero_processo: string; data: string; hora: string;
   andamento: string; responsavel: string; observacoes: string;
   atencao: boolean; finalizado: boolean; criado_em: string;
-  vara?: string; tribunal?: string;
+  vara?: string; tribunal?: string; prazo_fatal?: string;
 }
 
 export interface Cliente {

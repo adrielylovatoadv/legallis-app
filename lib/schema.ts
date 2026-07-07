@@ -35,6 +35,7 @@ export async function initSchema(sql: Sql): Promise<void> {
     )
   `;
   await sql`ALTER TABLE processos ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'`;
+  await sql`ALTER TABLE processos ADD COLUMN IF NOT EXISTS prazo_fatal TEXT`;
   await sql`CREATE INDEX IF NOT EXISTS idx_processos_tenant ON processos (tenant_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_processos_numero ON processos (tenant_id, numero_processo)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_processos_finalizado ON processos (tenant_id, finalizado)`;

@@ -19,6 +19,7 @@ function rowToProcesso(r: Record<string, unknown>): Processo {
     dashboard_ok: r.dashboard_ok != null ? !!r.dashboard_ok : undefined,
     vara: (r.vara as string) ?? undefined,
     tribunal: (r.tribunal as string) ?? undefined,
+    prazo_fatal: (r.prazo_fatal as string) ?? undefined,
   };
 }
 
@@ -43,10 +44,10 @@ export function buildCreateStatement(tenantId: string, row: Processo) {
   const sql = getSql()!;
   return sql`
     INSERT INTO processos (tenant_id, id, autor, reu, objeto, numero_processo, data, hora, andamento,
-                            responsavel, observacoes, atencao, finalizado, dashboard_ok, vara, tribunal, criado_em)
+                            responsavel, observacoes, atencao, finalizado, dashboard_ok, vara, tribunal, prazo_fatal, criado_em)
     VALUES (${tenantId}, ${row.id}, ${row.autor}, ${row.reu}, ${row.objeto}, ${row.numero_processo}, ${row.data},
             ${row.hora}, ${row.andamento}, ${row.responsavel}, ${row.observacoes}, ${row.atencao}, ${row.finalizado},
-            ${row.dashboard_ok ?? null}, ${row.vara ?? null}, ${row.tribunal ?? null}, ${row.criado_em})
+            ${row.dashboard_ok ?? null}, ${row.vara ?? null}, ${row.tribunal ?? null}, ${row.prazo_fatal ?? null}, ${row.criado_em})
   `;
 }
 
@@ -72,7 +73,7 @@ export function buildUpdateStatement(tenantId: string, merged: Processo) {
       numero_processo = ${merged.numero_processo}, data = ${merged.data}, hora = ${merged.hora},
       andamento = ${merged.andamento}, responsavel = ${merged.responsavel}, observacoes = ${merged.observacoes},
       atencao = ${merged.atencao}, finalizado = ${merged.finalizado}, dashboard_ok = ${merged.dashboard_ok ?? null},
-      vara = ${merged.vara ?? null}, tribunal = ${merged.tribunal ?? null}
+      vara = ${merged.vara ?? null}, tribunal = ${merged.tribunal ?? null}, prazo_fatal = ${merged.prazo_fatal ?? null}
     WHERE tenant_id = ${tenantId} AND id = ${merged.id}
   `;
 }
@@ -113,15 +114,15 @@ export function buildUpsertManyStatements(tenantId: string, rows: Processo[]) {
   const sql = getSql()!;
   return rows.map(row => sql`
     INSERT INTO processos (tenant_id, id, autor, reu, objeto, numero_processo, data, hora, andamento,
-                            responsavel, observacoes, atencao, finalizado, dashboard_ok, vara, tribunal, criado_em)
+                            responsavel, observacoes, atencao, finalizado, dashboard_ok, vara, tribunal, prazo_fatal, criado_em)
     VALUES (${tenantId}, ${row.id}, ${row.autor}, ${row.reu}, ${row.objeto}, ${row.numero_processo}, ${row.data},
             ${row.hora}, ${row.andamento}, ${row.responsavel}, ${row.observacoes}, ${row.atencao}, ${row.finalizado},
-            ${row.dashboard_ok ?? null}, ${row.vara ?? null}, ${row.tribunal ?? null}, ${row.criado_em})
+            ${row.dashboard_ok ?? null}, ${row.vara ?? null}, ${row.tribunal ?? null}, ${row.prazo_fatal ?? null}, ${row.criado_em})
     ON CONFLICT (tenant_id, id) DO UPDATE SET autor = EXCLUDED.autor, reu = EXCLUDED.reu, objeto = EXCLUDED.objeto,
       numero_processo = EXCLUDED.numero_processo, data = EXCLUDED.data, hora = EXCLUDED.hora,
       andamento = EXCLUDED.andamento, responsavel = EXCLUDED.responsavel, observacoes = EXCLUDED.observacoes,
       atencao = EXCLUDED.atencao, finalizado = EXCLUDED.finalizado, dashboard_ok = EXCLUDED.dashboard_ok,
-      vara = EXCLUDED.vara, tribunal = EXCLUDED.tribunal
+      vara = EXCLUDED.vara, tribunal = EXCLUDED.tribunal, prazo_fatal = EXCLUDED.prazo_fatal
   `);
 }
 
