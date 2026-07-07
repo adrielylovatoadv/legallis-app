@@ -14,6 +14,7 @@
     "@neondatabase/serverless": "^1.1.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/uuid": "^10.0.0",
+    "@vercel/blob": "^2.6.0",
     "bcryptjs": "^3.0.3",
     "docx": "^9.7.1",
     "jspdf": "^4.2.1",

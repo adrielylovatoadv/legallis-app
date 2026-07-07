@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { put } from "@vercel/blob";
 import { auth } from "@/auth";
 import { updateUserAsync } from "@/lib/users";
-import { writeFileSync, mkdirSync } from "fs";
-import { join } from "path";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 const MAX_SIZE = 2 * 1024 * 1024; // 2MB
@@ -28,19 +27,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const ext = file.type.split("/")[1].replace("jpeg", "jpg");
-  const filename = `${id}.${ext}`;
-  const avatarsDir = join(process.cwd(), "public", "avatars");
-  const filePath = join(avatarsDir, filename);
+  // Path prefixado por tenant: isola arquivos entre escritórios diferentes no mesmo Blob store.
+  const pathname = `avatars/${session.user.tenantId}/${id}.${ext}`;
 
+  let avatarUrl: string;
   try {
-    mkdirSync(avatarsDir, { recursive: true });
-    const buffer = Buffer.from(await file.arrayBuffer());
-    writeFileSync(filePath, buffer);
+    const blob = await put(pathname, file, { access: "public", addRandomSuffix: false, allowOverwrite: true });
+    avatarUrl = blob.url;
   } catch {
     return NextResponse.json({ error: "Erro ao salvar arquivo." }, { status: 500 });
   }
 
-  const avatarUrl = `/avatars/${filename}`;
   await updateUserAsync(id, { avatar: avatarUrl });
 
   return NextResponse.json({ avatarUrl });
