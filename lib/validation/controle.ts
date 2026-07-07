@@ -57,3 +57,14 @@ export const inicialCreateSchema = z.object({
   hora: z.string().trim().default(""),
 });
 export const inicialUpdateSchema = inicialCreateSchema.partial();
+
+export const tarefaCreateSchema = z.object({
+  titulo: z.string().trim().min(1, "Título é obrigatório"),
+  descricao: z.string().trim().default(""),
+  status: z.enum(["a_fazer", "fazendo", "concluido"]).default("a_fazer"),
+  responsavel: z.string().trim().default(""),
+  prazo: z.string().trim().optional(),
+  processo_id: z.string().trim().optional(),
+  processo_titulo: z.string().trim().optional(),
+});
+export const tarefaUpdateSchema = tarefaCreateSchema.partial();

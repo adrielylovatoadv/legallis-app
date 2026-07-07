@@ -50,6 +50,14 @@ export interface FinalizadoExecucao {
   honorarios: number; repasse_cliente: number; status: string; observacoes?: string;
 }
 
+export type StatusTarefa = "a_fazer" | "fazendo" | "concluido";
+
+export interface Tarefa {
+  id: string; titulo: string; descricao: string; status: StatusTarefa;
+  responsavel: string; criado_em: string;
+  prazo?: string; processo_id?: string; processo_titulo?: string;
+}
+
 export type StatusRedesignacao = "pendente" | "aceita" | "recusada";
 
 export interface Redesignacao {
@@ -75,6 +83,7 @@ export interface ControleData {
   finalizados_externos_acordos: FinalizadoAcordo[];
   finalizados_execucao: FinalizadoExecucao[];
   redesignacoes: Redesignacao[];
+  tarefas: Tarefa[];
 }
 
 function parseRaw(d: Partial<ControleData>): ControleData {
@@ -107,11 +116,15 @@ function parseRaw(d: Partial<ControleData>): ControleData {
     finalizados_externos_acordos: d.finalizados_externos_acordos || [],
     finalizados_execucao: (d as ControleData).finalizados_execucao || [],
     redesignacoes: (d as ControleData).redesignacoes || [],
+    tarefas: ((d as ControleData).tarefas || []).map(t => ({
+      ...{ descricao: "", status: "a_fazer" as const, responsavel: "" },
+      ...t,
+    })),
   };
 }
 
 function emptyData(): ControleData {
-  return { processos: [], clientes: [], iniciais: [], finalizados_externos_sem_honor: [], finalizados_externos_acordos: [], finalizados_execucao: [], redesignacoes: [] };
+  return { processos: [], clientes: [], iniciais: [], finalizados_externos_sem_honor: [], finalizados_externos_acordos: [], finalizados_execucao: [], redesignacoes: [], tarefas: [] };
 }
 
 // Legado: tenant "t_1" é o dono original dos dados no arquivo sem sufixo (pré multi-tenant).

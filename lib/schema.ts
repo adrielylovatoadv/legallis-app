@@ -41,6 +41,19 @@ export async function initSchema(sql: Sql): Promise<void> {
   await sql`CREATE INDEX IF NOT EXISTS idx_processos_finalizado ON processos (tenant_id, finalizado)`;
 
   await sql`
+    CREATE TABLE IF NOT EXISTS tarefas (
+      tenant_id TEXT NOT NULL, id TEXT NOT NULL,
+      titulo TEXT NOT NULL DEFAULT '', descricao TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'a_fazer', responsavel TEXT NOT NULL DEFAULT '',
+      prazo TEXT, processo_id TEXT, processo_titulo TEXT,
+      criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (tenant_id, id)
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS idx_tarefas_tenant ON tarefas (tenant_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_tarefas_status ON tarefas (tenant_id, status)`;
+
+  await sql`
     CREATE TABLE IF NOT EXISTS clientes (
       tenant_id TEXT NOT NULL, id TEXT NOT NULL,
       nome TEXT NOT NULL DEFAULT '', telefone TEXT NOT NULL DEFAULT '', cpf TEXT NOT NULL DEFAULT '',

@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
     finalizados_externos_acordos: body.finalizados_externos_acordos || [],
     finalizados_execucao: body.finalizados_execucao || [],
     redesignacoes: body.redesignacoes || [],
+    tarefas: body.tarefas || [],
   };
 
   await saveDataAsync(safeData, tid);
