@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import {
   getTarefas, createTarefa, updateTarefa, deleteTarefa, COLUNAS,
   type Tarefa, type StatusTarefa,
 } from "@/lib/tarefas";
-import { getProcessos, normalizeData, fmtData, type Processo } from "@/lib/controle";
+import { getProcessos, normalizeData, fmtData, normText, type Processo } from "@/lib/controle";
 import { Input as Inp, Select as Sel, FieldLabel as Lbl, Dialog } from "@/components/ui";
 import { DateField } from "@/components/ui/DateField";
 
@@ -72,16 +72,12 @@ function TarefaForm({ initial, onSave, onCancel, onDelete, responsaveis, process
         <DateField label="Prazo" value={form.prazo} onChange={v => set("prazo", v)} />
         <div>
           <Lbl>Processo vinculado</Lbl>
-          <Sel value={form.processo_id} onChange={e => {
-            const p = processos.find(p => p.id === e.target.value);
-            set("processo_id", e.target.value);
-            set("processo_titulo", p ? `${p.autor}${p.reu ? " x " + p.reu : ""}` : "");
-          }}>
-            <option value="">— nenhum —</option>
-            {processos.map(p => (
-              <option key={p.id} value={p.id}>{p.autor}{p.numero_processo ? ` — ${p.numero_processo}` : ""}</option>
-            ))}
-          </Sel>
+          <ProcessoPicker
+            processos={processos}
+            processoId={form.processo_id}
+            processoTitulo={form.processo_titulo}
+            onSelect={(id, titulo) => { set("processo_id", id); set("processo_titulo", titulo); }}
+          />
         </div>
       </div>
       <div className="flex gap-3 pt-2">
@@ -101,6 +97,78 @@ function TarefaForm({ initial, onSave, onCancel, onDelete, responsaveis, process
           </button>
         )}
       </div>
+    </div>
+  );
+}
+
+function ProcessoPicker({ processos, processoId, processoTitulo, onSelect }: {
+  processos: Processo[];
+  processoId: string;
+  processoTitulo: string;
+  onSelect: (id: string, titulo: string) => void;
+}) {
+  const displayFor = (p: Processo) => `${p.autor}${p.numero_processo ? ` — ${p.numero_processo}` : ""}`;
+  const selected = processoId ? processos.find(p => p.id === processoId) : undefined;
+  const [query, setQuery] = useState(selected ? displayFor(selected) : (processoTitulo || ""));
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = normText(query.trim());
+    if (!q) return processos.slice(0, 8);
+    return processos.filter(p =>
+      normText(p.autor || "").includes(q) || normText(p.numero_processo || "").includes(q)
+    ).slice(0, 8);
+  }, [query, processos]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <Inp
+        value={query}
+        placeholder="Buscar por autor ou nº do processo..."
+        onFocus={() => setOpen(true)}
+        onChange={e => {
+          setQuery(e.target.value);
+          setOpen(true);
+          if (processoId) onSelect("", "");
+        }}
+      />
+      {processoId && (
+        <button type="button" title="Remover vínculo"
+          onClick={() => { onSelect("", ""); setQuery(""); }}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-xs"
+          style={{ color: "var(--text3)" }}>✕</button>
+      )}
+      {open && (
+        <div className="absolute z-10 mt-1 w-full rounded-lg max-h-56 overflow-y-auto shadow-lg"
+          style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+          {filtered.length === 0 ? (
+            <p className="px-3 py-2 text-xs" style={{ color: "var(--text3)" }}>Nenhum processo encontrado</p>
+          ) : filtered.map(p => (
+            <button key={p.id} type="button"
+              onClick={() => {
+                onSelect(p.id, `${p.autor}${p.reu ? " x " + p.reu : ""}`);
+                setQuery(displayFor(p));
+                setOpen(false);
+              }}
+              className="w-full text-left px-3 py-2 text-sm transition-colors"
+              style={{ color: "var(--text)" }}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--surface)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+              <div>{p.autor}{p.reu ? ` x ${p.reu}` : ""}</div>
+              {p.numero_processo && <div className="text-xs" style={{ color: "var(--text3)" }}>{p.numero_processo}</div>}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
