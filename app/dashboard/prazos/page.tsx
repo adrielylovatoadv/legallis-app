@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { calcularPrazo, isDiaUtil, UFS, UF_LABEL, type UF, type ResultadoPrazo } from "@/lib/prazos";
-import { fmtData } from "@/lib/controle";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import {
+  calcularPrazo, isDiaUtil, UFS, UF_LABEL, type UF, type ResultadoPrazo,
+  getFeriadosMunicipais, createFeriadoMunicipal, deleteFeriadoMunicipal, type FeriadoMunicipalDTO,
+} from "@/lib/prazos";
+import { fmtData, normText } from "@/lib/controle";
 import { Input as Inp, Select as Sel, FieldLabel as Lbl, Card } from "@/components/ui";
 import { DateField } from "@/components/ui/DateField";
 
@@ -11,20 +14,68 @@ export default function PrazosPage() {
   const [dataPublicacao, setDataPublicacao] = useState(today);
   const [dias, setDias] = useState("15");
   const [uf, setUf] = useState<UF | "">("");
+  const [municipio, setMunicipio] = useState("");
+  const [tipoProcesso, setTipoProcesso] = useState<"eletronico" | "fisico">("eletronico");
   const [tipoContagem, setTipoContagem] = useState<"uteis" | "corridos">("uteis");
   const [considerarRecesso, setConsiderarRecesso] = useState(true);
   const [resultado, setResultado] = useState<ResultadoPrazo | null>(null);
   const [erro, setErro] = useState("");
+
+  const [feriados, setFeriados] = useState<FeriadoMunicipalDTO[]>([]);
+  const [mostrarGestao, setMostrarGestao] = useState(false);
+  const [novoFeriado, setNovoFeriado] = useState({ municipio: "", uf: "", data: "", nome: "" });
+  const [salvandoFeriado, setSalvandoFeriado] = useState(false);
+
+  const carregarFeriados = useCallback(() => {
+    getFeriadosMunicipais().then(setFeriados).catch(() => {});
+  }, []);
+  useEffect(() => { carregarFeriados(); }, [carregarFeriados]);
+
+  // Feriados municipais que batem com o UF + município preenchidos no formulário de cálculo.
+  const feriadosAplicaveis = useMemo(() => {
+    if (!uf || !municipio.trim()) return [];
+    const m = normText(municipio);
+    return feriados
+      .filter(f => f.uf === uf && normText(f.municipio) === m)
+      .map(f => ({ mes: f.mes, dia: f.dia, nome: f.nome }));
+  }, [feriados, uf, municipio]);
 
   const calcular = () => {
     const n = parseInt(dias, 10);
     if (!dataPublicacao) { setErro("Informe a data de publicação/intimação."); setResultado(null); return; }
     if (!n || n <= 0) { setErro("Informe uma quantidade de dias válida."); setResultado(null); return; }
     setErro("");
-    setResultado(calcularPrazo({ dataPublicacao, dias: n, uf, tipoContagem, considerarRecesso }));
+    setResultado(calcularPrazo({
+      dataPublicacao, dias: n, uf, tipoContagem, considerarRecesso,
+      feriadosExtras: feriadosAplicaveis,
+    }));
   };
 
-  const publicacaoEhUtil = dataPublicacao ? isDiaUtil(dataPublicacao, uf, considerarRecesso) : true;
+  const publicacaoEhUtil = dataPublicacao ? isDiaUtil(dataPublicacao, uf, considerarRecesso, feriadosAplicaveis) : true;
+
+  const salvarFeriado = async () => {
+    if (!novoFeriado.municipio.trim() || !novoFeriado.uf || !novoFeriado.data || !novoFeriado.nome.trim()) return;
+    const [, mesStr, diaStr] = novoFeriado.data.split("-");
+    setSalvandoFeriado(true);
+    try {
+      await createFeriadoMunicipal({
+        municipio: novoFeriado.municipio.trim(),
+        uf: novoFeriado.uf,
+        mes: parseInt(mesStr, 10),
+        dia: parseInt(diaStr, 10),
+        nome: novoFeriado.nome.trim(),
+      });
+      setNovoFeriado({ municipio: "", uf: "", data: "", nome: "" });
+      carregarFeriados();
+    } finally {
+      setSalvandoFeriado(false);
+    }
+  };
+
+  const removerFeriado = async (id: string) => {
+    await deleteFeriadoMunicipal(id);
+    carregarFeriados();
+  };
 
   return (
     <div className="p-8 space-y-5 max-w-3xl">
@@ -50,11 +101,22 @@ export default function PrazosPage() {
             </Sel>
           </div>
           <div>
+            <Lbl>Forma do processo</Lbl>
+            <Sel value={tipoProcesso} onChange={e => setTipoProcesso(e.target.value as "eletronico" | "fisico")}>
+              <option value="eletronico">Eletrônico (PJe, e-SAJ, etc.)</option>
+              <option value="fisico">Físico</option>
+            </Sel>
+          </div>
+          <div>
             <Lbl>Estado (feriados estaduais)</Lbl>
             <Sel value={uf} onChange={e => setUf(e.target.value as UF | "")}>
               <option value="">— apenas feriados nacionais —</option>
               {UFS.map(u => <option key={u} value={u}>{u} — {UF_LABEL[u]}</option>)}
             </Sel>
+          </div>
+          <div>
+            <Lbl>Município / comarca (opcional)</Lbl>
+            <Inp value={municipio} onChange={e => setMunicipio(e.target.value)} placeholder="Ex.: Belo Horizonte" />
           </div>
         </div>
 
@@ -62,6 +124,14 @@ export default function PrazosPage() {
           <input type="checkbox" checked={considerarRecesso} onChange={e => setConsiderarRecesso(e.target.checked)} className="accent-[var(--gold)]" />
           <span className="text-sm" style={{ color: "var(--text2)" }}>Considerar recesso forense (20/dez a 20/jan — art. 220, CPC)</span>
         </label>
+
+        {uf && municipio.trim() && (
+          <p className="text-xs mt-2" style={{ color: "var(--text3)" }}>
+            {feriadosAplicaveis.length > 0
+              ? `${feriadosAplicaveis.length} feriado(s) municipal(is) cadastrado(s) para ${municipio} (${uf}) serão considerados.`
+              : `Nenhum feriado municipal cadastrado para ${municipio} (${uf}) ainda — cadastre abaixo em "Feriados municipais".`}
+          </p>
+        )}
 
         {dataPublicacao && !publicacaoEhUtil && (
           <p className="text-xs mt-2" style={{ color: "var(--text3)" }}>
@@ -91,6 +161,12 @@ export default function PrazosPage() {
             </div>
           </div>
 
+          <p className="text-xs mt-3" style={{ color: "var(--text2)" }}>
+            {tipoProcesso === "eletronico"
+              ? "Processo eletrônico: a petição pode ser protocolada até as 23h59 do dia do vencimento (Lei 11.419/2006, art. 3º, parágrafo único)."
+              : "Processo físico: o protocolo precisa ser feito dentro do horário de expediente do fórum no dia do vencimento — confirme o horário local."}
+          </p>
+
           {resultado.diasPulados.length > 0 && (
             <div className="mt-4">
               <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "var(--text3)" }}>
@@ -109,11 +185,78 @@ export default function PrazosPage() {
           )}
 
           <p className="text-xs mt-4" style={{ color: "var(--text3)" }}>
-            Ferramenta de referência — considera feriados nacionais, o feriado estadual principal do estado selecionado
-            e o recesso forense. Não substitui a conferência do calendário forense do tribunal/comarca do processo.
+            Ferramenta de referência — considera feriados nacionais, o feriado estadual principal do estado selecionado,
+            o recesso forense e os feriados municipais que você cadastrar. Não substitui a conferência do calendário
+            forense oficial do tribunal/comarca do processo.
           </p>
         </Card>
       )}
+
+      <Card>
+        <button onClick={() => setMostrarGestao(v => !v)} className="w-full flex items-center justify-between">
+          <span className="text-sm font-semibold" style={{ color: "var(--text)" }}>
+            Feriados municipais cadastrados ({feriados.length})
+          </span>
+          <span className="text-xs" style={{ color: "var(--text3)" }}>{mostrarGestao ? "Ocultar ▲" : "Gerenciar ▼"}</span>
+        </button>
+
+        {mostrarGestao && (
+          <div className="mt-4 space-y-4">
+            <p className="text-xs" style={{ color: "var(--text3)" }}>
+              Cadastre aqui aniversário da comarca, padroeiro ou qualquer outro ponto facultativo local das comarcas
+              onde você atua — a data se repete todo ano automaticamente.
+            </p>
+
+            <div className="grid grid-cols-4 gap-3 items-end">
+              <div>
+                <Lbl>Município</Lbl>
+                <Inp value={novoFeriado.municipio} onChange={e => setNovoFeriado(p => ({ ...p, municipio: e.target.value }))} placeholder="Ex.: Belo Horizonte" />
+              </div>
+              <div>
+                <Lbl>UF</Lbl>
+                <Sel value={novoFeriado.uf} onChange={e => setNovoFeriado(p => ({ ...p, uf: e.target.value }))}>
+                  <option value="">—</option>
+                  {UFS.map(u => <option key={u} value={u}>{u}</option>)}
+                </Sel>
+              </div>
+              <div>
+                <Lbl>Data</Lbl>
+                <Inp type="date" value={novoFeriado.data} onChange={e => setNovoFeriado(p => ({ ...p, data: e.target.value }))} />
+              </div>
+              <div>
+                <Lbl>Nome do feriado</Lbl>
+                <Inp value={novoFeriado.nome} onChange={e => setNovoFeriado(p => ({ ...p, nome: e.target.value }))} placeholder="Ex.: Aniversário da comarca" />
+              </div>
+            </div>
+            <button onClick={salvarFeriado} disabled={salvandoFeriado}
+              className="px-4 py-2 rounded-lg text-sm font-semibold"
+              style={{ background: "var(--gold)", color: "#000" }}>
+              {salvandoFeriado ? "Salvando..." : "Adicionar feriado municipal"}
+            </button>
+
+            {feriados.length > 0 && (
+              <div className="rounded-lg" style={{ border: "1px solid var(--border)" }}>
+                {feriados.map((f, i) => (
+                  <div key={f.id} className="flex items-center justify-between px-3 py-2 text-sm"
+                    style={{ borderTop: i > 0 ? "1px solid var(--border)" : undefined }}>
+                    <div>
+                      <span style={{ color: "var(--text)" }}>{f.nome}</span>
+                      <span className="text-xs ml-2" style={{ color: "var(--text3)" }}>
+                        {String(f.dia).padStart(2, "0")}/{String(f.mes).padStart(2, "0")} — {f.municipio}/{f.uf}
+                      </span>
+                    </div>
+                    <button onClick={() => removerFeriado(f.id)} title="Remover"
+                      className="text-xs px-2 py-1 rounded"
+                      style={{ color: "#f87171" }}>
+                      Remover
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

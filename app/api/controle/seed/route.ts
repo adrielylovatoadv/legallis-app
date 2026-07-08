@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
     finalizados_execucao: body.finalizados_execucao || [],
     redesignacoes: body.redesignacoes || [],
     tarefas: body.tarefas || [],
+    feriados_municipais: body.feriados_municipais || [],
   };
 
   await saveDataAsync(safeData, tid);

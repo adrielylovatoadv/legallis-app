@@ -58,6 +58,11 @@ export interface Tarefa {
   prazo?: string; processo_id?: string; processo_titulo?: string;
 }
 
+export interface FeriadoMunicipal {
+  id: string; municipio: string; uf: string; mes: number; dia: number;
+  nome: string; criado_em: string;
+}
+
 export type StatusRedesignacao = "pendente" | "aceita" | "recusada";
 
 export interface Redesignacao {
@@ -84,6 +89,7 @@ export interface ControleData {
   finalizados_execucao: FinalizadoExecucao[];
   redesignacoes: Redesignacao[];
   tarefas: Tarefa[];
+  feriados_municipais: FeriadoMunicipal[];
 }
 
 function parseRaw(d: Partial<ControleData>): ControleData {
@@ -120,11 +126,12 @@ function parseRaw(d: Partial<ControleData>): ControleData {
       ...{ descricao: "", status: "a_fazer" as const, responsavel: "" },
       ...t,
     })),
+    feriados_municipais: (d as ControleData).feriados_municipais || [],
   };
 }
 
 function emptyData(): ControleData {
-  return { processos: [], clientes: [], iniciais: [], finalizados_externos_sem_honor: [], finalizados_externos_acordos: [], finalizados_execucao: [], redesignacoes: [], tarefas: [] };
+  return { processos: [], clientes: [], iniciais: [], finalizados_externos_sem_honor: [], finalizados_externos_acordos: [], finalizados_execucao: [], redesignacoes: [], tarefas: [], feriados_municipais: [] };
 }
 
 // Legado: tenant "t_1" é o dono original dos dados no arquivo sem sufixo (pré multi-tenant).

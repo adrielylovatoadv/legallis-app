@@ -68,3 +68,11 @@ export const tarefaCreateSchema = z.object({
   processo_titulo: z.string().trim().optional(),
 });
 export const tarefaUpdateSchema = tarefaCreateSchema.partial();
+
+export const feriadoMunicipalCreateSchema = z.object({
+  municipio: z.string().trim().min(1, "Município é obrigatório"),
+  uf: z.string().trim().min(2, "UF é obrigatória").max(2),
+  mes: z.number().int().min(1).max(12),
+  dia: z.number().int().min(1).max(31),
+  nome: z.string().trim().min(1, "Nome do feriado é obrigatório"),
+});

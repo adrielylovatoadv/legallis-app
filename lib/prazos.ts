@@ -105,7 +105,13 @@ export interface MotivoNaoUtil {
   motivo: string;
 }
 
-function motivoNaoUtil(iso: string, uf: UF | "", considerarRecesso: boolean): string | null {
+export interface FeriadoExtra {
+  mes: number;
+  dia: number;
+  nome: string;
+}
+
+function motivoNaoUtil(iso: string, uf: UF | "", considerarRecesso: boolean, feriadosExtras: FeriadoExtra[] = []): string | null {
   const dt = new Date(iso + "T00:00:00");
   const diaSemana = dt.getDay();
   if (diaSemana === 0) return "Domingo";
@@ -120,13 +126,16 @@ function motivoNaoUtil(iso: string, uf: UF | "", considerarRecesso: boolean): st
     if (fe && iso === toISO(ano, fe.mes, fe.dia)) return fe.nome;
   }
 
+  const extra = feriadosExtras.find(f => iso === toISO(ano, f.mes, f.dia));
+  if (extra) return extra.nome;
+
   if (considerarRecesso && emRecessoForense(iso)) return "Recesso forense (art. 220 do CPC)";
 
   return null;
 }
 
-export function isDiaUtil(iso: string, uf: UF | "", considerarRecesso: boolean): boolean {
-  return motivoNaoUtil(iso, uf, considerarRecesso) === null;
+export function isDiaUtil(iso: string, uf: UF | "", considerarRecesso: boolean, feriadosExtras: FeriadoExtra[] = []): boolean {
+  return motivoNaoUtil(iso, uf, considerarRecesso, feriadosExtras) === null;
 }
 
 function proximaData(iso: string, delta: number): string {
@@ -147,14 +156,15 @@ export function calcularPrazo(params: {
   uf: UF | "";
   tipoContagem: "uteis" | "corridos";
   considerarRecesso: boolean;
+  feriadosExtras?: FeriadoExtra[];
 }): ResultadoPrazo {
-  const { dataPublicacao, dias, uf, tipoContagem, considerarRecesso } = params;
+  const { dataPublicacao, dias, uf, tipoContagem, considerarRecesso, feriadosExtras = [] } = params;
   const diasPulados: MotivoNaoUtil[] = [];
 
   // Início da contagem: primeiro dia útil estritamente após a publicação/intimação.
   let inicio = proximaData(dataPublicacao, 1);
   while (true) {
-    const motivo = motivoNaoUtil(inicio, uf, considerarRecesso);
+    const motivo = motivoNaoUtil(inicio, uf, considerarRecesso, feriadosExtras);
     if (!motivo) break;
     diasPulados.push({ data: inicio, motivo });
     inicio = proximaData(inicio, 1);
@@ -166,7 +176,7 @@ export function calcularPrazo(params: {
     let contados = 1; // o próprio dia de início já é o 1º dia útil do prazo
     while (contados < dias) {
       atual = proximaData(atual, 1);
-      const motivo = motivoNaoUtil(atual, uf, considerarRecesso);
+      const motivo = motivoNaoUtil(atual, uf, considerarRecesso, feriadosExtras);
       if (motivo) { diasPulados.push({ data: atual, motivo }); continue; }
       contados++;
     }
@@ -175,7 +185,7 @@ export function calcularPrazo(params: {
     dataFinal = proximaData(inicio, dias - 1);
     // Se o vencimento cair em dia não útil, prorroga-se para o próximo dia útil (art. 224, §1º, CPC).
     while (true) {
-      const motivo = motivoNaoUtil(dataFinal, uf, considerarRecesso);
+      const motivo = motivoNaoUtil(dataFinal, uf, considerarRecesso, feriadosExtras);
       if (!motivo) break;
       diasPulados.push({ data: dataFinal, motivo });
       dataFinal = proximaData(dataFinal, 1);
@@ -184,3 +194,30 @@ export function calcularPrazo(params: {
 
   return { dataInicio: inicio, dataFinal, diasPulados };
 }
+
+// ── feriados municipais cadastrados manualmente (persistidos por escritório) ──
+
+export interface FeriadoMunicipalDTO {
+  id: string; municipio: string; uf: string; mes: number; dia: number; nome: string; criado_em: string;
+}
+
+async function fetchAPI(path: string, options?: RequestInit) {
+  const res = await fetch(`/api${path}`, options);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || "Erro na API");
+  }
+  return res.json();
+}
+
+export const getFeriadosMunicipais = () => fetchAPI("/prazos/feriados") as Promise<FeriadoMunicipalDTO[]>;
+
+export const createFeriadoMunicipal = (f: { municipio: string; uf: string; mes: number; dia: number; nome: string }) =>
+  fetchAPI("/prazos/feriados", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(f),
+  }) as Promise<FeriadoMunicipalDTO>;
+
+export const deleteFeriadoMunicipal = (id: string) =>
+  fetchAPI(`/prazos/feriados/${id}`, { method: "DELETE" });

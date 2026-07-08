@@ -54,6 +54,18 @@ export async function initSchema(sql: Sql): Promise<void> {
   await sql`CREATE INDEX IF NOT EXISTS idx_tarefas_status ON tarefas (tenant_id, status)`;
 
   await sql`
+    CREATE TABLE IF NOT EXISTS feriados_municipais (
+      tenant_id TEXT NOT NULL, id TEXT NOT NULL,
+      municipio TEXT NOT NULL DEFAULT '', uf TEXT NOT NULL DEFAULT '',
+      mes INTEGER NOT NULL, dia INTEGER NOT NULL, nome TEXT NOT NULL DEFAULT '',
+      criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (tenant_id, id)
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS idx_feriados_municipais_tenant ON feriados_municipais (tenant_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_feriados_municipais_uf_mun ON feriados_municipais (tenant_id, uf, municipio)`;
+
+  await sql`
     CREATE TABLE IF NOT EXISTS clientes (
       tenant_id TEXT NOT NULL, id TEXT NOT NULL,
       nome TEXT NOT NULL DEFAULT '', telefone TEXT NOT NULL DEFAULT '', cpf TEXT NOT NULL DEFAULT '',
