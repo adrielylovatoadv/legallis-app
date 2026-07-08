@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import {
   calcularPrazo, isDiaUtil, UFS, UF_LABEL, type UF, type ResultadoPrazo,
   getFeriadosMunicipais, createFeriadoMunicipal, deleteFeriadoMunicipal, type FeriadoMunicipalDTO,
@@ -8,18 +9,34 @@ import {
 import { fmtData, normText } from "@/lib/controle";
 import { Input as Inp, Select as Sel, FieldLabel as Lbl, Card } from "@/components/ui";
 import { DateField } from "@/components/ui/DateField";
+import { exportarPDF, type ExportDoc } from "@/lib/export-calc";
+import { canExport } from "@/lib/plans";
+import type { Plan } from "@/lib/plans";
+
+interface UserProfile { name?: string; oab?: Array<{ state: string; number: string }>; company?: { name?: string } }
 
 export default function PrazosPage() {
+  const { data: session } = useSession();
+  const plan = (session?.user.plan ?? "basic") as Plan;
   const today = new Date().toISOString().split("T")[0];
   const [dataPublicacao, setDataPublicacao] = useState(today);
   const [dias, setDias] = useState("15");
   const [uf, setUf] = useState<UF | "">("");
   const [municipio, setMunicipio] = useState("");
+  const [processo, setProcesso] = useState("");
   const [tipoProcesso, setTipoProcesso] = useState<"eletronico" | "fisico">("eletronico");
   const [tipoContagem, setTipoContagem] = useState<"uteis" | "corridos">("uteis");
   const [considerarRecesso, setConsiderarRecesso] = useState(true);
   const [resultado, setResultado] = useState<ResultadoPrazo | null>(null);
   const [erro, setErro] = useState("");
+  const [exportando, setExportando] = useState(false);
+
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetch(`/api/usuarios/${session.user.id}`).then(r => r.ok ? r.json() : null).then(d => d && setUserProfile(d)).catch(() => {});
+    }
+  }, [session?.user?.id]);
 
   const [feriados, setFeriados] = useState<FeriadoMunicipalDTO[]>([]);
   const [mostrarGestao, setMostrarGestao] = useState(false);
@@ -77,6 +94,64 @@ export default function PrazosPage() {
     carregarFeriados();
   };
 
+  const baixarPDF = async () => {
+    if (!resultado) return;
+    if (!canExport(plan, "pdf")) { alert("Seu plano não inclui exportação em PDF."); return; }
+    setExportando(true);
+    try {
+      const linhas = [
+        { label: "Data de publicação / intimação", valor: fmtData(dataPublicacao) },
+        { label: "Quantidade de dias do prazo", valor: `${dias} dias ${tipoContagem === "uteis" ? "úteis" : "corridos"}` },
+        { label: "Forma do processo", valor: tipoProcesso === "eletronico" ? "Eletrônico" : "Físico" },
+        { label: "Estado", valor: uf ? `${uf} — ${UF_LABEL[uf]}` : "— não informado —" },
+        ...(municipio.trim() ? [{ label: "Município / comarca", valor: municipio }] : []),
+        { label: "Início da contagem", valor: fmtData(resultado.dataInicio) },
+        { label: "Vencimento do prazo", valor: fmtData(resultado.dataFinal) },
+      ];
+
+      const secoes: ExportDoc["secoes"] = [{ nome: "Dados do Prazo", tipo: "resumo", linhas }];
+      if (resultado.diasPulados.length > 0) {
+        secoes.push({
+          nome: "Dias não úteis considerados na contagem",
+          tipo: "tabela",
+          colunas: ["Data", "Motivo"],
+          dados: resultado.diasPulados.map(d => ({ Data: fmtData(d.data), Motivo: d.motivo })),
+        });
+      }
+
+      const criterios = [
+        "Início da contagem: primeiro dia útil seguinte à data de publicação/intimação (art. 224, CPC).",
+        considerarRecesso
+          ? "Recesso forense (20/dez a 20/jan, art. 220 do CPC) considerado na contagem."
+          : "Recesso forense NÃO considerado nesta contagem (opção desmarcada no momento do cálculo).",
+        tipoProcesso === "eletronico"
+          ? "Processo eletrônico: protocolo admitido até 23h59 do dia do vencimento (Lei 11.419/2006, art. 3º, parágrafo único)."
+          : "Processo físico: o protocolo deve ocorrer dentro do horário de expediente do fórum no dia do vencimento.",
+        "Ferramenta de referência — recomenda-se confirmar o calendário forense oficial do tribunal/comarca antes de qualquer decisão baseada neste cálculo.",
+      ];
+
+      const advogado = userProfile ? {
+        nome: userProfile.name,
+        oab: userProfile.oab?.[0]?.number,
+        estado: userProfile.oab?.[0]?.state,
+        oabs: userProfile.oab?.map(o => ({ estado: o.state, numero: o.number })),
+        escritorio: userProfile.company?.name,
+      } : undefined;
+
+      await exportarPDF({
+        titulo: "Comprovante de Cálculo de Prazo Processual",
+        subtitulo: "Ferramenta de referência — Legallis",
+        data_calculo: today,
+        processo: processo.trim() || undefined,
+        criterios,
+        advogado,
+        secoes,
+      }, `prazo-${resultado.dataFinal}`);
+    } finally {
+      setExportando(false);
+    }
+  };
+
   return (
     <div className="p-8 space-y-5 max-w-3xl">
       <div>
@@ -118,6 +193,10 @@ export default function PrazosPage() {
             <Lbl>Município / comarca (opcional)</Lbl>
             <Inp value={municipio} onChange={e => setMunicipio(e.target.value)} placeholder="Ex.: Belo Horizonte" />
           </div>
+          <div>
+            <Lbl>Nº do processo / referência (opcional)</Lbl>
+            <Inp value={processo} onChange={e => setProcesso(e.target.value)} placeholder="Aparece no PDF, se preenchido" />
+          </div>
         </div>
 
         <label className="flex items-center gap-2 mt-4 cursor-pointer">
@@ -150,15 +229,22 @@ export default function PrazosPage() {
 
       {resultado && (
         <Card>
-          <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2">
-            <div>
-              <p className="text-xs uppercase tracking-wider" style={{ color: "var(--text3)" }}>Início da contagem</p>
-              <p className="text-lg font-semibold" style={{ color: "var(--text)" }}>{fmtData(resultado.dataInicio)}</p>
+          <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-3">
+            <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2">
+              <div>
+                <p className="text-xs uppercase tracking-wider" style={{ color: "var(--text3)" }}>Início da contagem</p>
+                <p className="text-lg font-semibold" style={{ color: "var(--text)" }}>{fmtData(resultado.dataInicio)}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wider" style={{ color: "var(--text3)" }}>Vencimento do prazo</p>
+                <p className="text-2xl font-serif font-bold" style={{ color: "var(--gold)" }}>{fmtData(resultado.dataFinal)}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs uppercase tracking-wider" style={{ color: "var(--text3)" }}>Vencimento do prazo</p>
-              <p className="text-2xl font-serif font-bold" style={{ color: "var(--gold)" }}>{fmtData(resultado.dataFinal)}</p>
-            </div>
+            <button onClick={baixarPDF} disabled={exportando}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold flex-shrink-0"
+              style={{ background: "var(--gold)", color: "#000", opacity: exportando ? 0.6 : 1 }}>
+              📄 {exportando ? "Gerando..." : "Baixar PDF"}
+            </button>
           </div>
 
           <p className="text-xs mt-3" style={{ color: "var(--text2)" }}>

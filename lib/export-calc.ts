@@ -133,7 +133,7 @@ export async function exportarPDF(doc: ExportDoc, nomeArquivo: string) {
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(15);
   pdf.setTextColor(...GOLD);
-  pdf.text("PLANILHA DE DÉBITOS JUDICIAIS", PW / 2, 13, { align: "center" });
+  pdf.text(doc.titulo.toUpperCase(), PW / 2, 13, { align: "center" });
 
   // Subtítulo por modo em off-white
   let subtitulo = "";
