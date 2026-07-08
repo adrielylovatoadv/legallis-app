@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { dbInit, dbGet, dbSet, hasDb } from "@/lib/db";
+import { dbInit, dbGet, dbSet, hasDb, getSql } from "@/lib/db";
+import { initSchema } from "@/lib/schema";
 
 export async function GET() {
   const session = await auth();
@@ -42,4 +43,23 @@ export async function GET() {
   }
 
   return NextResponse.json(result);
+}
+
+// Roda as CREATE TABLE/ADD COLUMN IF NOT EXISTS de lib/schema.ts — idempotente e aditivo,
+// não altera nem apaga nenhuma tabela ou linha já existente. Passo explícito e sob demanda
+// (não roda a cada request) para não repetir o problema de lentidão que motivou tirar o
+// initSchema() de dbInit() — ver comentário em lib/db.ts.
+export async function POST() {
+  const session = await auth();
+  if (!session || session.user.role !== "admin") {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  }
+  const sql = getSql();
+  if (!sql) return NextResponse.json({ error: "Sem banco configurado (POSTGRES_URL ausente)" }, { status: 400 });
+  try {
+    await initSchema(sql);
+    return NextResponse.json({ ok: true, mensagem: "Tabelas criadas/atualizadas com sucesso." });
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 });
+  }
 }

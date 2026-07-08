@@ -19,6 +19,8 @@ export default function DiagnosticoPage() {
   const router = useRouter();
   const [diag, setDiag] = useState<Diag | null>(null);
   const [loading, setLoading] = useState(false);
+  const [migrando, setMigrando] = useState(false);
+  const [migracaoMsg, setMigracaoMsg] = useState("");
 
   useEffect(() => {
     if (status === "loading") return;
@@ -38,6 +40,20 @@ export default function DiagnosticoPage() {
   };
 
   useEffect(() => { run(); }, []);
+
+  const migrarSchema = async () => {
+    setMigrando(true);
+    setMigracaoMsg("");
+    try {
+      const res = await fetch("/api/diagnostico", { method: "POST" });
+      const data = await res.json();
+      setMigracaoMsg(res.ok ? `✓ ${data.mensagem}` : `✗ ${data.error}`);
+    } catch (e) {
+      setMigracaoMsg(`✗ ${String(e)}`);
+    } finally {
+      setMigrando(false);
+    }
+  };
 
   if (status === "loading" || session?.user?.role !== "admin") return null;
 
@@ -83,6 +99,22 @@ export default function DiagnosticoPage() {
       {loading && !diag && (
         <div className="text-center py-10 text-sm" style={{ color: "var(--text3)" }}>Verificando conexão...</div>
       )}
+
+      <div className="rounded-xl p-5 space-y-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        <h2 className="text-sm font-semibold" style={{ color: "var(--text)" }}>Manutenção</h2>
+        <p className="text-xs" style={{ color: "var(--text3)" }}>
+          Cria/atualiza as tabelas do banco definidas em lib/schema.ts (CREATE TABLE / ADD COLUMN IF NOT EXISTS —
+          nunca apaga nem altera dados existentes). Rode depois de um deploy que adiciona uma tabela nova.
+        </p>
+        <button onClick={migrarSchema} disabled={migrando}
+          className="px-4 py-2 rounded-lg text-sm font-semibold"
+          style={{ background: "var(--surface2)", color: "var(--text)", border: "1px solid var(--border)", opacity: migrando ? 0.6 : 1 }}>
+          {migrando ? "Rodando..." : "Criar/atualizar tabelas do banco"}
+        </button>
+        {migracaoMsg && (
+          <p className="text-xs font-mono" style={{ color: migracaoMsg.startsWith("✓") ? "#4ade80" : "#f87171" }}>{migracaoMsg}</p>
+        )}
+      </div>
     </div>
   );
 }
