@@ -244,6 +244,9 @@ export function ProcessosTab() {
     if (filtroResp !== "Todos") r = r.filter(p => (p.responsavel||"") === filtroResp);
     if (soAtencao) r = r.filter(p => p.atencao);
     return r.sort((a, b) => {
+      const da = normalizeData(a.data) || "9999";
+      const db = normalizeData(b.data) || "9999";
+      if (da !== db) return da.localeCompare(db);
       const fa = normalizeData(a.prazo_fatal || "");
       const fb = normalizeData(b.prazo_fatal || "");
       if (fa && fb) return fa.localeCompare(fb);
@@ -251,7 +254,7 @@ export function ProcessosTab() {
       if (!fa && fb) return 1;
       if (a.atencao && !b.atencao) return -1;
       if (!a.atencao && b.atencao) return 1;
-      return (normalizeData(a.data) || "9999").localeCompare(normalizeData(b.data) || "9999");
+      return 0;
     });
   }, [busca, filtroAnd, filtroResp, soAtencao]);
 
