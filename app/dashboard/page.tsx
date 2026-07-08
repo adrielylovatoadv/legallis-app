@@ -8,6 +8,7 @@ const CARDS = [
   { icon: "⚖️", title: "Controle Processual", desc: "Processos · Prazos · Audiências · Acordos", href: "/dashboard/controle", color: "#C9A84C" },
   { icon: "💼", title: "Financeiro", desc: "Honorários · Acordos · Repasses · Fluxo de caixa", href: "/dashboard/financeiro", color: "#C9A84C", moduleKey: "financeiro" as const },
   { icon: "🧮", title: "Calculadora Jurídica", desc: "TJMG · TJSP · Correção monetária · Juros", href: "/dashboard/calculadora", color: "#C9A84C" },
+  { icon: "📅", title: "Calculadora de Prazos", desc: "Feriados · Recesso forense · Dias úteis", href: "/dashboard/prazos", color: "#C9A84C" },
   { icon: "🗂️", title: "Kanban", desc: "A Fazer · Fazendo · Concluído", href: "/dashboard/kanban", color: "#C9A84C" },
 ];
 
