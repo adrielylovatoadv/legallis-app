@@ -70,7 +70,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           let detail = "";
           try {
             const body = await res.clone().json();
-            if (body?.error) detail = `: ${body.error}`;
+            if (body?.details) {
+              const msgs = Object.values(body.details as Record<string, string[]>).flat().filter(Boolean);
+              if (msgs.length) detail = `: ${msgs.join(" ")}`;
+            }
+            if (!detail && body?.error) detail = `: ${body.error}`;
           } catch { /* resposta pode não ser JSON */ }
           showToast(`Não foi possível salvar${detail}. Tente novamente.`, "error");
         }
