@@ -238,7 +238,7 @@ function ClienteCard({ c, onEdit, onDelete }: {
   const badge = semProcessos ? null : [
     ativos.length > 0 ? `${ativos.length} ativo${ativos.length > 1?"s":""}` : null,
     finalizados.length > 0 ? `${finalizados.length} finalizado${finalizados.length > 1?"s":""}` : null,
-    iniciais.length > 0 ? `${iniciais.length} inicial${iniciais.length > 1?"is":""}` : null,
+    iniciais.length > 0 ? `${iniciais.length} ${iniciais.length > 1?"iniciais":"inicial"}` : null,
   ].filter(Boolean).join(" · ");
 
   return (
