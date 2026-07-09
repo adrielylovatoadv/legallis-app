@@ -27,6 +27,12 @@ export const ANDAMENTOS_INICIAL = [
   "AGUARDAR NOTIFICAÇÃO","ASSINAR PROCURAÇÃO","PROTOCOLADO","ARQUIVADO",
 ];
 
+export const ANDAMENTOS_CONCLUIDOS_INICIAL = ["PROTOCOLADO", "ARQUIVADO"];
+
+export function isInicialPendente(i: { andamento?: string }): boolean {
+  return !ANDAMENTOS_CONCLUIDOS_INICIAL.includes((i.andamento || "").toUpperCase().trim());
+}
+
 
 export interface Processo {
   id: string; autor: string; reu: string; objeto: string;

@@ -3,15 +3,12 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   getIniciais, createInicial, updateInicial, deleteInicial,
-  ANDAMENTOS_INICIAL, badgeAndamento, normalizeData, fmtData,
+  ANDAMENTOS_INICIAL, isInicialPendente, badgeAndamento, normalizeData, fmtData,
   type Inicial,
 } from "@/lib/controle";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { DateField } from "@/components/ui/DateField";
 import { Input, FieldLabel as Label, Select as SelectField } from "@/components/ui";
-
-const ANDAMENTOS_PENDENTES = ["FAZER INICIAL","EM ANDAMENTO","AGUARDAR","AGUARDAR DOCS","AGUARDAR CONTRATO","AGUARDAR LIMINAR","ENVIAR NOTIFICAÇÃO","AGUARDAR NOTIFICAÇÃO","ASSINAR PROCURAÇÃO"];
-const ANDAMENTOS_CONCLUIDOS = ["PROTOCOLADO","ARQUIVADO"];
 
 function InicialForm({ initial, onSave, onCancel, responsaveis = [] }: {
   initial?: Partial<Inicial>; onSave: (i: Omit<Inicial,"id"|"criado_em">) => Promise<void>; onCancel: () => void; responsaveis?: string[];
@@ -106,7 +103,7 @@ export function IniciaisTab() {
     return r.sort((a, b) => (normalizeData(a.data) || "9999").localeCompare(normalizeData(b.data) || "9999"));
   };
 
-  const pendentes = filtrar(iniciais.filter(i => !ANDAMENTOS_CONCLUIDOS.includes((i.andamento||"").toUpperCase().trim())));
+  const pendentes = filtrar(iniciais.filter(isInicialPendente));
 
   const handleSave = async (form: Omit<Inicial,"id"|"criado_em">) => {
     if (editando) {
@@ -179,7 +176,7 @@ export function IniciaisTab() {
                       </span>
                     )}
                     <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${badgeAndamento(i.andamento)}`}>{i.andamento}</span>
-                    {!ANDAMENTOS_CONCLUIDOS.includes((i.andamento||"").toUpperCase()) && (
+                    {isInicialPendente(i) && (
                       <button onClick={() => setProtocolando(i)}
                         className="text-xs px-2 py-1 rounded font-semibold"
                         style={{ background:"rgba(96,165,250,0.12)", color:"#60a5fa", border:"1px solid rgba(96,165,250,0.25)" }}>
@@ -259,7 +256,7 @@ export function IniciaisTab() {
           <button key={tab} onClick={() => setAba(tab)}
             className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
             style={tabStyle(tab)}>
-            {tab === "pendentes" ? `📋 Pendentes (${iniciais.filter(i => !ANDAMENTOS_CONCLUIDOS.includes((i.andamento||"").toUpperCase())).length})`
+            {tab === "pendentes" ? `📋 Pendentes (${iniciais.filter(isInicialPendente).length})`
               : "➕ Nova"}
           </button>
         ))}

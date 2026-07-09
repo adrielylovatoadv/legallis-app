@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
   getClientes, createCliente, updateCliente, deleteCliente,
-  fmtData, badgeAndamento, normalizeData,
+  fmtData, badgeAndamento, normalizeData, isInicialPendente,
   type Cliente, type Processo, type Inicial,
 } from "@/lib/controle";
 import { ConfirmModal } from "@/components/ConfirmModal";
@@ -233,12 +233,13 @@ function ClienteCard({ c, onEdit, onDelete }: {
   const ativos = c._ativos || [];
   const finalizados = c._finalizados || [];
   const iniciais = c._iniciais || [];
+  const iniciaisPendentes = iniciais.filter(isInicialPendente);
 
   const semProcessos = ativos.length === 0 && finalizados.length === 0 && iniciais.length === 0;
   const badge = semProcessos ? null : [
     ativos.length > 0 ? `${ativos.length} ativo${ativos.length > 1?"s":""}` : null,
     finalizados.length > 0 ? `${finalizados.length} finalizado${finalizados.length > 1?"s":""}` : null,
-    iniciais.length > 0 ? `${iniciais.length} ${iniciais.length > 1?"iniciais":"inicial"}` : null,
+    iniciaisPendentes.length > 0 ? `${iniciaisPendentes.length} ${iniciaisPendentes.length > 1?"iniciais":"inicial"}` : null,
   ].filter(Boolean).join(" · ");
 
   return (
