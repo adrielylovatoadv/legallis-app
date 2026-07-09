@@ -395,12 +395,12 @@ function ClienteCard({ c, onEdit, onDelete }: {
             </div>
           )}
 
-          {/* Iniciais */}
-          {iniciais.length > 0 && (
+          {/* Iniciais pendentes (as protocoladas já aparecem em Processos ativos) */}
+          {iniciaisPendentes.length > 0 && (
             <div>
               <p className="text-xs uppercase tracking-wider mb-2 font-semibold" style={{ color:"var(--text3)" }}>Iniciais</p>
               <div className="space-y-1">
-                {iniciais.map(i => (
+                {iniciaisPendentes.map(i => (
                   <div key={i.id} className="flex items-center gap-2 text-xs py-1" style={{ color:"var(--text2)" }}>
                     <span>📝</span>
                     <span>{i.reu}</span>
