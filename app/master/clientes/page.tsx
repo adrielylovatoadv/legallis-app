@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
 interface Client {
   id: string;
@@ -28,10 +29,19 @@ const PLAN_LABELS: Record<string, string> = {
 };
 
 export default function MasterClientesPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-sm" style={{ color: "var(--text3)" }}>Carregando...</div>}>
+      <MasterClientesContent />
+    </Suspense>
+  );
+}
+
+function MasterClientesContent() {
+  const searchParams = useSearchParams();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState(searchParams.get("status") ?? "all");
   const [selected, setSelected] = useState<Client | null>(null);
   const [editData, setEditData] = useState<Partial<Client & { trialDays: number }>>({});
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);

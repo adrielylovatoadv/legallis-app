@@ -14,20 +14,41 @@ interface Stats {
   byPlan: { basic: number; pro: number; profissional: number };
 }
 
-function StatCard({ label, value, icon, color, sub }: {
-  label: string; value: string | number; icon: React.ReactNode; color: string; sub?: string;
+function StatCard({ label, value, icon, color, sub, href }: {
+  label: string; value: string | number; icon: React.ReactNode; color: string; sub?: string; href?: string;
 }) {
-  return (
-    <div className="rounded-2xl p-5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+  const content = (
+    <>
       <div className="flex items-start justify-between mb-3">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center"
           style={{ background: `${color}20`, color }}>
           {icon}
         </div>
+        {href && (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: "var(--text3)" }}>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        )}
       </div>
       <p className="text-2xl font-bold mb-0.5" style={{ color: "var(--text)" }}>{value}</p>
       <p className="text-sm" style={{ color: "var(--text3)" }}>{label}</p>
       {sub && <p className="text-xs mt-1" style={{ color }}>{sub}</p>}
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link href={href}
+        className="block rounded-2xl p-5 transition-all hover:scale-[1.02] hover:border-[var(--gold)]"
+        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl p-5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+      {content}
     </div>
   );
 }
@@ -64,33 +85,33 @@ export default function MasterPage() {
           {/* Stats grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <StatCard label="Usuários totais" value={stats.totalUsers}
-              color="var(--gold)"
+              color="var(--gold)" href="/master/clientes"
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
             />
             <StatCard label="Assinaturas ativas" value={stats.subscriptionsActive}
-              color="#4ade80"
+              color="#4ade80" href="/master/clientes?status=active"
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
             />
             <StatCard label="Testes ativos" value={stats.trialActive}
-              color="var(--gold)"
+              color="var(--gold)" href="/master/clientes?status=trial"
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
             />
             <StatCard label="Planos vencidos" value={stats.expiredPlans}
-              color="#f87171"
+              color="#f87171" href="/master/clientes?status=expired"
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
             />
             <StatCard label="Receita mensal" value={`R$ ${stats.monthlyRevenue.toLocaleString("pt-BR")}`}
-              color="#818cf8"
+              color="#818cf8" href="/master/financeiro"
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
               sub="estimado"
             />
             <StatCard label="Receita anual" value={`R$ ${stats.annualRevenue.toLocaleString("pt-BR")}`}
-              color="#818cf8"
+              color="#818cf8" href="/master/financeiro"
               sub="projeção"
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>}
             />
             <StatCard label="Chamados abertos" value={stats.openTickets}
-              color="#fb923c"
+              color="#fb923c" href="/master/suporte"
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" /></svg>}
             />
           </div>
