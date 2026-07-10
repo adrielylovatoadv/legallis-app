@@ -217,12 +217,66 @@ function TarefaCard({ t, onEdit, onMove }: {
   );
 }
 
+type FiltroPrazo = "todos" | "atrasadas" | "7dias" | "30dias" | "sem_prazo";
+
+const OPCOES_PRAZO: { value: FiltroPrazo; label: string }[] = [
+  { value: "todos", label: "Todos os prazos" },
+  { value: "atrasadas", label: "Atrasadas" },
+  { value: "7dias", label: "Até 7 dias" },
+  { value: "30dias", label: "Até 30 dias" },
+  { value: "sem_prazo", label: "Sem prazo" },
+];
+
+function FiltrosBar({ responsavel, setResponsavel, prazo, setPrazo, vinculo, setVinculo, responsaveis, onLimpar, ativo }: {
+  responsavel: string; setResponsavel: (v: string) => void;
+  prazo: FiltroPrazo; setPrazo: (v: FiltroPrazo) => void;
+  vinculo: string; setVinculo: (v: string) => void;
+  responsaveis: string[];
+  onLimpar: () => void;
+  ativo: boolean;
+}) {
+  return (
+    <div className="flex flex-wrap items-end gap-3 mb-5 p-3 rounded-lg" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+      <div className="w-44">
+        <Lbl>Responsável</Lbl>
+        <Sel value={responsavel} onChange={e => setResponsavel(e.target.value)}>
+          <option value="">Todos</option>
+          {responsaveis.map(r => <option key={r} value={r}>{r}</option>)}
+        </Sel>
+      </div>
+      <div className="w-44">
+        <Lbl>Prazo</Lbl>
+        <Sel value={prazo} onChange={e => setPrazo(e.target.value as FiltroPrazo)}>
+          {OPCOES_PRAZO.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </Sel>
+      </div>
+      <div className="w-44">
+        <Lbl>Processo vinculado</Lbl>
+        <Sel value={vinculo} onChange={e => setVinculo(e.target.value)}>
+          <option value="">Todos</option>
+          <option value="com">Com vínculo</option>
+          <option value="sem">Sem vínculo</option>
+        </Sel>
+      </div>
+      {ativo && (
+        <button onClick={onLimpar} className="text-xs px-3 py-2 rounded-lg"
+          style={{ background: "var(--surface)", color: "var(--text2)", border: "1px solid var(--border)" }}>
+          Limpar filtros
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function KanbanPage() {
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
   const [users, setUsers] = useState<string[]>([]);
   const [processos, setProcessos] = useState<Processo[]>([]);
   const [editando, setEditando] = useState<Tarefa | "novo" | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fResponsavel, setFResponsavel] = useState("");
+  const [fPrazo, setFPrazo] = useState<FiltroPrazo>("todos");
+  const [fVinculo, setFVinculo] = useState("");
 
   const load = useCallback(() => {
     getTarefas().then(setTarefas).finally(() => setLoading(false));
@@ -254,6 +308,30 @@ export default function KanbanPage() {
     await updateTarefa(t.id, { status });
   };
 
+  const filtrosAtivos = !!fResponsavel || fPrazo !== "todos" || !!fVinculo;
+  const limparFiltros = () => { setFResponsavel(""); setFPrazo("todos"); setFVinculo(""); };
+
+  const tarefasFiltradas = useMemo(() => {
+    const hoje = new Date().toISOString().split("T")[0];
+    return tarefas.filter(t => {
+      if (fResponsavel && t.responsavel !== fResponsavel) return false;
+      if (fVinculo === "com" && !t.processo_id) return false;
+      if (fVinculo === "sem" && t.processo_id) return false;
+      if (fPrazo !== "todos") {
+        const dPrazo = normalizeData(t.prazo || "");
+        if (fPrazo === "sem_prazo") { if (dPrazo) return false; }
+        else {
+          if (!dPrazo) return false;
+          const diasAte = Math.floor((new Date(dPrazo).getTime() - new Date(hoje).getTime()) / 86400000);
+          if (fPrazo === "atrasadas" && diasAte >= 0) return false;
+          if (fPrazo === "7dias" && (diasAte < 0 || diasAte > 7)) return false;
+          if (fPrazo === "30dias" && (diasAte < 0 || diasAte > 30)) return false;
+        }
+      }
+      return true;
+    });
+  }, [tarefas, fResponsavel, fPrazo, fVinculo]);
+
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
@@ -268,12 +346,23 @@ export default function KanbanPage() {
         </button>
       </div>
 
+      {!loading && (
+        <FiltrosBar
+          responsavel={fResponsavel} setResponsavel={setFResponsavel}
+          prazo={fPrazo} setPrazo={setFPrazo}
+          vinculo={fVinculo} setVinculo={setFVinculo}
+          responsaveis={users}
+          onLimpar={limparFiltros}
+          ativo={filtrosAtivos}
+        />
+      )}
+
       {loading ? (
         <p className="text-sm" style={{ color: "var(--text3)" }}>Carregando...</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {COLUNAS.map(col => {
-            const itens = tarefas.filter(t => t.status === col.status);
+            const itens = tarefasFiltradas.filter(t => t.status === col.status);
             return (
               <div key={col.status} className="rounded-xl p-4" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
                 <div className="flex items-center gap-2 mb-3">
