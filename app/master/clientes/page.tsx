@@ -37,7 +37,7 @@ export default function MasterClientesPage() {
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/usuarios");
+    const res = await fetch("/api/master/usuarios");
     if (res.ok) {
       const all: Client[] = await res.json();
       setClients(all.filter(u => (u as { plan?: string }).plan !== "admin" || (u as { role?: string }).role !== "admin"));

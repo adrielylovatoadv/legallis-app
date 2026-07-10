@@ -7,14 +7,14 @@ const USER_EDITABLE_FIELDS = ["name", "phone", "theme", "oab", "company", "avata
 // Campos que o dono do escritório (ou super-admin) pode alterar em outro usuário do seu tenant
 const MANAGER_EDITABLE_FIELDS = [...USER_EDITABLE_FIELDS, "role", "cargo", "isActive", "email"] as const;
 
-// Dono do tenant ou super-admin, e o alvo pertence ao mesmo escritório
+// Super-admin (painel master) gerencia qualquer usuário; dono do tenant só os do próprio escritório
 async function requireManagerForTarget(sessionUserId: string, sessionRole: string, targetId: string) {
   const currentUser = await getUserByIdAsync(sessionUserId);
   const targetUser = await getUserByIdAsync(targetId);
   if (!currentUser || !targetUser) return null;
-  const manages = sessionRole === "admin" || isOwner(currentUser);
-  if (!manages) return null;
-  if (currentUser.tenantId !== targetUser.tenantId) return null;
+  const isSuperAdmin = sessionRole === "admin";
+  if (!isSuperAdmin && !isOwner(currentUser)) return null;
+  if (!isSuperAdmin && currentUser.tenantId !== targetUser.tenantId) return null;
   return { currentUser, targetUser };
 }
 
