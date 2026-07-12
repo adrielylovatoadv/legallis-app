@@ -57,6 +57,16 @@ export default function PrazosPage() {
       .map(f => ({ mes: f.mes, dia: f.dia, nome: f.nome }));
   }, [feriados, uf, municipio]);
 
+  // Só oferece no seletor os municípios que o sistema já reconhece (têm feriado cadastrado)
+  // para o estado escolhido — evita o usuário digitar um município sem cobertura de feriados.
+  const municipiosDisponiveis = useMemo(() => {
+    if (!uf) return [];
+    const nomes = new Set(feriados.filter(f => f.uf === uf).map(f => f.municipio));
+    return Array.from(nomes).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [feriados, uf]);
+
+  useEffect(() => { setMunicipio(""); }, [uf]);
+
   const calcular = () => {
     const n = parseInt(dias, 10);
     if (!dataPublicacao) { setErro("Informe a data de publicação/intimação."); setResultado(null); return; }
@@ -191,7 +201,10 @@ export default function PrazosPage() {
           </div>
           <div>
             <Lbl>Município / comarca (opcional)</Lbl>
-            <Inp value={municipio} onChange={e => setMunicipio(e.target.value)} placeholder="Ex.: Belo Horizonte" />
+            <Sel value={municipio} onChange={e => setMunicipio(e.target.value)} disabled={!uf}>
+              <option value="">{uf ? "— nenhum município específico —" : "selecione o estado primeiro"}</option>
+              {municipiosDisponiveis.map(m => <option key={m} value={m}>{m}</option>)}
+            </Sel>
           </div>
           <div>
             <Lbl>Nº do processo / referência (opcional)</Lbl>
@@ -204,11 +217,9 @@ export default function PrazosPage() {
           <span className="text-sm" style={{ color: "var(--text2)" }}>Considerar recesso forense (20/dez a 20/jan — art. 220, CPC)</span>
         </label>
 
-        {uf && municipio.trim() && (
+        {uf && municipio.trim() && feriadosAplicaveis.length > 0 && (
           <p className="text-xs mt-2" style={{ color: "var(--text3)" }}>
-            {feriadosAplicaveis.length > 0
-              ? `${feriadosAplicaveis.length} feriado(s) municipal(is) cadastrado(s) para ${municipio} (${uf}) serão considerados.`
-              : `Nenhum feriado municipal cadastrado para ${municipio} (${uf}) ainda — cadastre abaixo em "Feriados municipais".`}
+            {feriadosAplicaveis.length} feriado(s) municipal(is) de {municipio} ({uf}) serão considerados.
           </p>
         )}
 
@@ -278,9 +289,9 @@ export default function PrazosPage() {
         </Card>
       )}
 
-      <Card>
+      <Card padding="p-3">
         <button onClick={() => setMostrarGestao(v => !v)} className="w-full flex items-center justify-between">
-          <span className="text-sm font-semibold" style={{ color: "var(--text)" }}>
+          <span className="text-xs" style={{ color: "var(--text3)" }}>
             Feriados municipais cadastrados ({feriados.length})
           </span>
           <span className="text-xs" style={{ color: "var(--text3)" }}>{mostrarGestao ? "Ocultar ▲" : "Gerenciar ▼"}</span>
