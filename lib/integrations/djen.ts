@@ -9,7 +9,7 @@
 //
 // A chamada não vai direto pro DJEN: o Vercel (função Node/serverless) é bloqueado por WAF
 // do lado do CNJ (403 "The request could not be satisfied"), confirmado em produção em
-// 2026-07-12. A função Edge (app/api/_internal/djen-proxy) roda numa rede diferente da função
+// 2026-07-12. A função Edge (app/api/internal/djen-proxy) roda numa rede diferente da função
 // Node — passamos por ela na tentativa de contornar o bloqueio sem precisar de infraestrutura
 // nova (VPS/proxy pago).
 
@@ -19,7 +19,7 @@ function proxyBaseUrl(): string {
   return "http://localhost:3000";
 }
 
-const BASE_URL = () => `${proxyBaseUrl()}/api/_internal/djen-proxy`;
+const BASE_URL = () => `${proxyBaseUrl()}/api/internal/djen-proxy`;
 
 export interface DjenAdvogado {
   id: number;
