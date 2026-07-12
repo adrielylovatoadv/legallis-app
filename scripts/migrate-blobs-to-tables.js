@@ -294,6 +294,7 @@ const DDL = [
     dashboard_ok BOOLEAN, vara TEXT, tribunal TEXT, criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     raw JSONB NOT NULL DEFAULT '{}', PRIMARY KEY (tenant_id, id))`,
   `ALTER TABLE processos ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'`,
+  `ALTER TABLE processos ADD COLUMN IF NOT EXISTS prazo_fatal TEXT`,
   `CREATE INDEX IF NOT EXISTS idx_processos_tenant ON processos (tenant_id)`,
   `CREATE INDEX IF NOT EXISTS idx_processos_numero ON processos (tenant_id, numero_processo)`,
   `CREATE INDEX IF NOT EXISTS idx_processos_finalizado ON processos (tenant_id, finalizado)`,
@@ -404,6 +405,15 @@ const DDL = [
   `CREATE INDEX IF NOT EXISTS idx_fixas_valores_tenant ON fixas_valores (tenant_id)`,
   `CREATE TABLE IF NOT EXISTS config_escritorio (
     tenant_id TEXT PRIMARY KEY, tipo TEXT NOT NULL DEFAULT 'individual', socios JSONB NOT NULL DEFAULT '[]')`,
+  `CREATE TABLE IF NOT EXISTS tarefas (
+    tenant_id TEXT NOT NULL, id TEXT NOT NULL,
+    titulo TEXT NOT NULL DEFAULT '', descricao TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'a_fazer', responsavel TEXT NOT NULL DEFAULT '',
+    prazo TEXT, processo_id TEXT, processo_titulo TEXT,
+    criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (tenant_id, id))`,
+  `CREATE INDEX IF NOT EXISTS idx_tarefas_tenant ON tarefas (tenant_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_tarefas_status ON tarefas (tenant_id, status)`,
 ];
 
 async function ensureSchema(sql) {
