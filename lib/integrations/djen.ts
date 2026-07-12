@@ -6,8 +6,20 @@
 // resposta abaixo em DjenComunicacao.
 //
 // Doc oficial: https://comunicaapi.pje.jus.br/api/v1 (sem autenticação para consulta).
+//
+// A chamada não vai direto pro DJEN: o Vercel (função Node/serverless) é bloqueado por WAF
+// do lado do CNJ (403 "The request could not be satisfied"), confirmado em produção em
+// 2026-07-12. A função Edge (app/api/_internal/djen-proxy) roda numa rede diferente da função
+// Node — passamos por ela na tentativa de contornar o bloqueio sem precisar de infraestrutura
+// nova (VPS/proxy pago).
 
-const BASE_URL = "https://comunicaapi.pje.jus.br/api/v1/comunicacao";
+function proxyBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+}
+
+const BASE_URL = () => `${proxyBaseUrl()}/api/_internal/djen-proxy`;
 
 export interface DjenAdvogado {
   id: number;
@@ -70,13 +82,10 @@ export async function buscarComunicacoesPorOab(params: BuscarDjenParams): Promis
     if (params.dataDisponibilizacaoInicio) qs.set("dataDisponibilizacaoInicio", params.dataDisponibilizacaoInicio);
     if (params.dataDisponibilizacaoFim) qs.set("dataDisponibilizacaoFim", params.dataDisponibilizacaoFim);
 
-    const res = await fetch(`${BASE_URL}?${qs.toString()}`, {
+    const res = await fetch(`${BASE_URL()}?${qs.toString()}`, {
       headers: {
         Accept: "application/json",
-        "Accept-Language": "pt-BR,pt;q=0.9",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-        Referer: "https://comunica.pje.jus.br/",
-        Origin: "https://comunica.pje.jus.br",
+        "x-internal-secret": process.env.INTERNAL_PROXY_SECRET ?? "",
       },
     });
     if (!res.ok) {
