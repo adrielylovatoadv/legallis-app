@@ -74,14 +74,20 @@ export default function PublicacoesPage() {
         body: JSON.stringify({ oabNumero: oabNumero.trim(), oabUf }),
       });
       const data = await res.json();
-      if (!res.ok) { setMsg({ type: "err", text: data.error || "Erro ao buscar publicações." }); return; }
+      const dica = data.fontesComErro?.includes("djen")
+        ? " Enquanto isso, consulte manualmente em comunica.pje.jus.br."
+        : "";
+      if (!res.ok) {
+        setMsg({ type: "err", text: `${data.error || "Erro ao buscar publicações."}${dica}` });
+        return;
+      }
       const qtdNovas = data.novas?.length ?? 0;
       setMsg({
         type: "ok",
         text: qtdNovas > 0 ? `${qtdNovas} ${qtdNovas > 1 ? "publicações novas encontradas" : "publicação nova encontrada"}.` : "Nenhuma publicação nova encontrada.",
       });
       if (data.fontesComErro?.length) {
-        setMsg(prev => ({ type: "err", text: `${prev?.text ?? ""} Falha ao consultar: ${data.fontesComErro.join(", ")}.` }));
+        setMsg(prev => ({ type: "err", text: `${prev?.text ?? ""} Falha ao consultar: ${data.fontesComErro.join(", ")}.${dica}` }));
       }
       carregarLista();
     } finally {
