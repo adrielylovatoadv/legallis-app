@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Card, Input, FieldLabel as Lbl, Select } from "@/components/ui";
+import { DateField } from "@/components/ui/DateField";
 
 const BR_STATES = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
@@ -28,10 +29,21 @@ function fmtData(iso?: string) {
   return d && m && y ? `${d}/${m}/${y}` : iso;
 }
 
+// Padrão de 90 dias: o site oficial (comunica.pje.jus.br) exige um intervalo de datas e,
+// se a usuária deixar sem preencher, ele busca só o dia de hoje — o que sempre dá "sem
+// resultado". Aqui já vem preenchido com um intervalo razoável para evitar essa pegadinha.
+function dataIso(diasAtras: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - diasAtras);
+  return d.toISOString().slice(0, 10);
+}
+
 export default function PublicacoesPage() {
   const { data: session } = useSession();
   const [oabUf, setOabUf] = useState("MG");
   const [oabNumero, setOabNumero] = useState("");
+  const [dataInicio, setDataInicio] = useState(() => dataIso(90));
+  const [dataFim, setDataFim] = useState(() => dataIso(0));
   const [buscando, setBuscando] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [lista, setLista] = useState<Publicacao[]>([]);
@@ -65,13 +77,21 @@ export default function PublicacoesPage() {
 
   const buscar = async () => {
     if (!oabNumero.trim()) { setMsg({ type: "err", text: "Informe o número da OAB." }); return; }
+    if (dataInicio && dataFim && dataInicio > dataFim) {
+      setMsg({ type: "err", text: "A data inicial não pode ser depois da data final." });
+      return;
+    }
     setBuscando(true);
     setMsg(null);
     try {
       const res = await fetch("/api/publicacoes/buscar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ oabNumero: oabNumero.trim(), oabUf }),
+        body: JSON.stringify({
+          oabNumero: oabNumero.trim(), oabUf,
+          dataDisponibilizacaoInicio: dataInicio || undefined,
+          dataDisponibilizacaoFim: dataFim || undefined,
+        }),
       });
       const data = await res.json();
       const dica = data.fontesComErro?.includes("djen")
@@ -115,7 +135,7 @@ export default function PublicacoesPage() {
       </div>
 
       <Card className="mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-[100px_1fr_auto] gap-3 items-end">
+        <div className="grid grid-cols-2 md:grid-cols-[100px_1fr_140px_140px_auto] gap-3 items-end">
           <div>
             <Lbl>UF</Lbl>
             <Select value={oabUf} onChange={e => setOabUf(e.target.value)}>
@@ -126,12 +146,17 @@ export default function PublicacoesPage() {
             <Lbl>Número da OAB</Lbl>
             <Input value={oabNumero} onChange={e => setOabNumero(e.target.value)} placeholder="Ex: 123456" />
           </div>
+          <DateField label="Data inicial" value={dataInicio} onChange={setDataInicio} />
+          <DateField label="Data final" value={dataFim} onChange={setDataFim} />
           <button onClick={buscar} disabled={buscando}
-            className="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap disabled:opacity-50"
+            className="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap disabled:opacity-50 col-span-2 md:col-span-1"
             style={{ background: "var(--gold)", color: "#1a1a1a" }}>
             {buscando ? "Buscando..." : "Buscar novas publicações"}
           </button>
         </div>
+        <p className="text-xs mt-2" style={{ color: "var(--text3)" }}>
+          A busca é limitada ao intervalo de datas acima — amplie o período se não encontrar o que procura.
+        </p>
         {msg && (
           <p className="text-xs mt-3" style={{ color: msg.type === "ok" ? "#4ade80" : "#f87171" }}>{msg.text}</p>
         )}
