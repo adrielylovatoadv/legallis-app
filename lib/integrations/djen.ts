@@ -70,8 +70,19 @@ export async function buscarComunicacoesPorOab(params: BuscarDjenParams): Promis
     if (params.dataDisponibilizacaoInicio) qs.set("dataDisponibilizacaoInicio", params.dataDisponibilizacaoInicio);
     if (params.dataDisponibilizacaoFim) qs.set("dataDisponibilizacaoFim", params.dataDisponibilizacaoFim);
 
-    const res = await fetch(`${BASE_URL}?${qs.toString()}`, { headers: { Accept: "application/json" } });
-    if (!res.ok) throw new Error(`DJEN respondeu ${res.status}`);
+    const res = await fetch(`${BASE_URL}?${qs.toString()}`, {
+      headers: {
+        Accept: "application/json",
+        "Accept-Language": "pt-BR,pt;q=0.9",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+        Referer: "https://comunica.pje.jus.br/",
+        Origin: "https://comunica.pje.jus.br",
+      },
+    });
+    if (!res.ok) {
+      const corpo = await res.text().catch(() => "");
+      throw new Error(`DJEN respondeu ${res.status}${corpo ? `: ${corpo.slice(0, 300)}` : ""}`);
+    }
     const data = (await res.json()) as DjenResponse;
     acumulado.push(...(data.items ?? []));
 
