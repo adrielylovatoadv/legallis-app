@@ -49,6 +49,11 @@ const NAV = [
     href: "/dashboard/designacoes",
   },
   {
+    icon: <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2M19 21H5m0 0H3m8-14h.01M11 11h.01M11 15h.01M15 7h.01M15 11h.01M15 15h.01M7 7h.01M7 11h.01M7 15h.01" /></svg>,
+    label: "Publicações",
+    href: "/dashboard/publicacoes",
+  },
+  {
     icon: <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 3H5a2 2 0 00-2 2v14a2 2 0 002 2h4m0-18h10a2 2 0 012 2v14a2 2 0 01-2 2H9m0-18v18m-4-13h0m0 4h0m0 4h0" /></svg>,
     label: "Kanban",
     href: "/dashboard/kanban",

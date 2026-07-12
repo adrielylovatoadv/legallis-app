@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 const TABS = [
   { href: "/dashboard/configuracoes/perfil", label: "Perfil" },
   { href: "/dashboard/configuracoes/empresa", label: "Empresa" },
+  { href: "/dashboard/configuracoes/certificado", label: "Certificado Digital" },
   { href: "/dashboard/configuracoes/assinatura", label: "Assinatura" },
   { href: "/dashboard/configuracoes/usuarios", label: "Usuários" },
   { href: "/dashboard/configuracoes/aparencia", label: "Aparência" },

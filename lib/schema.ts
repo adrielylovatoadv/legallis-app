@@ -241,4 +241,31 @@ export async function initSchema(sql: Sql): Promise<void> {
       socios JSONB NOT NULL DEFAULT '[]'
     )
   `;
+
+  // ── automação processual (publicações + certificado digital) ─────────────
+  await sql`
+    CREATE TABLE IF NOT EXISTS certificados (
+      tenant_id TEXT NOT NULL, id TEXT NOT NULL, user_id TEXT NOT NULL,
+      tipo TEXT NOT NULL DEFAULT 'A1', apelido TEXT NOT NULL DEFAULT '',
+      nome_arquivo TEXT, blob_path TEXT, senha TEXT, titular TEXT, validade TEXT,
+      criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (tenant_id, id)
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS idx_certificados_tenant ON certificados (tenant_id)`;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS publicacoes (
+      tenant_id TEXT NOT NULL, id TEXT NOT NULL,
+      oab_numero TEXT NOT NULL DEFAULT '', oab_uf TEXT NOT NULL DEFAULT '',
+      numero_processo TEXT, orgao TEXT, tipo_comunicacao TEXT, data_disponibilizacao TEXT, texto TEXT,
+      fonte TEXT NOT NULL DEFAULT 'djen', fonte_id TEXT,
+      tratada BOOLEAN NOT NULL DEFAULT FALSE, processo_id TEXT,
+      criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(), raw JSONB NOT NULL DEFAULT '{}',
+      PRIMARY KEY (tenant_id, id)
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS idx_publicacoes_tenant ON publicacoes (tenant_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_publicacoes_tratada ON publicacoes (tenant_id, tratada)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_publicacoes_oab ON publicacoes (tenant_id, oab_uf, oab_numero)`;
 }

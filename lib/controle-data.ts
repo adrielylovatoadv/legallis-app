@@ -80,6 +80,40 @@ export interface Redesignacao {
   respondido_em?: string;
 }
 
+export type TipoCertificado = "A1" | "A3";
+
+export interface Certificado {
+  id: string;
+  userId: string;
+  tipo: TipoCertificado;
+  apelido: string;
+  nomeArquivo?: string; // apenas A1
+  blobPath?: string; // apenas A1 — pathname privado no Vercel Blob (não a URL pública)
+  senha?: string; // apenas A1 — criptografada em repouso
+  titular?: string;
+  validade?: string; // ISO date
+  criado_em: string;
+}
+
+export type FontePublicacao = "djen" | "datajud" | "escavador";
+
+export interface Publicacao {
+  id: string;
+  oabNumero: string;
+  oabUf: string;
+  numeroProcesso?: string;
+  orgao?: string;
+  tipoComunicacao?: string;
+  dataDisponibilizacao?: string;
+  texto?: string;
+  fonte: FontePublicacao;
+  fonteId?: string; // id externo da fonte, usado para dedupe
+  tratada: boolean;
+  processoId?: string;
+  criado_em: string;
+  raw?: unknown;
+}
+
 export interface ControleData {
   processos: Processo[];
   clientes: Cliente[];
@@ -90,6 +124,8 @@ export interface ControleData {
   redesignacoes: Redesignacao[];
   tarefas: Tarefa[];
   feriados_municipais: FeriadoMunicipal[];
+  certificados: Certificado[];
+  publicacoes: Publicacao[];
 }
 
 function parseRaw(d: Partial<ControleData>): ControleData {
@@ -127,11 +163,19 @@ function parseRaw(d: Partial<ControleData>): ControleData {
       ...t,
     })),
     feriados_municipais: (d as ControleData).feriados_municipais || [],
+    certificados: ((d as ControleData).certificados || []).map(c => ({
+      ...c,
+      senha: c.senha ? decryptField(c.senha) : c.senha,
+    })),
+    publicacoes: (d as ControleData).publicacoes || [],
   };
 }
 
 function emptyData(): ControleData {
-  return { processos: [], clientes: [], iniciais: [], finalizados_externos_sem_honor: [], finalizados_externos_acordos: [], finalizados_execucao: [], redesignacoes: [], tarefas: [], feriados_municipais: [] };
+  return {
+    processos: [], clientes: [], iniciais: [], finalizados_externos_sem_honor: [], finalizados_externos_acordos: [],
+    finalizados_execucao: [], redesignacoes: [], tarefas: [], feriados_municipais: [], certificados: [], publicacoes: [],
+  };
 }
 
 // Legado: tenant "t_1" é o dono original dos dados no arquivo sem sufixo (pré multi-tenant).
@@ -161,6 +205,10 @@ function encryptClientes(data: ControleData): ControleData {
       senha_serasa: encryptField(c.senha_serasa || ""),
       conta: encryptField(c.conta || ""),
       chave_pix: encryptField(c.chave_pix || ""),
+    })),
+    certificados: data.certificados.map(c => ({
+      ...c,
+      senha: c.senha ? encryptField(c.senha) : c.senha,
     })),
   };
 }
