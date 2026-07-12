@@ -13,9 +13,13 @@
 // Node — passamos por ela na tentativa de contornar o bloqueio sem precisar de infraestrutura
 // nova (VPS/proxy pago).
 
+// NEXTAUTH_URL é o domínio público estável (app.legallis.app.br) — usar VERCEL_URL aqui seria
+// errado: aponta pro hostname *.vercel.app específico do deployment, que tem a "Vercel
+// Authentication" (SSO) do próprio Vercel na frente, e a chamada interna levaria 401 do Vercel
+// em vez de chegar ao DJEN (confirmado em produção em 2026-07-12).
 function proxyBaseUrl(): string {
   if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  if (process.env.NEXTAUTH_URL) return process.env.NEXTAUTH_URL;
   return "http://localhost:3000";
 }
 
