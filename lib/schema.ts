@@ -145,12 +145,16 @@ export async function initSchema(sql: Sql): Promise<void> {
       valor_acordo NUMERIC(14,2) NOT NULL DEFAULT 0, honorarios NUMERIC(14,2) NOT NULL DEFAULT 0,
       repasse_cliente NUMERIC(14,2), -- existe em FinalizadoAcordo (controle-data.ts), ausente no tipo Acordo original
       status TEXT NOT NULL DEFAULT 'pago',
+      criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       raw JSONB NOT NULL DEFAULT '{}',
       PRIMARY KEY (tenant_id, id)
     )
   `;
   await sql`ALTER TABLE acordos ADD COLUMN IF NOT EXISTS repasse_cliente NUMERIC(14,2)`;
   await sql`ALTER TABLE acordos ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'`;
+  // Ordena a lista de acordos pelo momento real do registro (não pela data de pagamento,
+  // que muitas vezes fica em branco enquanto o acordo está pendente).
+  await sql`ALTER TABLE acordos ADD COLUMN IF NOT EXISTS criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()`;
   await sql`CREATE INDEX IF NOT EXISTS idx_acordos_tenant_mes ON acordos (tenant_id, mes)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_acordos_processo ON acordos (tenant_id, processo_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_acordos_processo_num ON acordos (tenant_id, processo)`;

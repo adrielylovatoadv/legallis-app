@@ -20,10 +20,13 @@ export function StatusBtn({ status, onClick, receita = true }: {
 // ── helpers de ordenação por mês ─────────────────────────────────────────────
 import { MESES } from "@/lib/financeiro";
 const MESES_IDX = Object.fromEntries(MESES.map((m, i) => [m, i]));
-export function sortByMesDesc<T extends { mes: string; data_pagamento?: string }>(arr: T[]): T[] {
+export function sortByMesDesc<T extends { mes: string; data_pagamento?: string; criado_em?: string }>(arr: T[]): T[] {
   return [...arr].sort((a, b) => {
     const mi = (MESES_IDX[b.mes] ?? -1) - (MESES_IDX[a.mes] ?? -1);
     if (mi !== 0) return mi;
+    // Prioriza o momento em que o registro foi feito (mais recente primeiro) — cai para
+    // data_pagamento só em tipos que ainda não guardam criado_em (execuções, honorários).
+    if (a.criado_em || b.criado_em) return (b.criado_em || "").localeCompare(a.criado_em || "");
     return (b.data_pagamento || "").localeCompare(a.data_pagamento || "");
   });
 }

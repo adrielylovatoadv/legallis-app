@@ -14,13 +14,14 @@ function rowToAcordo(r: Record<string, unknown>): Acordo {
     valor_acordo: Number(r.valor_acordo),
     honorarios: Number(r.honorarios),
     status: r.status as Acordo["status"],
+    criado_em: r.criado_em instanceof Date ? r.criado_em.toISOString() : (r.criado_em as string | undefined),
   };
 }
 
 export async function list(tenantId: string): Promise<Acordo[]> {
   if (!hasDb()) return (await getDataAsync(tenantId)).acordos;
   const sql = getSql()!;
-  const rows = await sql`SELECT * FROM acordos WHERE tenant_id = ${tenantId} ORDER BY mes` as Record<string, unknown>[];
+  const rows = await sql`SELECT * FROM acordos WHERE tenant_id = ${tenantId} ORDER BY mes, criado_em DESC` as Record<string, unknown>[];
   return rows.map(rowToAcordo);
 }
 
@@ -32,7 +33,7 @@ export async function get(tenantId: string, id: string): Promise<Acordo | null> 
 }
 
 export async function create(tenantId: string, input: Omit<Acordo, "id">): Promise<Acordo> {
-  const row: Acordo = { ...input, id: newId() };
+  const row: Acordo = { ...input, id: newId(), criado_em: new Date().toISOString() };
   if (!hasDb()) {
     const data = await getDataAsync(tenantId);
     data.acordos.push(row);
@@ -42,9 +43,9 @@ export async function create(tenantId: string, input: Omit<Acordo, "id">): Promi
   const sql = getSql()!;
   await sql`
     INSERT INTO acordos (tenant_id, id, mes, data_pagamento, cliente, reu, objeto, processo, processo_id,
-                          valor_acordo, honorarios, status)
+                          valor_acordo, honorarios, status, criado_em)
     VALUES (${tenantId}, ${row.id}, ${row.mes}, ${row.data_pagamento}, ${row.cliente}, ${row.reu}, ${row.objeto},
-            ${row.processo}, ${row.processoId ?? null}, ${row.valor_acordo}, ${row.honorarios}, ${row.status})
+            ${row.processo}, ${row.processoId ?? null}, ${row.valor_acordo}, ${row.honorarios}, ${row.status}, ${row.criado_em})
   `;
   return row;
 }
