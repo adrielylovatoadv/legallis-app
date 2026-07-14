@@ -11,8 +11,11 @@ export async function GET() {
   const tid = session.user.tenantId;
   const [semHonor, data] = await Promise.all([finalizadosRepo.list(tid), getDataAsync(tid)]);
 
-  // Migra acordos antigos (com dados financeiros) para o novo formato simples
-  const acordosMigrados = (data.finalizados_externos_acordos || []).map((a) => ({
+  // Migra acordos antigos (com dados financeiros) para o novo formato simples.
+  // Id sintético por índice (mesma técnica do backfill em controle-data.ts) — usado
+  // apenas para permitir reabrir; edição/exclusão continua restrita à aba Financeiro.
+  const acordosMigrados = (data.finalizados_externos_acordos || []).map((a, i) => ({
+    id: `acordo_${i}`,
     cliente: a.cliente || "",
     reu: a.reu || "",
     processo: a.processo || "",

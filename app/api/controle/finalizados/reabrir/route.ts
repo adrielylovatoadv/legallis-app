@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hasControleRestrito } from "@/lib/acl";
 import { hasDb, getSql } from "@/lib/db";
+import { getDataAsync, saveDataAsync } from "@/lib/controle-data";
 import * as processosRepo from "@/lib/repo/processos";
 import * as finalizadosRepo from "@/lib/repo/finalizados-sem-honor";
 
@@ -11,6 +12,25 @@ export async function POST(req: NextRequest) {
   if (hasControleRestrito(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para este módulo" }, { status: 403 });
   const tid = session.user.tenantId;
   const { id }: { id: string } = await req.json();
+
+  // Acordos migrados do Financeiro não têm registro em finalizados_sem_honor — vivem
+  // como array simples dentro do blob de controle, identificados por índice (ver
+  // app/api/controle/finalizados/route.ts). Reabrir aqui só remove a entrada do array
+  // e reabre o processo; não há transação SQL possível entre os dois (blob vs. tabela).
+  if (id.startsWith("acordo_")) {
+    const idx = Number(id.slice("acordo_".length));
+    const data = await getDataAsync(tid);
+    const acordos = data.finalizados_externos_acordos || [];
+    const alvo = acordos[idx];
+    if (!alvo) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
+    const processos = alvo.processo ? await processosRepo.list(tid) : [];
+    const proc = processos.find(p => p.numero_processo === alvo.processo);
+    data.finalizados_externos_acordos = acordos.filter((_, i) => i !== idx);
+    await saveDataAsync(data, tid);
+    if (proc) await processosRepo.update(tid, proc.id, { andamento: "", finalizado: false });
+    return NextResponse.json({ ok: true, processoReaberto: !!proc });
+  }
+
   const entry = await finalizadosRepo.get(tid, id);
   if (!entry) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
 

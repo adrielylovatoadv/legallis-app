@@ -313,18 +313,19 @@ export function FinalizadosTab() {
                         💰
                       </button>
                     )}
-                    {f._migrado ? (
+                    {f._migrado && (
                       <span className="text-xs px-2 py-0.5 rounded" title="Registro do Financeiro — edite lá"
                         style={{ background: "var(--surface2)", color: "var(--text3)", border: "1px solid var(--border)" }}>
                         Financeiro
                       </span>
-                    ) : (
+                    )}
+                    <button onClick={() => handleReabrir(f.id!)} title="Voltar para andamento"
+                      className="text-xs px-2 py-1 rounded"
+                      style={{ background: "rgba(96,165,250,0.12)", color: "#60a5fa", border: "1px solid var(--border)" }}>
+                      ↩️ Reabrir
+                    </button>
+                    {!f._migrado && (
                       <>
-                        <button onClick={() => handleReabrir(f.id!)} title="Voltar para andamento"
-                          className="text-xs px-2 py-1 rounded"
-                          style={{ background: "rgba(96,165,250,0.12)", color: "#60a5fa", border: "1px solid var(--border)" }}>
-                          ↩️ Reabrir
-                        </button>
                         <button onClick={() => setModal({ entry: f })}
                           className="text-xs px-2 py-1 rounded"
                           style={{ background: "var(--surface2)", color: "var(--text2)", border: "1px solid var(--border)" }}>
