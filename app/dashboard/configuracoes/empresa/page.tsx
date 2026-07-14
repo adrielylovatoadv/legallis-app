@@ -91,7 +91,7 @@ export default function EmpresaPage() {
               Advogado padrão na assinatura dos PDFs
             </label>
             <p className="text-xs mb-3" style={{ color: "var(--text3)" }}>
-              Quando um cálculo for exportado, este será o advogado que aparece por padrão. Pode ser alterado na hora da exportação.
+              Quando um cálculo ou um documento de cliente (procuração, contrato, declarações) for exportado, este será o advogado que aparece por padrão. Pode ser alterado na hora da exportação.
             </p>
             <div className="flex flex-wrap gap-2">
               {colegas.map(u => (

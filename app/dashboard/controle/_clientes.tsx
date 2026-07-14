@@ -17,6 +17,11 @@ import { Input as Inp, Select as Sel, FieldLabel as Lbl } from "@/components/ui"
 
 type ClienteComProcs = Cliente & { _ativos?: Processo[]; _finalizados?: Processo[]; _iniciais?: Inicial[] };
 
+interface UserProfile {
+  id?: string; name?: string; oab?: Array<{ state: string; number: string }>;
+  company?: { name?: string; address?: string; defaultPdfSignerId?: string };
+}
+
 const TRATAMENTOS = ["", "Senhor", "Senhora", "Doutor", "Doutora", "Excelentíssimo"];
 
 function ListaRepetivel({ label, valores, onChange, placeholder }: {
@@ -147,26 +152,13 @@ function ClienteForm({ initial, onSave, onCancel }: {
 
 type TipoDocumento = "procuracao" | "contrato" | "isencao_ir" | "hipossuficiencia";
 
-function GerarDocumentoMenu({ cliente }: { cliente: Cliente }) {
-  const { data: session } = useSession();
+function GerarDocumentoMenu({ cliente, advogado }: { cliente: Cliente; advogado: AdvogadoDoc }) {
   const [gerando, setGerando] = useState<TipoDocumento | null>(null);
   const [erro, setErro] = useState("");
-
-  async function getAdvogado(): Promise<AdvogadoDoc> {
-    if (!session?.user?.id) return {};
-    const res = await fetch(`/api/usuarios/${session.user.id}`);
-    if (!res.ok) return {};
-    const u = await res.json();
-    return {
-      nome: u.name, escritorio: u.company?.name, enderecoEscritorio: u.company?.address,
-      oabs: (u.oab || []).map((o: { state: string; number: string }) => ({ estado: o.state, numero: o.number })),
-    };
-  }
 
   const gerar = async (tipo: TipoDocumento) => {
     setGerando(tipo); setErro("");
     try {
-      const advogado = await getAdvogado();
       if (tipo === "procuracao") await generateProcuracaoDocx(cliente, advogado);
       else if (tipo === "contrato") await generateContratoHonorariosDocx(cliente, advogado);
       else if (tipo === "isencao_ir") await generateDeclaracaoIsencaoIRDocx(cliente, advogado);
@@ -193,8 +185,9 @@ function GerarDocumentoMenu({ cliente }: { cliente: Cliente }) {
   );
 }
 
-function ClienteCard({ c, onEdit, onDelete }: {
+function ClienteCard({ c, advogado, onEdit, onDelete }: {
   c: ClienteComProcs;
+  advogado: AdvogadoDoc;
   onEdit: (c: Cliente) => void;
   onDelete: (id: string) => void;
 }) {
@@ -346,7 +339,7 @@ function ClienteCard({ c, onEdit, onDelete }: {
           )}
 
           {/* Gerar documento */}
-          <GerarDocumentoMenu cliente={c} />
+          <GerarDocumentoMenu cliente={c} advogado={advogado} />
 
           {/* Informações */}
           {c.informacoes && (
@@ -418,11 +411,42 @@ function ClienteCard({ c, onEdit, onDelete }: {
 }
 
 export function ClientesTab() {
+  const { data: session } = useSession();
   const [clientes, setClientes] = useState<ClienteComProcs[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
   const [editando, setEditando] = useState<Cliente | null>(null);
   const [novoAberto, setNovoAberto] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [colegas, setColegas] = useState<UserProfile[]>([]);
+  const [advogadoSelecionadoId, setAdvogadoSelecionadoId] = useState<string>("");
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetch(`/api/usuarios/${session.user.id}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          if (d) {
+            setUserProfile(d);
+            // usa o advogado padrão salvo na empresa (Configurações > Empresa), ou o próprio usuário
+            setAdvogadoSelecionadoId(d.company?.defaultPdfSignerId ?? d.id);
+          }
+        })
+        .catch(() => {});
+      fetch("/api/usuarios/escritorio")
+        .then(r => r.ok ? r.json() : [])
+        .then(d => Array.isArray(d) && setColegas(d))
+        .catch(() => {});
+    }
+  }, [session?.user?.id]);
+
+  const advogadoPerfil = colegas.find(u => u.id === advogadoSelecionadoId) ?? userProfile;
+  const advogadoInfo: AdvogadoDoc = advogadoPerfil ? {
+    nome: advogadoPerfil.name,
+    escritorio: advogadoPerfil.company?.name,
+    enderecoEscritorio: advogadoPerfil.company?.address,
+    oabs: advogadoPerfil.oab?.map(o => ({ estado: o.state, numero: o.number })),
+  } : {};
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -456,6 +480,32 @@ export function ClientesTab() {
         </button>
       </div>
 
+      {colegas.length > 1 && (
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-xs font-medium uppercase tracking-wider flex-shrink-0" style={{ color: "var(--text3)" }}>
+            Advogado nos documentos:
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {colegas.map(u => (
+              <button
+                key={u.id}
+                onClick={() => setAdvogadoSelecionadoId(u.id ?? "")}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+                style={{
+                  background: advogadoSelecionadoId === u.id ? "rgba(201,168,76,0.15)" : "var(--surface2)",
+                  color: advogadoSelecionadoId === u.id ? "var(--gold)" : "var(--text3)",
+                  border: `1px solid ${advogadoSelecionadoId === u.id ? "var(--gold)" : "var(--border)"}`,
+                }}>
+                {u.name}
+                {u.id === userProfile?.id && (
+                  <span className="ml-1.5 text-xs opacity-60">(você)</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {novoAberto && <ClienteForm onSave={handleSave} onCancel={() => setNovoAberto(false)} />}
 
       {editando && (
@@ -467,7 +517,7 @@ export function ClientesTab() {
         : (
           <div className="space-y-2">
             {clientes.map(c => (
-              <ClienteCard key={c.id} c={c}
+              <ClienteCard key={c.id} c={c} advogado={advogadoInfo}
                 onEdit={c => { setEditando(c); setNovoAberto(false); window.scrollTo({ top: 0, behavior:"smooth" }); }}
                 onDelete={handleDelete} />
             ))}
