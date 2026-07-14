@@ -19,10 +19,14 @@ export function StatusBtn({ status, onClick, receita = true }: {
 
 // ── helpers de ordenação por mês ─────────────────────────────────────────────
 import { MESES } from "@/lib/financeiro";
-const MESES_IDX = Object.fromEntries(MESES.map((m, i) => [m, i]));
+// Chave normalizada (minúsculo/sem espaços) — registros lançados por campo de texto livre
+// (ex.: painel financeiro dentro de Controle Processual) podem ter "mes" com caixa diferente
+// da lista fixa (ex.: "jul/2026" em vez de "Jul/2026") e não podem virar órfãos no fim da lista.
+const normMes = (m: string) => (m || "").trim().toLowerCase();
+const MESES_IDX = Object.fromEntries(MESES.map((m, i) => [normMes(m), i]));
 export function sortByMesDesc<T extends { mes: string; data_pagamento?: string; criado_em?: string }>(arr: T[]): T[] {
   return [...arr].sort((a, b) => {
-    const mi = (MESES_IDX[b.mes] ?? -1) - (MESES_IDX[a.mes] ?? -1);
+    const mi = (MESES_IDX[normMes(b.mes)] ?? -1) - (MESES_IDX[normMes(a.mes)] ?? -1);
     if (mi !== 0) return mi;
     // Prioriza o momento em que o registro foi feito (mais recente primeiro) — cai para
     // data_pagamento só em tipos que ainda não guardam criado_em (execuções, honorários).

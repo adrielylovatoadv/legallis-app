@@ -8,7 +8,7 @@ import { useEffect, useState, useCallback } from "react";
 import {
   getProcessoFinanceiro, getFinanceiroPorNumero,
   createAcordo, createExecucao, createHonInicial, createTimesheet,
-  fmtBRL, statusBadge, statusLabel, type ProcessoFinanceiro,
+  fmtBRL, statusBadge, statusLabel, MESES, type ProcessoFinanceiro,
 } from "@/lib/financeiro";
 import { Select as Sel } from "@/components/ui";
 
@@ -84,7 +84,10 @@ function LancamentoForm({ alvo, onSaved, onCancel }: {
           <input placeholder="Data pagamento" type="date" value={form.data_pagamento} onChange={e => set("data_pagamento", e.target.value)} className={inpS} style={inpStyle} />
         )}
         {tipo !== "timesheet" && (
-          <input placeholder="Mês (ex: Jul/2026)" value={form.mes} onChange={e => set("mes", e.target.value)} className={inpS} style={inpStyle} />
+          <Sel value={form.mes} onChange={e => set("mes", e.target.value)} style={{ fontSize: 12, padding: "4px 8px" }}>
+            <option value="">Mês...</option>
+            {MESES.map(m => <option key={m} value={m}>{m}</option>)}
+          </Sel>
         )}
         <Sel value={form.status} onChange={e => set("status", e.target.value)} style={{ fontSize: 12, padding: "4px 8px" }}>
           <option value="pendente">Pendente</option>
