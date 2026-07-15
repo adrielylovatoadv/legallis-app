@@ -47,7 +47,7 @@ function qualificacaoCliente(c: ClienteDoc): string {
 
 function qualificacaoAdvogado(adv: AdvogadoDoc): string {
   const escritorio = adv.enderecoEscritorio
-    ? `, com escritório profissional${adv.cidadeEscritorio ? ` na cidade de ${adv.cidadeEscritorio}` : ""}, na ${adv.enderecoEscritorio}`
+    ? `, com escritório profissional, na ${adv.enderecoEscritorio}`
     : "";
   return `${adv.nome || "___________"}, advogado(a), inscrito(a) na Ordem dos Advogados do Brasil ${formatOabs(adv)}${escritorio}`;
 }
@@ -123,6 +123,36 @@ function blocoAssinaturaDupla(mod: DocxModule, esquerda: { nome: string; sub?: s
   });
 }
 
+function blocoTestemunhas(mod: DocxModule) {
+  const coluna = (rotulo: string) => [
+    new mod.Paragraph({ alignment: mod.AlignmentType.CENTER, spacing: { before: 120 },
+      children: [new mod.TextRun({ text: "________________________________", size: 22 })] }),
+    new mod.Paragraph({ alignment: mod.AlignmentType.CENTER,
+      children: [new mod.TextRun({ text: rotulo, bold: true, size: 22 })] }),
+    new mod.Paragraph({ alignment: mod.AlignmentType.CENTER, children: [] }),
+    new mod.Paragraph({ alignment: mod.AlignmentType.CENTER,
+      children: [new mod.TextRun({ text: "Nome: _______________________________", size: 20 })] }),
+    new mod.Paragraph({ alignment: mod.AlignmentType.CENTER,
+      children: [new mod.TextRun({ text: "CPF: ______________", size: 20 })] }),
+  ];
+  const semBorda = { style: mod.BorderStyle.NONE, size: 0, color: "FFFFFF" };
+  const bordas = { top: semBorda, bottom: semBorda, left: semBorda, right: semBorda };
+  return [
+    new mod.Paragraph({ spacing: { before: 200 },
+      children: [new mod.TextRun({ text: "TESTEMUNHAS:", bold: true, size: 24 })] }),
+    new mod.Paragraph({ spacing: { before: 200 }, children: [] }),
+    new mod.Table({
+      width: { size: 9360, type: mod.WidthType.DXA },
+      columnWidths: [4680, 4680],
+      borders: bordas,
+      rows: [new mod.TableRow({ children: [
+        new mod.TableCell({ borders: bordas, width: { size: 4680, type: mod.WidthType.DXA }, children: coluna("Testemunha 1") }),
+        new mod.TableCell({ borders: bordas, width: { size: 4680, type: mod.WidthType.DXA }, children: coluna("Testemunha 2") }),
+      ] })],
+    }),
+  ];
+}
+
 const PAGINA = {
   size: { width: 11906, height: 16838 }, // A4
   margin: { top: 1134, right: 1701, bottom: 1702, left: 1701 },
@@ -179,31 +209,33 @@ export async function generateContratoHonorariosDocx(
   const mod = await criarDoc(await import("docx"));
   const pExito = opts.percentualExito ?? 35;
   const pAcordo = opts.percentualAcordo ?? 10;
+  const extenso = (n: number) => n === 35 ? "trinta e cinco" : n === 10 ? "dez" : String(n);
 
   const children = [
     paragrafoTitulo(mod, "CONTRATO DE PRESTAÇÃO DE SERVIÇOS E HONORÁRIOS ADVOCATÍCIOS"),
     paragrafoTexto(mod, "Pelo presente instrumento particular e na melhor forma de direito, as partes, de um lado;", { indent: false }),
-    paragrafoCentralizado(mod, "CONTRATANTE", true),
-    paragrafoTexto(mod, `${qualificacaoCliente(cliente)};`, { indent: false }),
+    paragrafoTexto(mod, `CONTRATANTE: ${qualificacaoCliente(cliente)};`, { indent: false }),
     paragrafoTexto(mod, "E, de outro lado;", { indent: false }),
-    paragrafoCentralizado(mod, "CONTRATADO(A)", true),
-    paragrafoTexto(mod, `${qualificacaoAdvogado(advogado)};`, { indent: false }),
+    paragrafoTexto(mod, `CONTRATADA: ${qualificacaoAdvogado(advogado)};`, { indent: false }),
     paragrafoTexto(mod,
       'Sendo o CONTRATANTE e a CONTRATADA doravante designados, individualmente, como "Parte" e, em conjunto, como "Partes"; Resolvem, de comum acordo, firmar o presente Contrato de Prestação de Serviços e Honorários Advocatícios ("Contrato"), mediante as seguintes cláusulas e condições:',
       { indent: false }
     ),
-    paragrafoTexto(mod, "Cláusula 1ª: O CONTRATANTE, por meio do presente Contrato, contrata os serviços profissionais da CONTRATADA para tentativas administrativas e para ingressar com ação judicial de  _______"),
+    paragrafoTexto(mod, "Cláusula 1ª: O CONTRATANTE, por meio do presente Contrato, contrata os serviços profissionais da CONTRATADA para tentativas administrativas e para ingressar com ação judicial de ___________"),
     paragrafoTexto(mod, "Cláusula 2ª: Não haverá remuneração inicial para início dos trabalhos."),
-    paragrafoTexto(mod, `Parágrafo primeiro: Para todos os fins do procedimento administrativo e judicial, os honorários serão cobrados somente com o resultado de procedência, ou seja, no êxito, perfazendo o importe de ${pExito}% (${pExito === 35 ? "trinta e cinco" : pExito} por cento) sobre o valor indenizatório, além de ${pAcordo}% em casos de acordos extrajudiciais.`),
+    paragrafoTexto(mod, `Parágrafo primeiro: Os honorários de êxito, serão no importe de ${pExito}% (${extenso(pExito)} por cento) sobre o proveito econômico efetivamente obtido, compreendendo indenização por danos morais e materiais, repetição de indébito, exclusão de débitos ou negativações e qualquer outra vantagem patrimonial reconhecida em favor do(a) CONTRATANTE.`),
+    paragrafoTexto(mod, `Parágrafo segundo: Em caso de acordo extrajudicial celebrado antes ou depois do ajuizamento da ação ou da instauração do procedimento administrativo referidos no parágrafo primeiro, os honorários corresponderão a ${pAcordo}% (${extenso(pAcordo)} por cento) adicionais sobre o proveito econômico obtido, cumulativos com o percentual do parágrafo primeiro. Esta cumulatividade não se aplica aos casos de negociação de dívidas.`),
+    paragrafoTexto(mod, `Parágrafo terceiro: Nos casos de negociação de dívidas, renegociação extrajudicial ou defesa em execuções, os honorários corresponderão a ${pExito}% (${extenso(pExito)} por cento) sobre o proveito econômico auferido pelo(a) CONTRATANTE, entendido como a diferença entre o valor original da dívida, atualizado monetariamente, e o valor final pago ou reconhecido, incluindo reduções de principal, juros, multas e demais encargos.`),
+    paragrafoTexto(mod, "Parágrafo quarto: Os honorários de sucumbência eventualmente fixados judicialmente em favor do(a) CONTRATADA pertencem exclusivamente ao(à) advogado(a), nos termos do art. 22 da Lei nº 8.906/94, sendo cumulativos e não compensáveis com os honorários contratuais ora pactuados."),
+    paragrafoTexto(mod, "Parágrafo quinto: Na hipótese de êxito parcial, os honorários contratuais incidirão proporcionalmente sobre o proveito econômico efetivamente obtido pelo(a) CONTRATANTE."),
     paragrafoTexto(mod, "Cláusula 3ª: As custas processuais, salários periciais, ônus sucumbenciais e demais despesas (viagens, fotocópias, taxas, certidões, registros, correspondência, honorários de correspondente etc.) serão totalmente suportadas pelo CONTRATANTE."),
     paragrafoTexto(mod, "Parágrafo único: Se for o caso, haverá ressarcimento de despesas pagas pela CONTRATADA."),
-    paragrafoTexto(mod, "Cláusula 4ª: Na hipótese de pedido de substabelecimento pelo(a) CONTRATANTE, os honorários ainda assim serão devidos integralmente à CONTRATADA, independentemente do motivo do substabelecimento requerido."),
+    paragrafoTexto(mod, "Cláusula 4ª: Na hipótese de revogação do mandato pelo(a) CONTRATANTE, os honorários serão devidos à CONTRATADA proporcionalmente aos serviços já prestados até a data da revogação, independentemente do motivo alegado."),
     paragrafoTexto(mod, "Cláusula 5ª: O presente Contrato configura, para todos os fins de Direito, título executivo extrajudicial líquido, certo e exigível, representando crédito privilegiado na falência, concurso de credores, insolvência civil e liquidação extrajudicial, podendo a execução dos honorários prosseguir nos mesmos autos em que tenham sido prestados os serviços ora contratados, nos termos do que dispõem o art. 24 da Lei 8.906/94 e o art. 784 do Código de Processo Civil (2015)."),
     paragrafoTexto(mod, "Cláusula 6ª: A CONTRATADA se obriga a prestar informações sobre o andamento do feito sempre que solicitado pelo CONTRATANTE."),
     paragrafoTexto(mod, "Cláusula 7ª: O CONTRATANTE fora orientado pela CONTRATADA sobre a obrigação de manter esta informada sobre seus endereços eletrônicos (e-mails) e comercial, além dos telefones para contato, dada a eventual necessidade de comunicação de intimações e providências necessárias cuja intimação é feita na pessoa dos advogados, assumindo a obrigação de, sempre que houver alteração dos mesmos, informar a CONTRATADA por escrito dos novos endereços (físico e eletrônico) e telefones."),
     paragrafoTexto(mod, "Parágrafo único: O CONTRATANTE concorda que, ao manter seus dados de contato atualizados, estes servirão para receber qualquer informação e notificação por parte da CONTRATADA, inclusive sobre renúncia de mandato, sendo que, neste caso, a Advogada ficará responsável pelo processo até o prazo de 10 (dez) dias após o envio do e-mail, carta ou qualquer outra forma de comunicação possível."),
     paragrafoTexto(mod, `Cláusula 8ª: As Partes elegem o Foro da Comarca de ${advogado.cidadeEscritorio || "___________"}, por mais privilegiado que outro possa ser, a fim de dirimir eventuais dúvidas originárias deste Contrato.`),
-    paragrafoTexto(mod, "O presente contrato dispensa a assinatura de testemunhas, conforme estabelecido pela Lei 14.620/2023, uma vez que contratos formalizados eletronicamente não necessitam de assinatura de testemunhas e são considerados títulos executivos extrajudiciais.", { indent: false }),
     paragrafoTexto(mod, "E por estarem as Partes firmes e acordadas, assinam o presente, para que produza um só efeito de direito.", { indent: false }),
     paragrafoCentralizado(mod, localEData(advogado.cidadeEscritorio)),
     new mod.Paragraph({ spacing: { before: 200 }, children: [] }),
@@ -211,6 +243,7 @@ export async function generateContratoHonorariosDocx(
       { nome: cliente.nome, sub: cliente.tipo_pessoa === "juridica" ? `CNPJ: ${cliente.cnpj || ""}` : `CPF: ${cliente.cpf || ""}` },
       { nome: advogado.nome || "", sub: formatOabs(advogado) }
     ),
+    ...blocoTestemunhas(mod),
   ];
 
   await gerarEBaixar(mod, children, nomeArquivoDe(cliente.nome, "contrato_honorarios"), PAGINA_CONTRATO);
