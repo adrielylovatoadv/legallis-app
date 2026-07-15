@@ -73,6 +73,7 @@ export function IniciaisTab() {
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
   const [filtroAnd, setFiltroAnd] = useState("Todos");
+  const [ordenacao, setOrdenacao] = useState<"alfabetica"|"data">("alfabetica");
   const [aba, setAba] = useState<"pendentes"|"novo">("pendentes");
   const [editando, setEditando] = useState<Inicial | null>(null);
   const [protocolando, setProtocolando] = useState<Inicial | null>(null);
@@ -100,7 +101,9 @@ export function IniciaisTab() {
       r = r.filter(i => (i.cliente||"").toLowerCase().includes(b) || (i.reu||"").toLowerCase().includes(b) || (i.objeto||"").toLowerCase().includes(b));
     }
     if (filtroAnd !== "Todos") r = r.filter(i => i.andamento === filtroAnd);
-    return r.sort((a, b) => (normalizeData(a.data) || "9999").localeCompare(normalizeData(b.data) || "9999"));
+    return r.sort((a, b) => ordenacao === "alfabetica"
+      ? (a.cliente || "").localeCompare(b.cliente || "")
+      : (normalizeData(a.data) || "9999").localeCompare(normalizeData(b.data) || "9999"));
   };
 
   const pendentes = filtrar(iniciais.filter(isInicialPendente));
@@ -271,6 +274,10 @@ export function IniciaisTab() {
           <SelectField value={filtroAnd} onChange={e => setFiltroAnd(e.target.value)} style={{ width:"auto" }}>
             <option value="Todos">Andamento: Todos</option>
             {ANDAMENTOS_INICIAL.map(a => <option key={a} value={a}>{a}</option>)}
+          </SelectField>
+          <SelectField value={ordenacao} onChange={e => setOrdenacao(e.target.value as "alfabetica"|"data")} style={{ width:"auto" }}>
+            <option value="alfabetica">Ordenar: Alfabética</option>
+            <option value="data">Ordenar: Data</option>
           </SelectField>
         </div>
       )}
