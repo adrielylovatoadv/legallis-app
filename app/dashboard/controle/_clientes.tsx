@@ -263,19 +263,11 @@ function ClienteCard({ c, advogado, onEdit, onDelete }: {
               <span key={tag} className="text-xs px-1.5 py-0.5 rounded-full" style={{ background:"rgba(201,168,76,0.12)", color:"var(--gold)" }}>{tag}</span>
             ))}
           </div>
-          <p className="text-xs mt-0.5" style={{ color:"var(--text3)" }}>
-            {c.telefone && <span>{c.telefone}</span>}
-            {(c.tipo_pessoa === "juridica" ? c.cnpj : c.cpf) && (
-              <span className="select-text ml-1" style={{ cursor:"text" }} onClick={e => e.stopPropagation()}>
-                · {c.tipo_pessoa === "juridica" ? c.cnpj : c.cpf}
-              </span>
-            )}
-            {c.tipo_aposentadoria && <span> · {c.tipo_aposentadoria}</span>}
-            {badge
-              ? <span className="ml-2 text-[var(--gold)]">{badge}</span>
-              : <span className="ml-2 text-xs px-1.5 py-0.5 rounded" style={{ background:"rgba(107,114,128,0.12)", color:"#9ca3af" }}>sem processos</span>
-            }
-          </p>
+          {(c.tipo_pessoa === "juridica" ? c.cnpj : c.cpf) && (
+            <p className="text-xs mt-0.5 select-text" style={{ color:"var(--text3)", cursor:"text" }} onClick={e => e.stopPropagation()}>
+              {c.tipo_pessoa === "juridica" ? c.cnpj : c.cpf}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button onClick={e => { e.stopPropagation(); onEdit(c); }}
@@ -292,6 +284,12 @@ function ClienteCard({ c, advogado, onEdit, onDelete }: {
         <div className="px-4 pb-4 space-y-4 border-t" style={{ borderColor:"var(--border)" }}>
           {/* Dados pessoais */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-3 text-xs" style={{ color:"var(--text2)" }}>
+            {c.telefone && <div><span style={{ color:"var(--text3)" }}>Telefone: </span>{c.telefone}</div>}
+            {c.tipo_aposentadoria && <div><span style={{ color:"var(--text3)" }}>Aposentadoria: </span>{c.tipo_aposentadoria}</div>}
+            <div>
+              <span style={{ color:"var(--text3)" }}>Processos: </span>
+              {badge || "sem processos"}
+            </div>
             {c.tratamento && <div><span style={{ color:"var(--text3)" }}>Tratamento: </span>{c.tratamento}</div>}
             {c.email && <div><span style={{ color:"var(--text3)" }}>E-mail: </span>{c.email}</div>}
             {c.endereco && <div className="col-span-2"><span style={{ color:"var(--text3)" }}>Endereço: </span>{c.endereco}</div>}
