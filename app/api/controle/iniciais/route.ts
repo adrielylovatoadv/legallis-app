@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import * as iniciaisRepo from "@/lib/repo/iniciais";
+import { normText } from "@/lib/controle";
 import { inicialCreateSchema } from "@/lib/validation/controle";
 import { parseBody } from "@/lib/validation/helpers";
 
@@ -16,11 +17,11 @@ export async function GET(req: NextRequest) {
   let lista = await iniciaisRepo.list(tid);
 
   if (busca) {
-    const b = busca.toLowerCase();
+    const b = normText(busca);
     lista = lista.filter(i =>
-      (i.cliente || "").toLowerCase().includes(b) ||
-      (i.reu || "").toLowerCase().includes(b) ||
-      (i.objeto || "").toLowerCase().includes(b)
+      normText(i.cliente).includes(b) ||
+      normText(i.reu).includes(b) ||
+      normText(i.objeto).includes(b)
     );
   }
   if (andamento) lista = lista.filter(i => i.andamento === andamento);

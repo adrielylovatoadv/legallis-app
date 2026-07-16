@@ -180,22 +180,34 @@ export function fmtData(iso: string): string {
   return `${d}/${m}/${y}`;
 }
 
-export function gcalUrl(p: Processo): string | null {
-  const s = (p.andamento || "").toUpperCase().trim();
-  const isPericia = s === "PERÍCIA" || s === "PERICIA";
-  if (!s.includes("AIJ") && !s.startsWith("AC") && !isPericia) return null;
-  if (!p.data) return null;
-  const dataIso = normalizeData(p.data);
+function buildGcalUrl(titulo: string, detalhe: string, data: string, hora: string): string | null {
+  const dataIso = normalizeData(data);
   if (!dataIso) return null;
   const [y, mo, d] = dataIso.split("-").map(Number);
-  const [h, min] = (p.hora || "08:00").split(":").map(Number);
+  const [h, min] = (hora || "08:00").split(":").map(Number);
   const fmt = (n: number) => String(n).padStart(2, "0");
   const start = `${y}${fmt(mo)}${fmt(d)}T${fmt(h)}${fmt(min)}00`;
   const endMin = min + 30 >= 60 ? min + 30 - 60 : min + 30;
   const endH = min + 30 >= 60 ? h + 1 : h;
   const end = `${y}${fmt(mo)}${fmt(d)}T${fmt(endH)}${fmt(endMin)}00`;
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(titulo)}&dates=${start}/${end}&details=${encodeURIComponent(detalhe)}`;
+}
+
+export function gcalUrl(p: Processo): string | null {
+  const s = (p.andamento || "").toUpperCase().trim();
+  const isPericia = s === "PERÍCIA" || s === "PERICIA";
+  if (!s.includes("AIJ") && !s.startsWith("AC") && !isPericia) return null;
+  if (!p.data) return null;
   const tipo = s.includes("AIJ") ? "AIJ" : s.startsWith("AC") ? "AC" : "PERÍCIA";
   const titulo = `${tipo} ${p.autor} ${p.numero_processo}`.trim();
   const detalhe = `Processo: ${p.numero_processo} | ${p.autor} × ${p.reu} | ${p.objeto}`;
-  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(titulo)}&dates=${start}/${end}&details=${encodeURIComponent(detalhe)}`;
+  return buildGcalUrl(titulo, detalhe, p.data, p.hora);
+}
+
+export function gcalUrlAtendimento(a: Atendimento): string | null {
+  if (!a.data) return null;
+  const titulo = `Atendimento - ${a.cliente}`.trim();
+  const detalhe = [a.forma && `Via ${a.forma}`, a.telefone, a.observacoes].filter(Boolean).join(" | ")
+    || `Atendimento com ${a.cliente}`;
+  return buildGcalUrl(titulo, detalhe, a.data, a.hora);
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import * as atendimentosRepo from "@/lib/repo/atendimentos";
+import { normText } from "@/lib/controle";
 import { atendimentoCreateSchema } from "@/lib/validation/controle";
 import { parseBody } from "@/lib/validation/helpers";
 
@@ -18,8 +19,8 @@ export async function GET(req: NextRequest) {
   let lista = await atendimentosRepo.list(tid);
 
   if (busca) {
-    const b = busca.toLowerCase();
-    lista = lista.filter(a => (a.cliente || "").toLowerCase().includes(b));
+    const b = normText(busca);
+    lista = lista.filter(a => normText(a.cliente).includes(b));
   }
   if (status) lista = lista.filter(a => a.status === status);
   if (forma) lista = lista.filter(a => a.forma === forma);

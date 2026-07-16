@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { normText } from "@/lib/controle";
 
 interface AuditEvent {
   id: string;
@@ -67,7 +68,7 @@ export default function AuditoriaPage() {
 
   const filtered = events.filter(e => {
     const matchTipo = filtroTipo === "Todos" || e.tipo === filtroTipo;
-    const matchBusca = !busca || [e.descricao, e.usuario, e.tipo, e.detalhe].some(v => v?.toLowerCase().includes(busca.toLowerCase()));
+    const matchBusca = !busca || [e.descricao, e.usuario, e.tipo, e.detalhe].some(v => v && normText(v).includes(normText(busca)));
     return matchTipo && matchBusca;
   });
 

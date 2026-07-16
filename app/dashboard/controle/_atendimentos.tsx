@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import {
   getAtendimentos, createAtendimento, updateAtendimento, deleteAtendimento,
   concluirAtendimento, criarProcessoDeAtendimento, getClientes,
-  FORMAS_ATENDIMENTO, STATUS_ATENDIMENTO, badgeStatusAtendimento, normalizeData, fmtData,
+  FORMAS_ATENDIMENTO, STATUS_ATENDIMENTO, badgeStatusAtendimento, normalizeData, normText, fmtData, gcalUrlAtendimento,
   type Atendimento, type Cliente,
 } from "@/lib/controle";
 import { ConfirmModal } from "@/components/ConfirmModal";
@@ -124,7 +124,7 @@ function ConcluirModal({ atendimento, clientes, onClose, onDone }: {
   const [clienteId, setClienteId] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const filtrados = clientes.filter(c => c.nome.toLowerCase().includes(buscaCliente.toLowerCase()));
+  const filtrados = clientes.filter(c => normText(c.nome).includes(normText(buscaCliente)));
 
   const confirmar = async () => {
     setSaving(true);
@@ -232,7 +232,7 @@ export function AtendimentosTab({ onVerCliente }: { onVerCliente?: (nome: string
 
   const filtrar = (lista: Atendimento[]) => {
     let r = lista;
-    if (busca) { const b = busca.toLowerCase(); r = r.filter(a => (a.cliente || "").toLowerCase().includes(b)); }
+    if (busca) { const b = normText(busca); r = r.filter(a => normText(a.cliente).includes(b)); }
     if (filtroStatus !== "Todos") r = r.filter(a => a.status === filtroStatus);
     if (filtroForma !== "Todos") r = r.filter(a => a.forma === filtroForma);
     if (filtroResponsavel !== "Todos") r = r.filter(a => a.responsavel === filtroResponsavel);
@@ -263,6 +263,7 @@ export function AtendimentosTab({ onVerCliente }: { onVerCliente?: (nome: string
     const eHoje = d === hoje;
     const eAmanha = d === amanha;
     const destaque = eHoje ? "#ef4444" : eAmanha ? "#f97316" : undefined;
+    const gcalUrl = gcalUrlAtendimento(a);
     return (
       <div key={a.id} className="flex items-start gap-3 px-4 py-3 rounded-lg flex-wrap"
         style={{ background: eHoje ? "rgba(239,68,68,0.05)" : "var(--surface2)", border: `1px solid ${destaque ? `${destaque}4d` : "var(--border)"}` }}>
@@ -283,6 +284,13 @@ export function AtendimentosTab({ onVerCliente }: { onVerCliente?: (nome: string
             <span className="text-xs tabular-nums whitespace-nowrap font-semibold" style={{ color: destaque || "var(--gold)" }}>
               {fmtData(a.data)}{a.hora && ` ${a.hora}`}
             </span>
+          )}
+          {gcalUrl && (
+            <a href={gcalUrl} target="_blank" rel="noopener noreferrer"
+              className="text-xs px-2 py-1 rounded whitespace-nowrap"
+              style={{ background: "rgba(26,115,232,0.15)", color: "#60a5fa" }}>
+              📅 Google Calendar
+            </a>
           )}
           {a.status === "Agendado" && (
             <button onClick={() => handleIniciar(a.id)} className="text-xs px-2 py-1 rounded font-semibold"

@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
-  getDashboard, marcarOk, fmtData, gcalUrl, badgeAndamento, normalizeData,
+  getDashboard, marcarOk, fmtData, gcalUrl, gcalUrlAtendimento, badgeAndamento, normalizeData,
   ANDAMENTOS_PROCESSO, updateProcesso, badgeStatusAtendimento,
   type DashboardData, type Processo,
 } from "@/lib/controle";
@@ -226,6 +226,35 @@ function VisaoGeral() {
         <MetricCard value={data.total_clientes} label="Clientes Cadastrados" color="#22c55e" />
       </div>
 
+      {/* Atendimentos agendados (resumo) */}
+      {data.atendimentos_agendados.length > 0 && (
+        <Card>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold" style={{ color: "var(--text)" }}>📅 Atendimentos Agendados</h2>
+          </div>
+          <div className="space-y-1.5 max-h-48 overflow-y-auto">
+            {data.atendimentos_agendados.slice(0, 10).map(a => {
+              const url = gcalUrlAtendimento(a);
+              return (
+                <div key={a.id} className="flex items-center gap-3 px-3 py-2 rounded-lg"
+                  style={{ background: "var(--surface2)" }}>
+                  <span className="text-xs font-medium flex-1 truncate" style={{ color: "var(--text)" }}>{a.cliente}</span>
+                  <span className="text-xs whitespace-nowrap" style={{ color: "var(--text3)" }}>{fmtData(a.data)}{a.hora && ` ${a.hora}`}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${badgeStatusAtendimento(a.status)}`}>{a.status}</span>
+                  {url && (
+                    <a href={url} target="_blank" rel="noopener noreferrer"
+                      className="text-xs px-2 py-0.5 rounded whitespace-nowrap"
+                      style={{ background: "rgba(26,115,232,0.15)", color: "#60a5fa" }}>
+                      📅
+                    </a>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
       {/* Cards de prazos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Audiências */}
@@ -290,25 +319,6 @@ function VisaoGeral() {
           )}
         </Card>
       </div>
-
-      {/* Atendimentos agendados (resumo) */}
-      {data.atendimentos_agendados.length > 0 && (
-        <Card>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold" style={{ color: "var(--text)" }}>📅 Atendimentos Agendados</h2>
-          </div>
-          <div className="space-y-1.5 max-h-48 overflow-y-auto">
-            {data.atendimentos_agendados.slice(0, 10).map(a => (
-              <div key={a.id} className="flex items-center gap-3 px-3 py-2 rounded-lg"
-                style={{ background: "var(--surface2)" }}>
-                <span className="text-xs font-medium flex-1 truncate" style={{ color: "var(--text)" }}>{a.cliente}</span>
-                <span className="text-xs whitespace-nowrap" style={{ color: "var(--text3)" }}>{fmtData(a.data)}{a.hora && ` ${a.hora}`}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${badgeStatusAtendimento(a.status)}`}>{a.status}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
     </div>
   );
 }

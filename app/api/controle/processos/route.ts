@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hasControleRestrito } from "@/lib/acl";
 import { isFinalizado } from "@/lib/controle-data";
-import { normalizeData } from "@/lib/controle";
+import { normalizeData, normText } from "@/lib/controle";
 import * as processosRepo from "@/lib/repo/processos";
 import { processoCreateSchema } from "@/lib/validation/controle";
 import { parseBody } from "@/lib/validation/helpers";
@@ -21,12 +21,12 @@ export async function GET(req: NextRequest) {
   let lista = await processosRepo.list(tid);
 
   if (busca) {
-    const b = busca.toLowerCase();
+    const b = normText(busca);
     lista = lista.filter(p =>
-      (p.autor || "").toLowerCase().includes(b) ||
-      (p.reu || "").toLowerCase().includes(b) ||
-      (p.numero_processo || "").toLowerCase().includes(b) ||
-      (p.objeto || "").toLowerCase().includes(b)
+      normText(p.autor).includes(b) ||
+      normText(p.reu).includes(b) ||
+      normText(p.numero_processo).includes(b) ||
+      normText(p.objeto).includes(b)
     );
   }
   if (andamento) lista = lista.filter(p => (p.andamento || "").toUpperCase().includes(andamento.toUpperCase()));

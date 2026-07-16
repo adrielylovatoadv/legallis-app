@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   getIniciais, createInicial, updateInicial, deleteInicial,
-  ANDAMENTOS_INICIAL, isInicialPendente, badgeAndamento, normalizeData, fmtData,
+  ANDAMENTOS_INICIAL, isInicialPendente, badgeAndamento, normalizeData, normText, fmtData,
   type Inicial,
 } from "@/lib/controle";
 import { ConfirmModal } from "@/components/ConfirmModal";
@@ -97,8 +97,8 @@ export function IniciaisTab() {
   const filtrar = (lista: Inicial[]) => {
     let r = lista;
     if (busca) {
-      const b = busca.toLowerCase();
-      r = r.filter(i => (i.cliente||"").toLowerCase().includes(b) || (i.reu||"").toLowerCase().includes(b) || (i.objeto||"").toLowerCase().includes(b));
+      const b = normText(busca);
+      r = r.filter(i => normText(i.cliente).includes(b) || normText(i.reu).includes(b) || normText(i.objeto).includes(b));
     }
     if (filtroAnd !== "Todos") r = r.filter(i => i.andamento === filtroAnd);
     return r.sort((a, b) => ordenacao === "alfabetica"

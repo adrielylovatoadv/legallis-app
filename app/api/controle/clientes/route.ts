@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { normNome, isFinalizado } from "@/lib/controle-data";
+import { normText } from "@/lib/controle";
 import * as clientesRepo from "@/lib/repo/clientes";
 import * as processosRepo from "@/lib/repo/processos";
 import * as iniciaisRepo from "@/lib/repo/iniciais";
@@ -19,11 +20,11 @@ export async function GET(req: NextRequest) {
   let lista = (await clientesRepo.list(tid)).sort((a, b) => a.nome.localeCompare(b.nome));
 
   if (busca) {
-    const b = busca.toLowerCase();
+    const b = normText(busca);
     lista = lista.filter(c =>
-      (c.nome || "").toLowerCase().includes(b) ||
-      (c.cpf || "").toLowerCase().includes(b) ||
-      (c.telefone || "").toLowerCase().includes(b)
+      normText(c.nome).includes(b) ||
+      normText(c.cpf).includes(b) ||
+      normText(c.telefone).includes(b)
     );
   }
 
