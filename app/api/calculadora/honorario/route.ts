@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { calcCorrecaoHonorario } from "@/lib/calc-formulas";
+import { calculateCharge } from "@/lib/calc-formulas";
 import { loadIndicesAsync } from "@/lib/indices-store";
 
 function round2(v: number) { return Math.round(v * 100) / 100; }
@@ -38,9 +38,11 @@ export async function POST(req: NextRequest) {
     }
 
     const idx = await loadIndicesAsync();
-    const result = calcCorrecaoHonorario(valor_causa, dataOrigem, dataCalculo, idx, tribunal);
+    // calculateCharge já aplica correção monetária + juros de mora (mesma regra do
+    // Cumprimento de Sentença), com a mora contada a partir da data de origem por padrão.
+    const result = calculateCharge(valor_causa, dataOrigem, dataCalculo, idx, tribunal);
 
-    const honorario_valor = round2(result.valor_corrigido * (honorarios_pct / 100));
+    const honorario_valor = round2(result.total * (honorarios_pct / 100));
 
     // Período legível
     const fmtDate = (d: Date) => d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
@@ -48,10 +50,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       valor_original: round2(valor_causa),
-      valor_corrigido: result.valor_corrigido,
-      corr_factor: result.corr_factor,
-      variacao_pct: result.variacao_pct,
-      meses_corr: result.meses_corr,
+      valor_corrigido: result.corrected,
+      corr_factor: result.correction_factor,
+      variacao_pct: round2((result.correction_factor - 1) * 100),
+      meses_corr: result.months,
+      juros_pct: result.interest_pct,
+      juros_valor: result.interest_value,
+      valor_total: result.total,
       indice_label: result.indice_label,
       honorarios_pct,
       honorario_valor,

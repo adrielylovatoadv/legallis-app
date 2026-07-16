@@ -28,6 +28,7 @@ interface Summary {
 interface HonorarioResult {
   valor_original: number; valor_corrigido: number; corr_factor: number;
   variacao_pct: number; meses_corr: number; indice_label: string;
+  juros_pct: number; juros_valor: number; valor_total: number;
   honorarios_pct: number; honorario_valor: number;
   periodo: string; numero_processo: string;
 }
@@ -940,7 +941,9 @@ export default function CalculadoraPage() {
             <SummaryRow label="Índice de correção" value={honResult.indice_label} />
             <SummaryRow label="Período" value={`${honResult.meses_corr} mês(es) — ${honResult.periodo}`} />
             <SummaryRow label="Fator acumulado" value={`${honResult.corr_factor.toFixed(6)} (+${honResult.variacao_pct.toFixed(4)}%)`} />
-            <SummaryRow label="Valor corrigido" value={fmtBRL(honResult.valor_corrigido)} highlight />
+            <SummaryRow label="Valor corrigido" value={fmtBRL(honResult.valor_corrigido)} />
+            <SummaryRow label={`Juros de mora (${honResult.juros_pct}%)`} value={fmtBRL(honResult.juros_valor)} />
+            <SummaryRow label="Valor corrigido + juros" value={fmtBRL(honResult.valor_total)} highlight />
             <SummaryRow label={`Percentual de honorário (${honResult.honorarios_pct}%)`} value={fmtBRL(honResult.honorario_valor)} />
           </div>
           <div className="mt-3 flex items-center justify-between rounded-lg px-3 py-2.5"
@@ -949,7 +952,7 @@ export default function CalculadoraPage() {
             <span className="font-bold text-lg tabular-nums" style={{ color: "var(--gold)" }}>{fmtBRL(honResult.honorario_valor)}</span>
           </div>
           <p className="text-xs mt-2" style={{ color: "var(--text3)" }}>
-            Correção: {honResult.indice_label} — sem juros de mora.
+            Correção: {honResult.indice_label}. Juros de mora contados desde a data de origem.
           </p>
           <BotoesExport nome={`honorario-${new Date().toISOString().slice(0,10)}`} doc={{
             titulo: "Execução de Honorário",
@@ -969,6 +972,8 @@ export default function CalculadoraPage() {
                 { label: "Período", valor: `${honResult.meses_corr} mês(es) — ${honResult.periodo}` },
                 { label: "Fator acumulado", valor: honResult.corr_factor.toFixed(6) },
                 { label: "Valor corrigido", valor: fmtBRL(honResult.valor_corrigido) },
+                { label: `Juros de mora (${honResult.juros_pct}%)`, valor: fmtBRL(honResult.juros_valor) },
+                { label: "Valor corrigido + juros", valor: fmtBRL(honResult.valor_total) },
                 { label: `Honorário (${honResult.honorarios_pct}%)`, valor: fmtBRL(honResult.honorario_valor) },
               ],
             }],
