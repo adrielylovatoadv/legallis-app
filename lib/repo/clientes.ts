@@ -47,16 +47,12 @@ export async function get(tenantId: string, id: string): Promise<Cliente | null>
   return rows[0] ? rowToCliente(rows[0]) : null;
 }
 
-export async function create(tenantId: string, input: Omit<Cliente, "id" | "criado_em">): Promise<Cliente> {
-  const row: Cliente = { ...input, id: newId(), criado_em: new Date().toISOString() };
-  if (!hasDb()) {
-    const data = await getDataAsync(tenantId);
-    data.clientes.push(row);
-    await saveDataAsync(data, tenantId);
-    return row;
-  }
+// Constrói (sem executar) o INSERT de um cliente — usado por create() e por rotas que
+// precisam agrupar essa escrita com a de outra entidade numa única transação (ex.:
+// atendimentos/concluir, que cadastra o cliente e vincula o atendimento ao mesmo tempo).
+export function buildCreateStatement(tenantId: string, row: Cliente) {
   const sql = getSql()!;
-  await sql`
+  return sql`
     INSERT INTO clientes (tenant_id, id, nome, telefone, cpf, email, endereco, tipo_aposentadoria, informacoes,
                            senha_gov, senha_serasa, tipo_pessoa, cnpj, tratamento, etiquetas, telefones_adicionais,
                            emails_adicionais, rg, profissao, estado_civil, nacionalidade,
@@ -71,6 +67,17 @@ export async function create(tenantId: string, input: Omit<Cliente, "id" | "cria
             ${encryptField(row.conta || "") || null}, ${row.tipo_conta ?? "corrente"},
             ${encryptField(row.chave_pix || "") || null}, ${row.criado_em})
   `;
+}
+
+export async function create(tenantId: string, input: Omit<Cliente, "id" | "criado_em">): Promise<Cliente> {
+  const row: Cliente = { ...input, id: newId(), criado_em: new Date().toISOString() };
+  if (!hasDb()) {
+    const data = await getDataAsync(tenantId);
+    data.clientes.push(row);
+    await saveDataAsync(data, tenantId);
+    return row;
+  }
+  await buildCreateStatement(tenantId, row);
   return row;
 }
 

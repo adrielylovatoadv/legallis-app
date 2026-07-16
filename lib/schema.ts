@@ -108,6 +108,24 @@ export async function initSchema(sql: Sql): Promise<void> {
   await sql`CREATE INDEX IF NOT EXISTS idx_iniciais_tenant ON iniciais (tenant_id)`;
 
   await sql`
+    CREATE TABLE IF NOT EXISTS atendimentos (
+      tenant_id TEXT NOT NULL, id TEXT NOT NULL,
+      data TEXT NOT NULL DEFAULT '', hora TEXT NOT NULL DEFAULT '',
+      cliente TEXT NOT NULL DEFAULT '', cliente_id TEXT, telefone TEXT NOT NULL DEFAULT '',
+      forma TEXT NOT NULL DEFAULT 'Presencial', observacoes TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'Agendado', responsavel TEXT NOT NULL DEFAULT '',
+      processo_id TEXT,
+      criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      raw JSONB NOT NULL DEFAULT '{}',
+      PRIMARY KEY (tenant_id, id)
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS idx_atendimentos_tenant ON atendimentos (tenant_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_atendimentos_data ON atendimentos (tenant_id, data)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_atendimentos_cliente_id ON atendimentos (tenant_id, cliente_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_atendimentos_status ON atendimentos (tenant_id, status)`;
+
+  await sql`
     CREATE TABLE IF NOT EXISTS finalizados_sem_honor (
       tenant_id TEXT NOT NULL, id TEXT NOT NULL,
       cliente TEXT NOT NULL DEFAULT '', reu TEXT NOT NULL DEFAULT '', processo TEXT NOT NULL DEFAULT '',

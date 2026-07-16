@@ -4,13 +4,14 @@ import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
   getDashboard, marcarOk, fmtData, gcalUrl, badgeAndamento, normalizeData,
-  ANDAMENTOS_PROCESSO, updateProcesso,
+  ANDAMENTOS_PROCESSO, updateProcesso, badgeStatusAtendimento,
   type DashboardData, type Processo,
 } from "@/lib/controle";
 import { ProcessosTab } from "./_processos";
 import { IniciaisTab } from "./_iniciais";
 import { ClientesTab } from "./_clientes";
 import { FinalizadosTab } from "./_finalizados";
+import { AtendimentosTab } from "./_atendimentos";
 import { Card, MetricCard as MetricCardBase } from "@/components/ui";
 import { hasControleRestrito } from "@/lib/acl";
 
@@ -200,6 +201,10 @@ function VisaoGeral() {
 
   if (!data) return <div style={{ color: "var(--text3)" }}>Erro ao carregar dados.</div>;
 
+  const hojeIso = new Date().toISOString().split("T")[0];
+  const atendimentosHoje = data.atendimentos_agendados.filter(a =>
+    normalizeData(a.data) === hojeIso && a.status !== "Concluído" && a.status !== "Cancelado");
+
   const audiencias_hoje = data.prazos_hoje.filter(p =>
     (p.andamento || "").toUpperCase().includes("AIJ") || (p.andamento || "").toUpperCase().includes("AUDIÊNCIA"));
   const outros_hoje = data.prazos_hoje.filter(p => !audiencias_hoje.includes(p));
@@ -217,7 +222,7 @@ function VisaoGeral() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetricCard value={data.prazos_hoje.length} label="Prazos Hoje" color="#f97316" />
         <MetricCard value={data.prazos_3dias.length} label="Alertas — Próx. 3 dias" color="#ef4444" />
-        <MetricCard value={data.iniciais_pendentes.length} label="Iniciais Pendentes" color="#C9A84C" />
+        <MetricCard value={atendimentosHoje.length} label="Atendimentos Hoje" color="#C9A84C" />
         <MetricCard value={data.total_clientes} label="Clientes Cadastrados" color="#22c55e" />
       </div>
 
@@ -286,19 +291,19 @@ function VisaoGeral() {
         </Card>
       </div>
 
-      {/* Iniciais pendentes (resumo) */}
-      {data.iniciais_pendentes.length > 0 && (
+      {/* Atendimentos agendados (resumo) */}
+      {data.atendimentos_agendados.length > 0 && (
         <Card>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold" style={{ color: "var(--text)" }}>📝 Iniciais Pendentes</h2>
+            <h2 className="font-semibold" style={{ color: "var(--text)" }}>📅 Atendimentos Agendados</h2>
           </div>
           <div className="space-y-1.5 max-h-48 overflow-y-auto">
-            {data.iniciais_pendentes.slice(0, 10).map(i => (
-              <div key={i.id} className="flex items-center gap-3 px-3 py-2 rounded-lg"
+            {data.atendimentos_agendados.slice(0, 10).map(a => (
+              <div key={a.id} className="flex items-center gap-3 px-3 py-2 rounded-lg"
                 style={{ background: "var(--surface2)" }}>
-                <span className="text-xs font-medium flex-1 truncate" style={{ color: "var(--text)" }}>{i.cliente}</span>
-                <span className="text-xs truncate" style={{ color: "var(--text3)" }}>{i.reu}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${badgeAndamento(i.andamento)}`}>{i.andamento}</span>
+                <span className="text-xs font-medium flex-1 truncate" style={{ color: "var(--text)" }}>{a.cliente}</span>
+                <span className="text-xs whitespace-nowrap" style={{ color: "var(--text3)" }}>{fmtData(a.data)}{a.hora && ` ${a.hora}`}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${badgeStatusAtendimento(a.status)}`}>{a.status}</span>
               </div>
             ))}
           </div>
@@ -309,22 +314,25 @@ function VisaoGeral() {
 }
 
 // ── Página principal ───────────────────────────────────────────────────────────
-type Tab = "inicio" | "processos" | "iniciais" | "clientes" | "finalizados";
+type Tab = "inicio" | "processos" | "iniciais" | "atendimentos" | "clientes" | "finalizados";
 
 export default function ControlePage() {
   const { data: session } = useSession();
   const restrito = hasControleRestrito(session?.user?.cargo);
   const [tab, setTab] = useState<Tab>("inicio");
-  const effectiveTab: Tab = restrito && tab !== "iniciais" && tab !== "clientes" ? "iniciais" : tab;
+  const [clienteBusca, setClienteBusca] = useState("");
+  const restritoTabs: Tab[] = ["iniciais", "atendimentos", "clientes"];
+  const effectiveTab: Tab = restrito && !restritoTabs.includes(tab) ? "iniciais" : tab;
 
   const ALL_TABS = [
     { id: "inicio", label: "📊 Visão Geral" },
     { id: "processos", label: "⚖️ Processos" },
     { id: "iniciais", label: "📝 Iniciais" },
+    { id: "atendimentos", label: "🗓️ Atendimentos" },
     { id: "clientes", label: "👥 Clientes" },
     { id: "finalizados", label: "✅ Finalizados" },
   ] as const;
-  const TABS = restrito ? ALL_TABS.filter(t => t.id === "iniciais" || t.id === "clientes") : ALL_TABS;
+  const TABS = restrito ? ALL_TABS.filter(t => restritoTabs.includes(t.id)) : ALL_TABS;
 
   const tabStyle = (id: Tab) => ({
     background: effectiveTab === id ? "var(--gold)" : "var(--surface2)",
@@ -355,7 +363,10 @@ export default function ControlePage() {
       {effectiveTab === "inicio" && <VisaoGeral />}
       {effectiveTab === "processos" && <ProcessosTab />}
       {effectiveTab === "iniciais" && <IniciaisTab />}
-      {effectiveTab === "clientes" && <ClientesTab />}
+      {effectiveTab === "atendimentos" && (
+        <AtendimentosTab onVerCliente={nome => { setClienteBusca(nome); setTab("clientes"); }} />
+      )}
+      {effectiveTab === "clientes" && <ClientesTab initialBusca={clienteBusca} />}
       {effectiveTab === "finalizados" && <FinalizadosTab />}
     </div>
   );

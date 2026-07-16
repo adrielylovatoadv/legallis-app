@@ -58,9 +58,19 @@ export interface Inicial {
   data: string; hora: string;
 }
 
+export interface Atendimento {
+  id: string; data: string; hora: string;
+  cliente: string; cliente_id?: string; telefone: string;
+  forma: string; observacoes: string; status: string; responsavel: string;
+  processo_id?: string; criado_em: string;
+}
+
+export const FORMAS_ATENDIMENTO = ["Presencial", "WhatsApp", "Telefone", "Google Meet", "Outro"];
+export const STATUS_ATENDIMENTO = ["Agendado", "Em andamento", "Concluído", "Cancelado"];
+
 export interface DashboardData {
   prazos_hoje: Processo[]; prazos_3dias: Processo[];
-  iniciais_pendentes: Inicial[];
+  atendimentos_agendados: Atendimento[];
   total_clientes: number; total_processos_ativos: number;
 }
 
@@ -83,7 +93,7 @@ export const marcarOk = (id: string) =>
   fetchAPI(`/controle/processos/${id}/ok`, { method: "POST" });
 
 export const getClientes = (params?: Record<string, string>) =>
-  fetchAPI(`/controle/clientes${q(params)}`) as Promise<(Cliente & { _ativos?: Processo[]; _finalizados?: Processo[]; _iniciais?: Inicial[] })[]>;
+  fetchAPI(`/controle/clientes${q(params)}`) as Promise<(Cliente & { _ativos?: Processo[]; _finalizados?: Processo[]; _iniciais?: Inicial[]; _atendimentos?: Atendimento[] })[]>;
 export const createCliente = (c: Omit<Cliente, "id" | "criado_em">) =>
   fetchAPI("/controle/clientes", { method: "POST", ...J, body: JSON.stringify(c) });
 export const updateCliente = (id: string, c: Partial<Cliente>) =>
@@ -99,6 +109,23 @@ export const updateInicial = (id: string, i: Partial<Inicial>) =>
   fetchAPI(`/controle/iniciais/${id}`, { method: "PUT", ...J, body: JSON.stringify(i) });
 export const deleteInicial = (id: string) =>
   fetchAPI(`/controle/iniciais/${id}`, { method: "DELETE" });
+
+export const getAtendimentos = (params?: Record<string, string>) =>
+  fetchAPI(`/controle/atendimentos${q(params)}`) as Promise<Atendimento[]>;
+export const createAtendimento = (a: Omit<Atendimento, "id" | "criado_em">) =>
+  fetchAPI("/controle/atendimentos", { method: "POST", ...J, body: JSON.stringify(a) });
+export const updateAtendimento = (id: string, a: Partial<Atendimento>) =>
+  fetchAPI(`/controle/atendimentos/${id}`, { method: "PUT", ...J, body: JSON.stringify(a) });
+export const deleteAtendimento = (id: string) =>
+  fetchAPI(`/controle/atendimentos/${id}`, { method: "DELETE" });
+export const concluirAtendimento = (
+  id: string,
+  body: { acao: "cadastrar_cliente"; nome?: string; telefone?: string }
+    | { acao: "vincular_cliente"; clienteId: string }
+    | { acao: "nenhum" }
+) => fetchAPI(`/controle/atendimentos/${id}/concluir`, { method: "POST", ...J, body: JSON.stringify(body) });
+export const criarProcessoDeAtendimento = (id: string, body?: { reu?: string; objeto?: string }) =>
+  fetchAPI(`/controle/atendimentos/${id}/criar-processo`, { method: "POST", ...J, body: JSON.stringify(body || {}) });
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -123,6 +150,15 @@ export function badgeAndamento(status: string): string {
   if (s.includes("EMENDAR") || s.includes("LIMINAR")) return "bg-yellow-500/15 text-yellow-400";
   if (s.includes("ACORDO")) return "bg-emerald-500/15 text-emerald-400";
   if (s.includes("ARQUIVADO") || s.includes("DESISTÊNCIA")) return "bg-gray-500/15 text-gray-400";
+  return "bg-[var(--surface2)] text-[var(--text2)]";
+}
+
+export function badgeStatusAtendimento(status: string): string {
+  const s = (status || "").toUpperCase();
+  if (s === "AGENDADO") return "bg-blue-500/15 text-blue-400";
+  if (s === "EM ANDAMENTO") return "bg-yellow-500/15 text-yellow-400";
+  if (s === "CONCLUÍDO" || s === "CONCLUIDO") return "bg-green-500/15 text-green-400";
+  if (s === "CANCELADO") return "bg-gray-500/15 text-gray-400";
   return "bg-[var(--surface2)] text-[var(--text2)]";
 }
 

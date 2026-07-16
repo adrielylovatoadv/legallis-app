@@ -4,6 +4,7 @@ import { normNome, isFinalizado } from "@/lib/controle-data";
 import * as clientesRepo from "@/lib/repo/clientes";
 import * as processosRepo from "@/lib/repo/processos";
 import * as iniciaisRepo from "@/lib/repo/iniciais";
+import * as atendimentosRepo from "@/lib/repo/atendimentos";
 import { clienteCreateSchema } from "@/lib/validation/controle";
 import { parseBody } from "@/lib/validation/helpers";
 
@@ -31,14 +32,19 @@ export async function GET(req: NextRequest) {
   const sanitize = ({ senha_gov: _g, senha_serasa: _s, conta: _c, chave_pix: _p, ...rest }: typeof lista[number]) => rest;
 
   if (comProcessos) {
-    const [processos, iniciaisTodas] = await Promise.all([processosRepo.list(tid), iniciaisRepo.list(tid)]);
+    const [processos, iniciaisTodas, atendimentosTodos] = await Promise.all([
+      processosRepo.list(tid), iniciaisRepo.list(tid), atendimentosRepo.list(tid),
+    ]);
     return NextResponse.json(lista.map(c => {
       const cn = normNome(c.nome);
       const procs = processos.filter(p => normNome(p.autor || "").includes(cn));
       const ativos = procs.filter(p => !isFinalizado(p));
       const finalizados = procs.filter(p => isFinalizado(p));
       const iniciais = iniciaisTodas.filter(i => normNome(i.cliente || "").includes(cn));
-      return { ...sanitize(c), _ativos: ativos, _finalizados: finalizados, _iniciais: iniciais };
+      const atendimentos = atendimentosTodos.filter(a =>
+        a.cliente_id ? a.cliente_id === c.id : normNome(a.cliente || "").includes(cn)
+      );
+      return { ...sanitize(c), _ativos: ativos, _finalizados: finalizados, _iniciais: iniciais, _atendimentos: atendimentos };
     }));
   }
 

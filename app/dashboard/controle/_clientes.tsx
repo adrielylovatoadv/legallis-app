@@ -4,8 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
   getClientes, createCliente, updateCliente, deleteCliente,
-  fmtData, badgeAndamento, normalizeData, isInicialPendente,
-  type Cliente, type Processo, type Inicial,
+  fmtData, badgeAndamento, normalizeData, isInicialPendente, badgeStatusAtendimento,
+  type Cliente, type Processo, type Inicial, type Atendimento,
 } from "@/lib/controle";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import {
@@ -15,7 +15,7 @@ import {
 } from "@/lib/document-templates";
 import { Input as Inp, Select as Sel, FieldLabel as Lbl } from "@/components/ui";
 
-type ClienteComProcs = Cliente & { _ativos?: Processo[]; _finalizados?: Processo[]; _iniciais?: Inicial[] };
+type ClienteComProcs = Cliente & { _ativos?: Processo[]; _finalizados?: Processo[]; _iniciais?: Inicial[]; _atendimentos?: Atendimento[] };
 
 interface UserProfile {
   id?: string; name?: string; oab?: Array<{ state: string; number: string }>;
@@ -225,6 +225,7 @@ function ClienteCard({ c, advogado, onEdit, onDelete }: {
   }
   const ativos = c._ativos || [];
   const finalizados = c._finalizados || [];
+  const atendimentos = c._atendimentos || [];
   const iniciais = c._iniciais || [];
   const iniciaisPendentes = iniciais.filter(isInicialPendente);
 
@@ -404,17 +405,39 @@ function ClienteCard({ c, advogado, onEdit, onDelete }: {
               </div>
             </div>
           )}
+
+          {/* Histórico de Atendimentos */}
+          {atendimentos.length > 0 && (
+            <div>
+              <p className="text-xs uppercase tracking-wider mb-2 font-semibold" style={{ color:"var(--text3)" }}>Histórico de Atendimentos</p>
+              <div className="space-y-1.5">
+                {atendimentos
+                  .sort((a,b) => (normalizeData(b.data)||"").localeCompare(normalizeData(a.data)||""))
+                  .map(a => (
+                    <div key={a.id} className="flex items-start gap-2 text-xs p-2 rounded-lg" style={{ background:"var(--surface2)" }}>
+                      <span>🗓️</span>
+                      <div className="min-w-0 flex-1">
+                        {a.data && <span className="whitespace-nowrap" style={{ color:"var(--text3)" }}>{fmtData(a.data)}{a.hora && ` ${a.hora}`}</span>}
+                        {a.observacoes && <span style={{ color:"var(--text2)" }}> — {a.observacoes.slice(0,60)}</span>}
+                        {a.responsavel && <span className="ml-2" style={{ color:"var(--text3)" }}>👤 {a.responsavel}</span>}
+                      </div>
+                      <span className={`px-1.5 py-0.5 rounded whitespace-nowrap ${badgeStatusAtendimento(a.status)}`}>{a.status}</span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-export function ClientesTab() {
+export function ClientesTab({ initialBusca }: { initialBusca?: string } = {}) {
   const { data: session } = useSession();
   const [clientes, setClientes] = useState<ClienteComProcs[]>([]);
   const [loading, setLoading] = useState(true);
-  const [busca, setBusca] = useState("");
+  const [busca, setBusca] = useState(initialBusca ?? "");
   const [editando, setEditando] = useState<Cliente | null>(null);
   const [novoAberto, setNovoAberto] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);

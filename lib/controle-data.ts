@@ -33,6 +33,13 @@ export interface Inicial {
   protocolo?: { numero_processo: string; data_protocolo: string; observacoes: string; registrado_por: string; registrado_em: string };
 }
 
+export interface Atendimento {
+  id: string; data: string; hora: string;
+  cliente: string; cliente_id?: string; telefone: string;
+  forma: string; observacoes: string; status: string; responsavel: string;
+  processo_id?: string; criado_em: string;
+}
+
 export interface FinalizadoSemHonor {
   id?: string; cliente: string; reu: string; processo: string; objeto: string;
   data_fin: string; motivo: string;
@@ -118,6 +125,7 @@ export interface ControleData {
   processos: Processo[];
   clientes: Cliente[];
   iniciais: Inicial[];
+  atendimentos: Atendimento[];
   finalizados_externos_sem_honor: FinalizadoSemHonor[];
   finalizados_externos_acordos: FinalizadoAcordo[];
   finalizados_execucao: FinalizadoExecucao[];
@@ -152,6 +160,10 @@ function parseRaw(d: Partial<ControleData>): ControleData {
       ...{ reu: "", objeto: "", responsavel: "", observacoes: "", data: "", hora: "" },
       ...i,
     })),
+    atendimentos: ((d as ControleData).atendimentos || []).map(a => ({
+      ...{ telefone: "", forma: "Presencial", observacoes: "", status: "Agendado", responsavel: "" },
+      ...a,
+    })),
     // Backfill de id por índice para registros antigos sem id (mesma técnica já usada em
     // lib/financeiro-data.ts para acordos/execucoes/honorarios_iniciais).
     finalizados_externos_sem_honor: (d.finalizados_externos_sem_honor || []).map((f, i) => ({ ...f, id: f.id || String(i) })),
@@ -173,7 +185,7 @@ function parseRaw(d: Partial<ControleData>): ControleData {
 
 function emptyData(): ControleData {
   return {
-    processos: [], clientes: [], iniciais: [], finalizados_externos_sem_honor: [], finalizados_externos_acordos: [],
+    processos: [], clientes: [], iniciais: [], atendimentos: [], finalizados_externos_sem_honor: [], finalizados_externos_acordos: [],
     finalizados_execucao: [], redesignacoes: [], tarefas: [], feriados_municipais: [], certificados: [], publicacoes: [],
   };
 }

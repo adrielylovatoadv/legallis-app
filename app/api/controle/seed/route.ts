@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
     processos: body.processos || [],
     clientes: body.clientes || [],
     iniciais: body.iniciais || [],
+    atendimentos: body.atendimentos || [],
     finalizados_externos_sem_honor: body.finalizados_externos_sem_honor || [],
     finalizados_externos_acordos: body.finalizados_externos_acordos || [],
     finalizados_execucao: body.finalizados_execucao || [],

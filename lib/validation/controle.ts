@@ -58,6 +58,20 @@ export const inicialCreateSchema = z.object({
 });
 export const inicialUpdateSchema = inicialCreateSchema.partial();
 
+export const atendimentoCreateSchema = z.object({
+  data: z.string().trim().default(""),
+  hora: z.string().trim().default(""),
+  cliente: z.string().trim().min(1, "Cliente é obrigatório"),
+  cliente_id: z.string().trim().optional(),
+  telefone: z.string().trim().default(""),
+  forma: z.string().trim().default("Presencial"),
+  observacoes: z.string().trim().default(""),
+  status: z.string().trim().default("Agendado"),
+  responsavel: z.string().trim().default(""),
+  processo_id: z.string().trim().optional(),
+});
+export const atendimentoUpdateSchema = atendimentoCreateSchema.partial();
+
 export const tarefaCreateSchema = z.object({
   titulo: z.string().trim().min(1, "Título é obrigatório"),
   descricao: z.string().trim().default(""),
