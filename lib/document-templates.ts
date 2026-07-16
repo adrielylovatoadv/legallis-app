@@ -52,6 +52,23 @@ function qualificacaoAdvogado(adv: AdvogadoDoc): string {
   return `${adv.nome || "___________"}, advogado(a), inscrito(a) na Ordem dos Advogados do Brasil ${formatOabs(adv)}${escritorio}`;
 }
 
+function qualificacaoAdvogados(advs: AdvogadoDoc[]): string {
+  const lista = advs.length > 0 ? advs : [{}];
+  const textos = lista.map(qualificacaoAdvogado);
+  if (textos.length === 1) return textos[0];
+  return `${textos.slice(0, -1).join("; ")}; e ${textos[textos.length - 1]}`;
+}
+
+function nomesAdvogados(advs: AdvogadoDoc[]): string {
+  const nomes = advs.map(a => a.nome || "___________");
+  if (nomes.length <= 1) return nomes[0] || "___________";
+  return `${nomes.slice(0, -1).join(", ")} e ${nomes[nomes.length - 1]}`;
+}
+
+function oabsAdvogadosResumo(advs: AdvogadoDoc[]): string {
+  return advs.map(formatOabs).join(" · ");
+}
+
 function localEData(cidade?: string): string {
   const hoje = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
   return `${cidade || "___________"}, ${hoje}.`;
@@ -207,15 +224,15 @@ function nomeArquivoDe(nome: string, prefixo: string) {
 
 // ── Procuração "Ad Judicia" ──────────────────────────────────────────────────
 
-export async function generateProcuracaoDocx(cliente: ClienteDoc, advogado: AdvogadoDoc) {
+export async function generateProcuracaoDocx(cliente: ClienteDoc, advogados: AdvogadoDoc[]) {
   const mod = await criarDoc(await import("docx"));
 
   const children = [
     paragrafoTitulo(mod, 'PROCURAÇÃO "AD JUDICIA"'),
     paragrafoTexto(mod,
-      `${qualificacaoCliente(cliente)}, nomeia e constitui ${qualificacaoAdvogado(advogado)}, a quem confere amplos poderes para o foro em geral, inclusive os da cláusula "ad judicia", e mais os poderes de desistir, transigir, firmar compromisso, acordar, receber e dar quitação, substabelecer, com ou sem reservas de iguais poderes, para em qualquer juízo, instância, ou tribunal, representar e defender os direitos e interesses do(a) outorgante no foro em geral, podendo propor contra quem de direito as ações competentes, defendê-lo(a) nas que lhe forem movidas, seguindo umas e outras até final decisão, usando dos recursos legais, produzindo provas, podendo ainda, requerer em seu nome pedido de Assistência Judiciária Gratuita, variar de ações, requerer medidas preventivas, preparatórias e incidentes, praticar todos os atos necessários ao bom, fiel e cabal cumprimento deste mandato em todos os processos judiciais onde seja parte, tanto autor(a) como ré(u) em especial, para`
+      `${qualificacaoCliente(cliente)}, nomeia e constitui ${qualificacaoAdvogados(advogados)}, a quem confere amplos poderes para o foro em geral, inclusive os da cláusula "ad judicia", e mais os poderes de desistir, transigir, firmar compromisso, acordar, receber e dar quitação, substabelecer, com ou sem reservas de iguais poderes, para em qualquer juízo, instância, ou tribunal, representar e defender os direitos e interesses do(a) outorgante no foro em geral, podendo propor contra quem de direito as ações competentes, defendê-lo(a) nas que lhe forem movidas, seguindo umas e outras até final decisão, usando dos recursos legais, produzindo provas, podendo ainda, requerer em seu nome pedido de Assistência Judiciária Gratuita, variar de ações, requerer medidas preventivas, preparatórias e incidentes, praticar todos os atos necessários ao bom, fiel e cabal cumprimento deste mandato em todos os processos judiciais onde seja parte, tanto autor(a) como ré(u) em especial, para`
     ),
-    paragrafoCentralizado(mod, localEData(advogado.cidadeEscritorio)),
+    paragrafoCentralizado(mod, localEData(advogados[0]?.cidadeEscritorio)),
     ...blocoAssinaturaUnica(mod, cliente.nome),
   ];
 
@@ -226,7 +243,7 @@ export async function generateProcuracaoDocx(cliente: ClienteDoc, advogado: Advo
 
 export async function generateContratoHonorariosDocx(
   cliente: ClienteDoc,
-  advogado: AdvogadoDoc,
+  advogados: AdvogadoDoc[],
   opts: { percentualExito?: number; percentualAcordo?: number } = {}
 ) {
   const mod = await criarDoc(await import("docx"));
@@ -239,7 +256,7 @@ export async function generateContratoHonorariosDocx(
     paragrafoContrato(mod, "Pelo presente instrumento particular e na melhor forma de direito, as partes, de um lado;", { indent: false }),
     paragrafoContrato(mod, `CONTRATANTE: ${qualificacaoCliente(cliente)};`, { indent: false }),
     paragrafoContrato(mod, "E, de outro lado;", { indent: false }),
-    paragrafoContrato(mod, `CONTRATADA: ${qualificacaoAdvogado(advogado)};`, { indent: false }),
+    paragrafoContrato(mod, `CONTRATADA: ${qualificacaoAdvogados(advogados)};`, { indent: false }),
     paragrafoContrato(mod,
       'Sendo o CONTRATANTE e a CONTRATADA doravante designados, individualmente, como "Parte" e, em conjunto, como "Partes"; Resolvem, de comum acordo, firmar o presente Contrato de Prestação de Serviços e Honorários Advocatícios ("Contrato"), mediante as seguintes cláusulas e condições:',
       { indent: false }
@@ -258,13 +275,13 @@ export async function generateContratoHonorariosDocx(
     clausulaContrato(mod, "Cláusula 6ª:", " A CONTRATADA se obriga a prestar informações sobre o andamento do feito sempre que solicitado pelo CONTRATANTE."),
     clausulaContrato(mod, "Cláusula 7ª:", " O CONTRATANTE fora orientado pela CONTRATADA sobre a obrigação de manter esta informada sobre seus endereços eletrônicos (e-mails) e comercial, além dos telefones para contato, dada a eventual necessidade de comunicação de intimações e providências necessárias cuja intimação é feita na pessoa dos advogados, assumindo a obrigação de, sempre que houver alteração dos mesmos, informar a CONTRATADA por escrito dos novos endereços (físico e eletrônico) e telefones."),
     clausulaContrato(mod, "Parágrafo único:", " O CONTRATANTE concorda que, ao manter seus dados de contato atualizados, estes servirão para receber qualquer informação e notificação por parte da CONTRATADA, inclusive sobre renúncia de mandato, sendo que, neste caso, a Advogada ficará responsável pelo processo até o prazo de 10 (dez) dias após o envio do e-mail, carta ou qualquer outra forma de comunicação possível."),
-    clausulaContrato(mod, "Cláusula 8ª:", ` As Partes elegem o Foro da Comarca de ${advogado.cidadeEscritorio || "___________"}, por mais privilegiado que outro possa ser, a fim de dirimir eventuais dúvidas originárias deste Contrato.`),
+    clausulaContrato(mod, "Cláusula 8ª:", ` As Partes elegem o Foro da Comarca de ${advogados[0]?.cidadeEscritorio || "___________"}, por mais privilegiado que outro possa ser, a fim de dirimir eventuais dúvidas originárias deste Contrato.`),
     paragrafoContrato(mod, "E por estarem as Partes firmes e acordadas, assinam o presente, para que produza um só efeito de direito.", { indent: false }),
-    paragrafoContrato(mod, localEData(advogado.cidadeEscritorio), { indent: false, align: "center" }),
+    paragrafoContrato(mod, localEData(advogados[0]?.cidadeEscritorio), { indent: false, align: "center" }),
     new mod.Paragraph({ spacing: { before: 200 }, children: [] }),
     blocoAssinaturaDupla(mod,
       { nome: cliente.nome, sub: cliente.tipo_pessoa === "juridica" ? `CNPJ: ${cliente.cnpj || ""}` : `CPF: ${cliente.cpf || ""}` },
-      { nome: advogado.nome || "", sub: formatOabs(advogado) }
+      { nome: nomesAdvogados(advogados), sub: oabsAdvogadosResumo(advogados) }
     ),
     ...blocoTestemunhas(mod),
   ];
@@ -274,7 +291,7 @@ export async function generateContratoHonorariosDocx(
 
 // ── Declaração de Isenção do Imposto de Renda ────────────────────────────────
 
-export async function generateDeclaracaoIsencaoIRDocx(cliente: ClienteDoc, advogado: AdvogadoDoc) {
+export async function generateDeclaracaoIsencaoIRDocx(cliente: ClienteDoc, advogados: AdvogadoDoc[]) {
   const mod = await criarDoc(await import("docx"));
 
   const children = [
@@ -282,7 +299,7 @@ export async function generateDeclaracaoIsencaoIRDocx(cliente: ClienteDoc, advog
     paragrafoTexto(mod,
       `${qualificacaoCliente(cliente)}, DECLARO ser isento(a) da apresentação da Declaração do Imposto de Renda Pessoa Física (DIRPF) por não incorrer em nenhuma das hipóteses de obrigatoriedade estabelecidas pelas Instruções Normativas (IN) da Receita Federal do Brasil (RFB). Esta declaração está em conformidade com a IN RFB nº 1548/2015 e a Lei nº 7.115/83. Declaro ainda, sob as penas da lei, serem verdadeiras todas as informações acima prestadas.`
     ),
-    paragrafoCentralizado(mod, localEData(advogado.cidadeEscritorio)),
+    paragrafoCentralizado(mod, localEData(advogados[0]?.cidadeEscritorio)),
     ...blocoAssinaturaUnica(mod, cliente.nome),
   ];
 
@@ -291,7 +308,7 @@ export async function generateDeclaracaoIsencaoIRDocx(cliente: ClienteDoc, advog
 
 // ── Declaração de Hipossuficiência ───────────────────────────────────────────
 
-export async function generateDeclaracaoHipossuficienciaDocx(cliente: ClienteDoc, advogado: AdvogadoDoc) {
+export async function generateDeclaracaoHipossuficienciaDocx(cliente: ClienteDoc, advogados: AdvogadoDoc[]) {
   const mod = await criarDoc(await import("docx"));
 
   const children = [
@@ -300,7 +317,7 @@ export async function generateDeclaracaoHipossuficienciaDocx(cliente: ClienteDoc
       `${qualificacaoCliente(cliente)}; declaro, sob as penas da lei, para fins de obtenção dos benefícios da justiça gratuita, que não possuo condições financeiras de arcar com as custas processuais e demais despesas do processo, sem prejuízo do meu próprio sustento ou de minha família.`
     ),
     paragrafoTexto(mod, "Por ser a expressão da verdade, firmo a presente declaração para que produza os efeitos legais cabíveis."),
-    paragrafoCentralizado(mod, localEData(advogado.cidadeEscritorio)),
+    paragrafoCentralizado(mod, localEData(advogados[0]?.cidadeEscritorio)),
     ...blocoAssinaturaUnica(mod, cliente.nome),
   ];
 

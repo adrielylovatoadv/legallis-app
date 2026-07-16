@@ -182,7 +182,12 @@ function TarefaCard({ t, onEdit, onMove }: {
   const dPrazo = normalizeData(t.prazo || "");
   const hoje = new Date().toISOString().split("T")[0];
   const diasAte = dPrazo ? Math.floor((new Date(dPrazo).getTime() - new Date(hoje).getTime()) / 86400000) : null;
-  const corPrazo = diasAte !== null ? (diasAte <= 0 ? "#ef4444" : diasAte <= 3 ? "#f97316" : "var(--text3)") : undefined;
+  // Tarefa já em andamento ou concluída: não faz sentido continuar marcando como atrasada.
+  const emAndamentoOuConcluido = t.status === "fazendo" || t.status === "concluido";
+  const atrasada = diasAte !== null && diasAte < 0 && !emAndamentoOuConcluido;
+  const corPrazo = diasAte !== null
+    ? (atrasada || diasAte === 0 ? "#ef4444" : diasAte > 0 && diasAte <= 3 ? "#f97316" : "var(--text3)")
+    : undefined;
 
   return (
     <div onClick={() => onEdit(t)}
@@ -196,7 +201,11 @@ function TarefaCard({ t, onEdit, onMove }: {
       {dPrazo && (
         <p className="text-xs mt-1 font-semibold" style={{ color: corPrazo }}>
           📅 {fmtData(t.prazo || "")}
-          {diasAte !== null && (diasAte < 0 ? ` (atrasada ${Math.abs(diasAte)}d)` : diasAte === 0 ? " (hoje!)" : ` (${diasAte}d)`)}
+          {diasAte !== null && (
+            diasAte < 0
+              ? (atrasada ? ` (atrasada ${Math.abs(diasAte)}d)` : "")
+              : diasAte === 0 ? " (hoje!)" : ` (${diasAte}d)`
+          )}
         </p>
       )}
       <div className="flex gap-1 mt-2" onClick={e => e.stopPropagation()}>

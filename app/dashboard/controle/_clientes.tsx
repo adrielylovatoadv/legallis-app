@@ -152,17 +152,17 @@ function ClienteForm({ initial, onSave, onCancel }: {
 
 type TipoDocumento = "procuracao" | "contrato" | "isencao_ir" | "hipossuficiencia";
 
-function GerarDocumentoMenu({ cliente, advogado }: { cliente: Cliente; advogado: AdvogadoDoc }) {
+function GerarDocumentoMenu({ cliente, advogados }: { cliente: Cliente; advogados: AdvogadoDoc[] }) {
   const [gerando, setGerando] = useState<TipoDocumento | null>(null);
   const [erro, setErro] = useState("");
 
   const gerar = async (tipo: TipoDocumento) => {
     setGerando(tipo); setErro("");
     try {
-      if (tipo === "procuracao") await generateProcuracaoDocx(cliente, advogado);
-      else if (tipo === "contrato") await generateContratoHonorariosDocx(cliente, advogado);
-      else if (tipo === "isencao_ir") await generateDeclaracaoIsencaoIRDocx(cliente, advogado);
-      else await generateDeclaracaoHipossuficienciaDocx(cliente, advogado);
+      if (tipo === "procuracao") await generateProcuracaoDocx(cliente, advogados);
+      else if (tipo === "contrato") await generateContratoHonorariosDocx(cliente, advogados);
+      else if (tipo === "isencao_ir") await generateDeclaracaoIsencaoIRDocx(cliente, advogados);
+      else await generateDeclaracaoHipossuficienciaDocx(cliente, advogados);
     } catch { setErro("Erro ao gerar documento."); }
     finally { setGerando(null); }
   };
@@ -185,9 +185,9 @@ function GerarDocumentoMenu({ cliente, advogado }: { cliente: Cliente; advogado:
   );
 }
 
-function ClienteCard({ c, advogado, onEdit, onDelete }: {
+function ClienteCard({ c, advogados, onEdit, onDelete }: {
   c: ClienteComProcs;
-  advogado: AdvogadoDoc;
+  advogados: AdvogadoDoc[];
   onEdit: (c: Cliente) => void;
   onDelete: (id: string) => void;
 }) {
@@ -338,7 +338,7 @@ function ClienteCard({ c, advogado, onEdit, onDelete }: {
           )}
 
           {/* Gerar documento */}
-          <GerarDocumentoMenu cliente={c} advogado={advogado} />
+          <GerarDocumentoMenu cliente={c} advogados={advogados} />
 
           {/* Informações */}
           {c.informacoes && (
@@ -440,7 +440,7 @@ export function ClientesTab({ initialBusca }: { initialBusca?: string } = {}) {
   const [novoAberto, setNovoAberto] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [colegas, setColegas] = useState<UserProfile[]>([]);
-  const [advogadoSelecionadoId, setAdvogadoSelecionadoId] = useState<string>("");
+  const [advogadoSelecionadoIds, setAdvogadoSelecionadoIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -450,7 +450,7 @@ export function ClientesTab({ initialBusca }: { initialBusca?: string } = {}) {
           if (d) {
             setUserProfile(d);
             // usa o advogado padrão salvo na empresa (Configurações > Empresa), ou o próprio usuário
-            setAdvogadoSelecionadoId(d.company?.defaultPdfSignerId ?? d.id);
+            setAdvogadoSelecionadoIds([d.company?.defaultPdfSignerId ?? d.id]);
           }
         })
         .catch(() => {});
@@ -461,13 +461,16 @@ export function ClientesTab({ initialBusca }: { initialBusca?: string } = {}) {
     }
   }, [session?.user?.id]);
 
-  const advogadoPerfil = colegas.find(u => u.id === advogadoSelecionadoId) ?? userProfile;
-  const advogadoInfo: AdvogadoDoc = advogadoPerfil ? {
-    nome: advogadoPerfil.name,
-    escritorio: advogadoPerfil.company?.name,
-    enderecoEscritorio: advogadoPerfil.company?.address,
-    oabs: advogadoPerfil.oab?.map(o => ({ estado: o.state, numero: o.number })),
-  } : {};
+  const advogadosPerfis = advogadoSelecionadoIds
+    .map(id => colegas.find(u => u.id === id))
+    .filter((u): u is UserProfile => !!u);
+  const advogadosInfo: AdvogadoDoc[] = (advogadosPerfis.length > 0 ? advogadosPerfis : userProfile ? [userProfile] : [])
+    .map(perfil => ({
+      nome: perfil.name,
+      escritorio: perfil.company?.name,
+      enderecoEscritorio: perfil.company?.address,
+      oabs: perfil.oab?.map(o => ({ estado: o.state, numero: o.number })),
+    }));
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -504,25 +507,32 @@ export function ClientesTab({ initialBusca }: { initialBusca?: string } = {}) {
       {colegas.length > 1 && (
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-xs font-medium uppercase tracking-wider flex-shrink-0" style={{ color: "var(--text3)" }}>
-            Advogado nos documentos:
+            Advogado(s) nos documentos:
           </span>
           <div className="flex flex-wrap gap-2">
-            {colegas.map(u => (
-              <button
-                key={u.id}
-                onClick={() => setAdvogadoSelecionadoId(u.id ?? "")}
-                className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
-                style={{
-                  background: advogadoSelecionadoId === u.id ? "rgba(201,168,76,0.15)" : "var(--surface2)",
-                  color: advogadoSelecionadoId === u.id ? "var(--gold)" : "var(--text3)",
-                  border: `1px solid ${advogadoSelecionadoId === u.id ? "var(--gold)" : "var(--border)"}`,
-                }}>
-                {u.name}
-                {u.id === userProfile?.id && (
-                  <span className="ml-1.5 text-xs opacity-60">(você)</span>
-                )}
-              </button>
-            ))}
+            {colegas.map(u => {
+              const selecionado = advogadoSelecionadoIds.includes(u.id ?? "");
+              return (
+                <button
+                  key={u.id}
+                  onClick={() => setAdvogadoSelecionadoIds(prev =>
+                    prev.includes(u.id ?? "")
+                      ? (prev.length > 1 ? prev.filter(id => id !== u.id) : prev)
+                      : [...prev, u.id ?? ""]
+                  )}
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+                  style={{
+                    background: selecionado ? "rgba(201,168,76,0.15)" : "var(--surface2)",
+                    color: selecionado ? "var(--gold)" : "var(--text3)",
+                    border: `1px solid ${selecionado ? "var(--gold)" : "var(--border)"}`,
+                  }}>
+                  {selecionado ? "✓ " : ""}{u.name}
+                  {u.id === userProfile?.id && (
+                    <span className="ml-1.5 text-xs opacity-60">(você)</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -538,7 +548,7 @@ export function ClientesTab({ initialBusca }: { initialBusca?: string } = {}) {
         : (
           <div className="space-y-2">
             {clientes.map(c => (
-              <ClienteCard key={c.id} c={c} advogado={advogadoInfo}
+              <ClienteCard key={c.id} c={c} advogados={advogadosInfo}
                 onEdit={c => { setEditando(c); setNovoAberto(false); window.scrollTo({ top: 0, behavior:"smooth" }); }}
                 onDelete={handleDelete} />
             ))}
