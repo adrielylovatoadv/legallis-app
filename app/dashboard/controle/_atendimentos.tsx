@@ -331,7 +331,10 @@ export function AtendimentosTab({ onVerCliente }: { onVerCliente?: (nome: string
       : <div className="space-y-2">{lista.map(renderLinha)}</div>
   );
 
-  const AgendaView = () => {
+  // Função comum (não componente JSX) para casar com o padrão de renderLista/renderLinha acima —
+  // usar <AgendaView /> recriaria o "componente" a cada render, forçando o React a desmontar e
+  // remontar toda a subárvore em vez de só atualizar o que mudou.
+  const renderAgenda = () => {
     const doDia = (iso: string) => atendimentos.filter(a => normalizeData(a.data) === iso)
       .sort((a, b) => (a.hora || "").localeCompare(b.hora || ""));
 
@@ -489,7 +492,7 @@ export function AtendimentosTab({ onVerCliente }: { onVerCliente?: (nome: string
               </button>
             ))}
           </div>
-          <AgendaView />
+          {renderAgenda()}
         </div>
       )}
     </div>

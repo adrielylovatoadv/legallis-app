@@ -137,7 +137,7 @@ function FormacaoRapida({ onGerar }: {
     if (!valor) return;
     const lancamentos: { data: string; valor: string }[] = [];
 
-    let dataBase = dataInicial ? new Date(dataInicial + "T12:00:00") : null;
+    const dataBase = dataInicial ? new Date(dataInicial + "T12:00:00") : null;
 
     for (let i = 0; i < n; i++) {
       let dataStr = "";

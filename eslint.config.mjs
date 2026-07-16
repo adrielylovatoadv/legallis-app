@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Scripts Node standalone (rodados via `node scripts/foo.js`, não fazem parte do bundle
+    // Next.js) — CommonJS é o formato correto aqui, não faz sentido aplicar as regras do app.
+    "scripts/**",
   ]),
 ]);
 

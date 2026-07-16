@@ -171,6 +171,8 @@ export default function DesignacoesPage() {
   const [pendentesRecebidas, setPendentesRecebidas] = useState<{
     id: string; tipo: "processo"|"inicial"; label: string; deUserName: string; motivo: string;
   }[]>([]);
+  // Snapshot de "agora" só na montagem — Date.now() direto no corpo do componente é impuro.
+  const [now] = useState(() => Date.now());
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -201,8 +203,8 @@ export default function DesignacoesPage() {
     }).catch(() => {});
   }, []);
 
-  const hoje = new Date().toISOString().split("T")[0];
-  const em3Dias = new Date(Date.now() + 3 * 86400000).toISOString().split("T")[0];
+  const hoje = new Date(now).toISOString().split("T")[0];
+  const em3Dias = new Date(now + 3 * 86400000).toISOString().split("T")[0];
 
   const isFinalizado = (p: Processo) => {
     if (p.finalizado) return true;

@@ -22,6 +22,8 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 export default function AssinaturaPage() {
   const { data: session } = useSession();
   const [portalLoading, setPortalLoading] = useState(false);
+  // Snapshot de "agora" só na montagem — Date.now() direto no corpo do componente é impuro.
+  const [now] = useState(() => Date.now());
 
   const openPortal = async () => {
     setPortalLoading(true);
@@ -42,7 +44,7 @@ export default function AssinaturaPage() {
   const statusInfo = STATUS_LABELS[status] ?? STATUS_LABELS.active;
 
   const daysLeft = trialEndsAt
-    ? Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    ? Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - now) / (1000 * 60 * 60 * 24)))
     : null;
 
   return (

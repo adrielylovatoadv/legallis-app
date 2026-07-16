@@ -105,29 +105,6 @@ function NavItem({ href, icon, label, collapsed, exact, badge }: {
   );
 }
 
-function BottomLink({ href, icon, label, collapsed }: {
-  href: string; icon: React.ReactNode; label: string; collapsed: boolean;
-}) {
-  const pathname = usePathname();
-  const active = pathname === href || pathname.startsWith(href + "/");
-  return (
-    <Link href={href} title={collapsed ? label : undefined}
-      className="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg transition-all group relative"
-      style={{
-        background: active ? "rgba(201,168,76,0.12)" : "transparent",
-        color: active ? "var(--gold)" : "var(--text3)",
-        borderLeft: active ? "2px solid var(--gold)" : "2px solid transparent",
-        paddingLeft: active ? "calc(0.5rem - 2px)" : "0.5rem",
-      }}>
-      {icon}
-      {!collapsed && <span className="text-sm font-medium">{label}</span>}
-      {collapsed && (
-        <span className="absolute left-full ml-3 px-2.5 py-1.5 bg-[#2A2A2A] border border-[#3A3A3A] text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">{label}</span>
-      )}
-    </Link>
-  );
-}
-
 export default function Sidebar() {
   const pathname = usePathname();
   const { collapsed, toggle, mobileOpen, closeMobile } = useSidebar();

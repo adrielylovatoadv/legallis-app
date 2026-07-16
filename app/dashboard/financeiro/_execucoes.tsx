@@ -109,7 +109,7 @@ function ExecucaoForm({ initial, onSave, onCancel }: {
   const set = (k: string, v: string | number) => setForm(p => ({ ...p, [k]: v }));
 
   const isSomente = form.tipo_execucao === "honorarios_somente";
-  const pct = form.pct_honorarios || 35;
+  const pct = form.pct_honorarios ?? 35;
   const honorariosCalc = isSomente
     ? form.valor_percebido + form.sucumbencia
     : form.valor_percebido * (pct / 100) + form.sucumbencia;
@@ -178,7 +178,8 @@ function ExecucaoForm({ initial, onSave, onCancel }: {
             </div>
             <div>
               <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>% de honorário</span>
-              <Inp type="number" step="0.5" min="0" max="100" value={form.pct_honorarios||35} onChange={e => set("pct_honorarios", parseFloat(e.target.value)||35)} />
+              <Inp type="number" step="0.5" min="0" max="100" value={form.pct_honorarios ?? 35}
+                onChange={e => { const v = parseFloat(e.target.value); set("pct_honorarios", Number.isNaN(v) ? 35 : v); }} />
             </div>
           </>
         )}

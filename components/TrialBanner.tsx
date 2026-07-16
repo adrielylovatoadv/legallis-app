@@ -1,10 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 export default function TrialBanner() {
   const { data: session } = useSession();
+  // Snapshot de "agora" só na montagem, não a cada render (Date.now() direto no corpo do
+  // componente é uma função impura e o React não pode garantir resultado estável entre renders).
+  const [now] = useState(() => Date.now());
   if (!session) return null;
 
   const status = session.user.subscriptionStatus;
@@ -13,7 +17,7 @@ export default function TrialBanner() {
   const trialEndsAt = session.user.trialEndsAt;
   if (!trialEndsAt) return null;
 
-  const diff = new Date(trialEndsAt).getTime() - Date.now();
+  const diff = new Date(trialEndsAt).getTime() - now;
   const daysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
   const expiryDate = new Date(trialEndsAt).toLocaleDateString("pt-BR");
 
