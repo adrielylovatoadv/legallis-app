@@ -2,10 +2,13 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getUsersAsync, saveUsersAsync } from "@/lib/users";
 
-// Endpoint único: define tenantId para todos os usuários ativos sem tenantId
+// Endpoint único: define tenantId para todos os usuários ativos sem tenantId, em TODOS os
+// escritórios — operação global de migração, só para o super-admin da Legallis (plan="admin").
+// `role` é um papel interno de cada escritório, autoatribuível — ver nota de segurança em
+// app/api/usuarios/[id]/route.ts.
 export async function POST() {
   const session = await auth();
-  if (!session || session.user.role !== "admin") {
+  if (!session || session.user.plan !== "admin") {
     return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   }
 

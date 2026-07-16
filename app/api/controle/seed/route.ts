@@ -5,10 +5,12 @@ import * as processosRepo from "@/lib/repo/processos";
 import * as clientesRepo from "@/lib/repo/clientes";
 import * as iniciaisRepo from "@/lib/repo/iniciais";
 
-// POST /api/controle/seed — admin only
+// POST /api/controle/seed — ferramenta interna de seed/import, só para o super-admin da
+// Legallis (plan="admin"). `role` é um papel interno de cada escritório, autoatribuível — ver
+// nota de segurança em app/api/usuarios/[id]/route.ts.
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session || session.user.role !== "admin")
+  if (!session || session.user.plan !== "admin")
     return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
 
   const body = await req.json() as ControleData;

@@ -13,7 +13,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params;
   const ticket = getTicketById(id);
   if (!ticket) return new Response("Not found", { status: 404 });
-  if (ticket.userId !== session.user.id && session.user.role !== "admin" && session.user.plan !== "admin") {
+  // Só a própria escritora que abriu o chamado ou a equipe da Legallis (plan="admin") pode ver —
+  // ver nota de segurança em app/api/usuarios/[id]/route.ts sobre não usar `role` aqui.
+  if (ticket.userId !== session.user.id && session.user.plan !== "admin") {
     return new Response("Forbidden", { status: 403 });
   }
 

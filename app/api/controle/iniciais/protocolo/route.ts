@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
 
   const msg = `${session.user.name} protocolou: ${inicial.cliente} x ${inicial.reu}. Nº ${numero_processo}. Processo criado com status: AGUARDANDO DESPACHO.`;
   await addSystemMessage(msg, "system", tid);
-  logEvent({ tipo: "Protocolo", descricao: msg, usuario: session.user.name ?? "?", usuarioId: session.user.id });
+  logEvent({ tenantId: tid, tipo: "Protocolo", descricao: msg, usuario: session.user.name ?? "?", usuarioId: session.user.id });
 
   return NextResponse.json({ inicial, processo: novoProcesso });
 }

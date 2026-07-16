@@ -7,7 +7,11 @@ export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const tickets = session.user.role === "admin" || session.user.plan === "admin"
+  // Suporte é centralizado na Legallis: só a equipe da Legallis (plan="admin", painel master)
+  // vê chamados de todos os escritórios. `role` é um papel interno de cada escritório e NÃO
+  // deve conceder visibilidade de chamados de OUTROS escritórios — ver nota de segurança em
+  // app/api/usuarios/[id]/route.ts.
+  const tickets = session.user.plan === "admin"
     ? getTickets()
     : getTicketsByUser(session.user.id);
 
@@ -40,7 +44,7 @@ export async function POST(req: NextRequest) {
   addMessage(ticket.id, {
     authorId: session.user.id,
     authorName: session.user.name ?? "",
-    authorRole: session.user.role === "admin" ? "admin" : "user",
+    authorRole: session.user.plan === "admin" ? "admin" : "user",
     content: message,
   });
 

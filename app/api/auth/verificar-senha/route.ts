@@ -7,7 +7,9 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   const { id, password } = await req.json();
-  if (session.user.id !== id && session.user.role !== "admin") {
+  // Super-admin real (painel master) é plan === "admin", nunca o role interno do escritório —
+  // ver nota de segurança em app/api/usuarios/[id]/route.ts.
+  if (session.user.id !== id && session.user.plan !== "admin") {
     return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   }
   const user = await getUserByIdAsync(id);

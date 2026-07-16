@@ -11,7 +11,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  if (session.user.id !== id && session.user.role !== "admin") {
+  // Super-admin real (painel master) é plan === "admin", nunca o role interno do escritório —
+  // ver nota de segurança em app/api/usuarios/[id]/route.ts.
+  if (session.user.id !== id && session.user.plan !== "admin") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

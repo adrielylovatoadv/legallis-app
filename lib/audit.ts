@@ -3,6 +3,7 @@ import path from "path";
 
 export interface AuditEvent {
   id: string;
+  tenantId: string;
   tipo: string;
   descricao: string;
   usuario: string;
@@ -15,14 +16,19 @@ export interface AuditEvent {
 const FILE = path.join(process.cwd(), "data", "audit.json");
 const TMP_FILE = "/tmp/legallis_audit.json";
 
-export function getAuditLog(): AuditEvent[] {
+function readAllEvents(): AuditEvent[] {
   const src = fs.existsSync(TMP_FILE) ? TMP_FILE : FILE;
   try { return JSON.parse(fs.readFileSync(src, "utf-8")); }
   catch { return []; }
 }
 
+// Escopado por tenant: cada escritório só pode ver os próprios eventos de auditoria.
+export function getAuditLog(tenantId: string): AuditEvent[] {
+  return readAllEvents().filter(e => e.tenantId === tenantId);
+}
+
 export function logEvent(event: Omit<AuditEvent, "id" | "data" | "hora">): AuditEvent {
-  const events = getAuditLog();
+  const events = readAllEvents();
   const now = new Date();
   const e: AuditEvent = {
     ...event,

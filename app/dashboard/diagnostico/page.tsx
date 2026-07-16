@@ -24,7 +24,7 @@ export default function DiagnosticoPage() {
 
   useEffect(() => {
     if (status === "loading") return;
-    if (status === "unauthenticated" || session?.user?.role !== "admin") {
+    if (status === "unauthenticated" || session?.user?.plan !== "admin") {
       router.replace("/dashboard");
     }
   }, [status, session, router]);
@@ -55,7 +55,7 @@ export default function DiagnosticoPage() {
     }
   };
 
-  if (status === "loading" || session?.user?.role !== "admin") return null;
+  if (status === "loading" || session?.user?.plan !== "admin") return null;
 
   const ok = diag?.status?.startsWith("✓");
 

@@ -60,7 +60,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const msg = `${session.user.name} finalizou o atendimento de ${atendimento.cliente}` +
     (clienteVinculado ? ` — vinculado ao cliente ${clienteVinculado.nome}.` : ".");
-  logEvent({ tipo: "Atendimento", descricao: msg, usuario: session.user.name ?? "?", usuarioId: session.user.id });
+  logEvent({ tenantId: tid, tipo: "Atendimento", descricao: msg, usuario: session.user.name ?? "?", usuarioId: session.user.id });
 
   const atualizado = await atendimentosRepo.get(tid, id);
   return NextResponse.json({ atendimento: atualizado, cliente: clienteVinculado });

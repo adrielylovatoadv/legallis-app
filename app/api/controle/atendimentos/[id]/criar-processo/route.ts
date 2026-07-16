@@ -48,7 +48,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const msg = `${session.user.name} criou um processo a partir do atendimento de ${cliente.nome}.`;
-  logEvent({ tipo: "Atendimento", descricao: msg, usuario: session.user.name ?? "?", usuarioId: session.user.id });
+  logEvent({ tenantId: tid, tipo: "Atendimento", descricao: msg, usuario: session.user.name ?? "?", usuarioId: session.user.id });
 
   return NextResponse.json({ processo: novoProcesso });
 }

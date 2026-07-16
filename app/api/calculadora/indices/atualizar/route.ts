@@ -59,10 +59,12 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST — acionado manualmente pelo painel admin
+// POST — acionado manualmente pelo painel admin. Escreve um override GLOBAL (usado por todos
+// os tenants), então exige o super-admin real (plan="admin"), não o role interno do escritório
+// — ver nota de segurança em app/api/usuarios/[id]/route.ts.
 export async function POST() {
   const session = await auth();
-  if (!session || session.user?.role !== "admin") {
+  if (!session || session.user?.plan !== "admin") {
     return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   }
   try {

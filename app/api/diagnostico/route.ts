@@ -3,9 +3,12 @@ import { auth } from "@/auth";
 import { dbInit, dbGet, dbSet, hasDb, getSql } from "@/lib/db";
 import { initSchema } from "@/lib/schema";
 
+// Ferramenta de infra (status do banco, roda migração de schema) — só para o super-admin da
+// Legallis (plan="admin"). `role` é um papel interno de cada escritório, autoatribuível — ver
+// nota de segurança em app/api/usuarios/[id]/route.ts.
 export async function GET() {
   const session = await auth();
-  if (!session || session.user.role !== "admin") {
+  if (!session || session.user.plan !== "admin") {
     return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   }
 
@@ -51,7 +54,7 @@ export async function GET() {
 // initSchema() de dbInit() — ver comentário em lib/db.ts.
 export async function POST() {
   const session = await auth();
-  if (!session || session.user.role !== "admin") {
+  if (!session || session.user.plan !== "admin") {
     return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   }
   const sql = getSql();

@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
       : `${userName} recusou a redesignação de "${pedido.label}" solicitada por ${pedido.deUserName}. O item voltou sem responsável.`;
     const conv = await getOrCreateDM(userId, pedido.deUserId, tid);
     await addMessage({ conversationId: conv.id, from: userId, fromName: userName, text: msg, type: "user" }, tid);
-    logEvent({ tipo: "Redesignação", descricao: msg, usuario: userName, usuarioId: userId, detalhe: `${pedido.tipo} ID ${pedido.itemId}` });
+    logEvent({ tenantId: tid, tipo: "Redesignação", descricao: msg, usuario: userName, usuarioId: userId, detalhe: `${pedido.tipo} ID ${pedido.itemId}` });
 
     return NextResponse.json({ ok: true });
   }
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
       await processosRepo.update(tid, id, { andamento: "AGUARDANDO DESPACHO", data: "", hora: "", responsavel: "" });
       const msg = `${userName} concluiu prazo do processo ${item.autor} x ${item.reu}. Status: AGUARDANDO DESPACHO.`;
       await addSystemMessage(msg, "system", tid);
-      logEvent({ tipo: "Conclusão de Tarefa", descricao: msg, usuario: userName, usuarioId: userId, detalhe: `Processo ID ${id}` });
+      logEvent({ tenantId: tid, tipo: "Conclusão de Tarefa", descricao: msg, usuario: userName, usuarioId: userId, detalhe: `Processo ID ${id}` });
     } else if (action === "redesignacao") {
       if (!motivo?.trim()) return NextResponse.json({ error: "Motivo obrigatório" }, { status: 400 });
       if (!adminId) return NextResponse.json({ error: "Selecione um administrador" }, { status: 400 });
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
       const msg = `Solicitação de redesignação de ${userName}: Processo ${label}. Motivo: ${motivo}`;
       const conv = await getOrCreateDM(userId, adminId, tid);
       await addMessage({ conversationId: conv.id, from: userId, fromName: userName, text: msg, type: "user" }, tid);
-      logEvent({ tipo: "Redesignação", descricao: msg, usuario: userName, usuarioId: userId, detalhe: `Processo ID ${id}` });
+      logEvent({ tenantId: tid, tipo: "Redesignação", descricao: msg, usuario: userName, usuarioId: userId, detalhe: `Processo ID ${id}` });
     }
   } else if (tipo === "inicial") {
     const item = await iniciaisRepo.get(tid, id);
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
       await iniciaisRepo.update(tid, id, { andamento: "PROTOCOLADO", responsavel: "" });
       const msg = `${userName} concluiu tarefa de petição inicial: ${item.cliente} x ${item.reu}. Status: PROTOCOLADO.`;
       await addSystemMessage(msg, "system", tid);
-      logEvent({ tipo: "Conclusão de Tarefa", descricao: msg, usuario: userName, usuarioId: userId, detalhe: `Inicial ID ${id}` });
+      logEvent({ tenantId: tid, tipo: "Conclusão de Tarefa", descricao: msg, usuario: userName, usuarioId: userId, detalhe: `Inicial ID ${id}` });
       return NextResponse.json({
         ok: true,
         openCadastro: true,
@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
       const msg = `Solicitação de redesignação de ${userName}: Petição Inicial ${label}. Motivo: ${motivo}`;
       const conv = await getOrCreateDM(userId, adminId, tid);
       await addMessage({ conversationId: conv.id, from: userId, fromName: userName, text: msg, type: "user" }, tid);
-      logEvent({ tipo: "Redesignação", descricao: msg, usuario: userName, usuarioId: userId, detalhe: `Inicial ID ${id}` });
+      logEvent({ tenantId: tid, tipo: "Redesignação", descricao: msg, usuario: userName, usuarioId: userId, detalhe: `Inicial ID ${id}` });
     }
   }
 

@@ -9,7 +9,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const ticket = getTicketById(id);
   if (!ticket) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (ticket.userId !== session.user.id && session.user.role !== "admin" && session.user.plan !== "admin") {
+  // Só a própria escritora que abriu o chamado ou a equipe da Legallis (plan="admin") pode ver —
+  // ver nota de segurança em app/api/usuarios/[id]/route.ts sobre não usar `role` aqui.
+  if (ticket.userId !== session.user.id && session.user.plan !== "admin") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -19,7 +21,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const msg = addMessage(id, {
     authorId: session.user.id,
     authorName: session.user.name ?? "",
-    authorRole: session.user.role === "admin" ? "admin" : "user",
+    authorRole: session.user.plan === "admin" ? "admin" : "user",
     content: content.trim(),
   });
 

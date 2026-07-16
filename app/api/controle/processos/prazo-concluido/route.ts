@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
   const msg = `${session.user.name} concluiu prazo do processo ${processo.autor} x ${processo.reu} (${processo.numero_processo}). Status: AGUARDANDO DESPACHO.`;
   await addSystemMessage(msg, "system", tid);
-  logEvent({ tipo: "Prazo Concluído", descricao: msg, usuario: session.user.name ?? "?", usuarioId: session.user.id });
+  logEvent({ tenantId: tid, tipo: "Prazo Concluído", descricao: msg, usuario: session.user.name ?? "?", usuarioId: session.user.id });
 
   return NextResponse.json(processo);
 }

@@ -51,6 +51,12 @@ export default function AdminPage() {
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [setupLoading, setSetupLoading] = useState(false);
 
+  const load = useCallback(async () => {
+    const res = await fetch("/api/usuarios");
+    if (res.ok) setUsers(await res.json());
+    setLoading(false);
+  }, []);
+
   const setupEscritorio = async () => {
     setSetupLoading(true);
     try {
@@ -67,14 +73,11 @@ export default function AdminPage() {
     }
   };
 
-  const load = useCallback(async () => {
-    const res = await fetch("/api/usuarios");
-    if (res.ok) setUsers(await res.json());
-    setLoading(false);
-  }, []);
-
   useEffect(() => {
-    if (session?.user.role !== "admin") { router.push("/dashboard"); return; }
+    // Painel legado (sem link no menu): tem o botão "Configurar Escritório", que dispara uma
+    // migração global (todos os tenants) — por isso exige o super-admin real (plan="admin"),
+    // não o role interno do escritório. Ver nota de segurança em app/api/usuarios/[id]/route.ts.
+    if (session?.user.plan !== "admin") { router.push("/dashboard"); return; }
     load();
   }, [session, router, load]);
 

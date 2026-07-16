@@ -7,13 +7,22 @@ const USER_EDITABLE_FIELDS = ["name", "phone", "theme", "oab", "company", "avata
 // Campos que o dono do escritório (ou super-admin) pode alterar em outro usuário do seu tenant
 const MANAGER_EDITABLE_FIELDS = [...USER_EDITABLE_FIELDS, "role", "cargo", "isActive", "email"] as const;
 
-// Super-admin (painel master) gerencia qualquer usuário; dono do tenant só os do próprio escritório
-async function requireManagerForTarget(sessionUserId: string, sessionRole: string, targetId: string) {
+// Super-admin (painel master, plan="admin") gerencia qualquer usuário de qualquer escritório.
+// Dono do tenant ou funcionário com role="admin" ("Administrador do sistema") só gerenciam
+// usuários do PRÓPRIO escritório.
+//
+// IMPORTANTE: super-admin aqui tem que ser `plan === "admin"`, NUNCA `role === "admin"` — role
+// é um papel interno do escritório, livremente atribuível pelo dono do tenant a qualquer
+// funcionário (dropdown "Administrador do sistema" em Configurações > Usuários). Usar `role`
+// para pular a checagem de tenant permitia que qualquer escritório criasse um funcionário
+// "role: admin" e, com ele, editasse/excluísse usuários de OUTROS escritórios.
+async function requireManagerForTarget(sessionUserId: string, targetId: string) {
   const currentUser = await getUserByIdAsync(sessionUserId);
   const targetUser = await getUserByIdAsync(targetId);
   if (!currentUser || !targetUser) return null;
-  const isSuperAdmin = sessionRole === "admin";
-  if (!isSuperAdmin && !isOwner(currentUser)) return null;
+  const isSuperAdmin = currentUser.plan === "admin";
+  const isTenantManager = isSuperAdmin || isOwner(currentUser) || currentUser.role === "admin";
+  if (!isTenantManager) return null;
   if (!isSuperAdmin && currentUser.tenantId !== targetUser.tenantId) return null;
   return { currentUser, targetUser };
 }
@@ -28,7 +37,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const { password: _pw, ...safe } = user;
     return NextResponse.json(safe);
   }
-  const managed = await requireManagerForTarget(session.user.id, session.user.role, id);
+  const managed = await requireManagerForTarget(session.user.id, id);
   if (!managed) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   const { password: _pw, ...safe } = managed.targetUser;
   return NextResponse.json(safe);
@@ -47,7 +56,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       USER_EDITABLE_FIELDS.filter(f => f in rawBody).map(f => [f, rawBody[f]])
     );
   } else {
-    const managed = await requireManagerForTarget(session.user.id, session.user.role, id);
+    const managed = await requireManagerForTarget(session.user.id, id);
     if (!managed) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
     body = Object.fromEntries(
       MANAGER_EDITABLE_FIELDS.filter(f => f in rawBody).map(f => [f, rawBody[f]])
@@ -70,7 +79,7 @@ export async function DELETE(req2: NextRequest, { params }: { params: Promise<{ 
   if (session.user.id === id) {
     return NextResponse.json({ error: "Não pode excluir a si mesmo" }, { status: 400 });
   }
-  const managed = await requireManagerForTarget(session.user.id, session.user.role, id);
+  const managed = await requireManagerForTarget(session.user.id, id);
   if (!managed) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   const ok = await deleteUserAsync(id);
   return ok ? NextResponse.json({ ok: true }) : NextResponse.json({ error: "Não encontrado" }, { status: 404 });
