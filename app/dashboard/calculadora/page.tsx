@@ -337,6 +337,9 @@ export default function CalculadoraPage() {
   const [processoInfo, setProcessoInfo] = useState({ numero: "", parte: "", advogado: "" });
 
   const parseBRL = (s: string) => parseFloat(s.replace(/\./g, "").replace(",", ".")) || 0;
+  // parseFloat(...) || 20 trataria "0" como falso e cairia no padrão — aqui só cai no
+  // padrão quando o campo está vazio/inválido (NaN), preservando um 0 digitado de propósito.
+  const parsePct = (s: string, fallback: number) => { const n = parseFloat(s); return Number.isNaN(n) ? fallback : n; };
   const totalSeguros = (seg: Record<string, string>) =>
     Object.values(seg).reduce((s, v) => s + parseBRL(v), 0);
 
@@ -361,7 +364,7 @@ export default function CalculadoraPage() {
           body: JSON.stringify({
             valor_causa: parseBRL(honValor), data_origem: honDataOrigem,
             data_calculo: honDataCalc, tribunal: honTribunal,
-            honorarios_pct: parseFloat(honPct) || 20, numero_processo: honProcesso,
+            honorarios_pct: parsePct(honPct, 20), numero_processo: honProcesso,
           }),
         });
         setHonResult(r);
@@ -388,7 +391,7 @@ export default function CalculadoraPage() {
           body: JSON.stringify({
             lancamentos: validos.map(l => ({ data_cobranca: l.data, valor: parseBRL(l.valor) })),
             data_calculo: dataCalculo, tribunal,
-            honorarios_pct: parseFloat(honorariosPct) || 20,
+            honorarios_pct: parsePct(honorariosPct, 20),
             multa_523: multa523, modo,
             aplicar_dobro: aplicarDobro, dano_moral: parseBRL(danoMoral),
             data_citacao: dataCitacao,
