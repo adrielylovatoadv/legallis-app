@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Card, Input, FieldLabel as Lbl, Select } from "@/components/ui";
 import { DateField } from "@/components/ui/DateField";
+import { buscarComunicacoesPorOab, type DjenComunicacao } from "@/lib/integrations/djen";
 
 const BR_STATES = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
@@ -83,6 +84,19 @@ export default function PublicacoesPage() {
     }
     setBuscando(true);
     setMsg(null);
+    // A busca no DJEN sai daqui do navegador (mesmo caminho que o comunica.pje.jus.br usa),
+    // não do servidor — o CNJ bloqueia por WAF as chamadas vindas de IP de datacenter/cloud.
+    let djenItems: DjenComunicacao[] = [];
+    let djenErro: string | undefined;
+    try {
+      djenItems = await buscarComunicacoesPorOab({
+        numeroOab: oabNumero.trim(), ufOab: oabUf,
+        dataDisponibilizacaoInicio: dataInicio || undefined,
+        dataDisponibilizacaoFim: dataFim || undefined,
+      });
+    } catch (e) {
+      djenErro = e instanceof Error ? e.message : "Erro ao buscar no DJEN.";
+    }
     try {
       const res = await fetch("/api/publicacoes/buscar", {
         method: "POST",
@@ -91,6 +105,7 @@ export default function PublicacoesPage() {
           oabNumero: oabNumero.trim(), oabUf,
           dataDisponibilizacaoInicio: dataInicio || undefined,
           dataDisponibilizacaoFim: dataFim || undefined,
+          djenItems, djenErro,
         }),
       });
       const data = await res.json();

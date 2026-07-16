@@ -18,7 +18,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self'",
-      "connect-src 'self' https://api.stripe.com https://*.neon.tech wss://*.neon.tech",
+      "connect-src 'self' https://api.stripe.com https://*.neon.tech wss://*.neon.tech https://comunicaapi.pje.jus.br",
       "frame-src https://js.stripe.com https://hooks.stripe.com https://buy.stripe.com",
       "form-action 'self' https://buy.stripe.com",
     ].join("; "),

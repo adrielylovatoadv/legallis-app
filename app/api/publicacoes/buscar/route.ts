@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import * as publicacoesRepo from "@/lib/repo/publicacoes";
-import { buscarComunicacoesPorOab } from "@/lib/integrations/djen";
 import { buscarPublicacoesPorOab as buscarEscavador, escavadorConfigurado } from "@/lib/integrations/escavador";
 import { buscarPublicacoesSchema } from "@/lib/validation/publicacoes";
 import { parseBody } from "@/lib/validation/helpers";
 import type { Publicacao } from "@/lib/controle-data";
 
+// O DJEN é consultado pelo navegador (ver lib/integrations/djen.ts) porque o CNJ bloqueia por
+// WAF as chamadas vindas de IP de datacenter/cloud (Vercel), mas libera normalmente o navegador
+// de quem está usando o site — é o mesmo caminho que https://comunica.pje.jus.br usa. Aqui só
+// recebemos o resultado já buscado (djenItems) e deduplicamos/gravamos.
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
@@ -17,14 +20,8 @@ export async function POST(req: NextRequest) {
   const candidatos: Omit<Publicacao, "id" | "criado_em" | "tratada">[] = [];
   const fontesComErro: string[] = [];
 
-  try {
-    const djen = await buscarComunicacoesPorOab({
-      numeroOab: body.oabNumero,
-      ufOab: body.oabUf,
-      dataDisponibilizacaoInicio: body.dataDisponibilizacaoInicio,
-      dataDisponibilizacaoFim: body.dataDisponibilizacaoFim,
-    });
-    for (const item of djen) {
+  if (body.djenItems && body.djenItems.length > 0) {
+    for (const item of body.djenItems) {
       candidatos.push({
         oabNumero: body.oabNumero,
         oabUf: body.oabUf,
@@ -38,9 +35,9 @@ export async function POST(req: NextRequest) {
         raw: item,
       });
     }
-  } catch (e) {
+  } else if (body.djenErro) {
     fontesComErro.push("djen");
-    console.error("Erro ao buscar publicações no DJEN:", e);
+    console.error("Erro ao buscar publicações no DJEN (navegador):", body.djenErro);
   }
 
   if (escavadorConfigurado()) {

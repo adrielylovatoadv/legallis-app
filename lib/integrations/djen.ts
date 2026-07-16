@@ -1,29 +1,20 @@
-// DJEN — Diário de Justiça Eletrônico Nacional (CNJ), consultado via a API pública
-// que também serve o portal https://comunica.pje.jus.br. Não exige chave/token: é o mesmo
-// mecanismo que sistemas como Astrea/AdvBox usam por baixo para captura automática de
-// publicação/intimação por OAB, cobrindo nacionalmente os tribunais que aderiram ao PJe
-// (a grande maioria hoje). Confirmado contra a API real em 2026-07-12 — ver formato de
-// resposta abaixo em DjenComunicacao.
+// DJEN — Diário de Justiça Eletrônico Nacional (CNJ), consultado via a API pública que também
+// serve o portal https://comunica.pje.jus.br. Não exige chave/token: é o mesmo mecanismo que
+// sistemas como Astrea/AdvBox usam por baixo para captura automática de publicação/intimação
+// por OAB, cobrindo nacionalmente os tribunais que aderiram ao PJe (a grande maioria hoje).
 //
-// Doc oficial: https://comunicaapi.pje.jus.br/api/v1 (sem autenticação para consulta).
+// Doc oficial: https://comunicaapi.pje.jus.br/api/v1 (sem autenticação para consulta, CORS
+// aberto — access-control-allow-origin: *, confirmado via curl em 2026-07-16).
 //
-// A chamada não vai direto pro DJEN: o Vercel (função Node/serverless) é bloqueado por WAF
-// do lado do CNJ (403 "The request could not be satisfied"), confirmado em produção em
-// 2026-07-12. A função Edge (app/api/internal/djen-proxy) roda numa rede diferente da função
-// Node — passamos por ela na tentativa de contornar o bloqueio sem precisar de infraestrutura
-// nova (VPS/proxy pago).
+// IMPORTANTE: chamar esta função a partir de um componente "use client" (navegador), nunca do
+// servidor. O CNJ bloqueia por WAF as chamadas vindas de IPs de datacenter/cloud (confirmado em
+// produção em 2026-07-12: 403 "The request could not be satisfied" ao chamar a partir de funções
+// Vercel, tanto Node quanto Edge — tentativas de proxy/spoofing de headers não resolveram). O
+// próprio comunica.pje.jus.br é só uma SPA que roda essa mesma consulta direto no navegador de
+// quem está usando o site; replicamos exatamente esse caminho aqui, então o fetch precisa sair
+// da máquina da usuária, não do servidor do Legallis.
 
-// NEXTAUTH_URL é o domínio público estável (app.legallis.app.br) — usar VERCEL_URL aqui seria
-// errado: aponta pro hostname *.vercel.app específico do deployment, que tem a "Vercel
-// Authentication" (SSO) do próprio Vercel na frente, e a chamada interna levaria 401 do Vercel
-// em vez de chegar ao DJEN (confirmado em produção em 2026-07-12).
-function proxyBaseUrl(): string {
-  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
-  if (process.env.NEXTAUTH_URL) return process.env.NEXTAUTH_URL;
-  return "http://localhost:3000";
-}
-
-const BASE_URL = () => `${proxyBaseUrl()}/api/internal/djen-proxy`;
+const DJEN_URL = "https://comunicaapi.pje.jus.br/api/v1/comunicacao";
 
 export interface DjenAdvogado {
   id: number;
@@ -86,11 +77,8 @@ export async function buscarComunicacoesPorOab(params: BuscarDjenParams): Promis
     if (params.dataDisponibilizacaoInicio) qs.set("dataDisponibilizacaoInicio", params.dataDisponibilizacaoInicio);
     if (params.dataDisponibilizacaoFim) qs.set("dataDisponibilizacaoFim", params.dataDisponibilizacaoFim);
 
-    const res = await fetch(`${BASE_URL()}?${qs.toString()}`, {
-      headers: {
-        Accept: "application/json",
-        "x-internal-secret": process.env.INTERNAL_PROXY_SECRET ?? "",
-      },
+    const res = await fetch(`${DJEN_URL}?${qs.toString()}`, {
+      headers: { Accept: "application/json" },
     });
     if (!res.ok) {
       const corpo = await res.text().catch(() => "");
