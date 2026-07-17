@@ -301,6 +301,7 @@ export default function PublicacoesPage() {
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-medium" style={{ color: "var(--text2)" }}>
           {mostrarTratadas ? "Todas as publicações" : "Pendentes de tratamento"}
+          {!carregando && <span style={{ color: "var(--text3)" }}> ({lista.length})</span>}
         </h2>
         <button onClick={() => setMostrarTratadas(v => !v)} className="text-xs" style={{ color: "var(--gold)" }}>
           {mostrarTratadas ? "Ver só pendentes" : "Ver todas"}
