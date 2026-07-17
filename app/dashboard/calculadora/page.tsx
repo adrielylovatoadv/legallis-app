@@ -37,7 +37,7 @@ interface RevisionalResult {
   taxa_contratada_pct: number; taxa_referencia_pct: number;
   pmt_contratada: number; pmt_justa: number;
   excesso_mensal: number; total_excesso: number;
-  parcelas: { parcela: number; data_vencimento: string; pmt_contratada: number; pmt_justa: number; excesso: number }[];
+  parcelas: { parcela: number; data_vencimento: string; pmt_contratada: number; pmt_justa: number; excesso: number; excesso_corrigido: number }[];
   total_parcelas: number; total_seguros?: number;
   aplicar_dobro?: boolean; subtotal_dobro?: number;
   dano_moral?: number; total_geral?: number;
@@ -1008,7 +1008,7 @@ export default function CalculadoraPage() {
               <div className="flex flex-col items-center justify-center rounded-xl p-6"
                 style={{ background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.2)" }}>
                 <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--text3)" }}>
-                  {revResult.total_geral !== undefined && revResult.total_geral !== revResult.total_excesso ? "Total geral (com pedidos adicionais)" : "Total de excesso cobrado"}
+                  {revResult.total_geral !== undefined && revResult.total_geral !== revResult.total_excesso ? "Total geral (com pedidos adicionais)" : "Total de excesso corrigido (correção monetária + juros de mora)"}
                 </p>
                 <p className="font-bold text-3xl tabular-nums" style={{ color: "var(--gold)" }}>
                   {fmtBRL(revResult.total_geral ?? revResult.total_excesso)}
@@ -1029,7 +1029,7 @@ export default function CalculadoraPage() {
                 <table className="w-full text-xs">
                   <thead>
                     <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                      {["Parcela", "Vencimento", "Pmt Contratada", "Pmt Justa", "Excesso"].map(h => (
+                      {["Parcela", "Vencimento", "Pmt Contratada", "Pmt Justa", "Excesso", "Excesso Corrigido"].map(h => (
                         <th key={h} className="pb-2 text-left pr-4 font-medium uppercase tracking-wider" style={{ color: "var(--text3)" }}>{h}</th>
                       ))}
                     </tr>
@@ -1041,7 +1041,8 @@ export default function CalculadoraPage() {
                         <td className="py-1.5 pr-4 tabular-nums">{p.data_vencimento}</td>
                         <td className="py-1.5 pr-4 tabular-nums">{fmtBRL(p.pmt_contratada)}</td>
                         <td className="py-1.5 pr-4 tabular-nums">{fmtBRL(p.pmt_justa)}</td>
-                        <td className="py-1.5 font-semibold tabular-nums" style={{ color: p.excesso > 0 ? "#f87171" : "var(--text3)" }}>{fmtBRL(p.excesso)}</td>
+                        <td className="py-1.5 pr-4 tabular-nums" style={{ color: p.excesso > 0 ? "#f87171" : "var(--text3)" }}>{fmtBRL(p.excesso)}</td>
+                        <td className="py-1.5 font-semibold tabular-nums" style={{ color: p.excesso_corrigido > 0 ? "#f87171" : "var(--text3)" }}>{fmtBRL(p.excesso_corrigido)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1068,7 +1069,7 @@ export default function CalculadoraPage() {
                       { label: "Parcela contratada", valor: fmtBRL(revResult.pmt_contratada) },
                       { label: "Parcela justa", valor: fmtBRL(revResult.pmt_justa) },
                       { label: "Excesso mensal", valor: fmtBRL(revResult.excesso_mensal) },
-                      { label: "Total de excesso cobrado", valor: fmtBRL(revResult.total_excesso) },
+                      { label: "Total de excesso corrigido (correção monetária + juros de mora)", valor: fmtBRL(revResult.total_excesso) },
                       ...(revResult.total_seguros ? [{ label: "( + ) Seguros embutidos restituíveis", valor: fmtBRL(revResult.total_seguros) }] : []),
                       ...(revResult.aplicar_dobro && revResult.subtotal_dobro !== undefined ? [{ label: "( × ) Repetição em dobro — CDC art. 42, §único", valor: `${fmtBRL(revResult.total_excesso)} × 2 = ${fmtBRL(revResult.subtotal_dobro)}` }] : []),
                       ...(revResult.dano_moral ? [{ label: "( + ) Dano Moral", valor: fmtBRL(revResult.dano_moral) }] : []),
@@ -1078,13 +1079,14 @@ export default function CalculadoraPage() {
                   {
                     nome: "Planilha de Parcelas",
                     tipo: "tabela",
-                    colunas: ["Parcela", "Vencimento", "Pmt Contratada", "Pmt Justa", "Excesso"],
+                    colunas: ["Parcela", "Vencimento", "Pmt Contratada", "Pmt Justa", "Excesso", "Excesso Corrigido"],
                     dados: revResult.parcelas.map(p => ({
                       "Parcela": p.parcela,
                       "Vencimento": p.data_vencimento,
                       "Pmt Contratada": fmtBRL(p.pmt_contratada),
                       "Pmt Justa": fmtBRL(p.pmt_justa),
                       "Excesso": fmtBRL(p.excesso),
+                      "Excesso Corrigido": fmtBRL(p.excesso_corrigido),
                     })),
                   },
                 ],

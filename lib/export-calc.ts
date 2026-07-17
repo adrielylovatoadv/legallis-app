@@ -318,7 +318,10 @@ export async function exportarPDF(doc: ExportDoc, nomeArquivo: string) {
         "Correção monetária do excesso de parcelas vencidas: INPC (IBGE, série BCB 188) até agosto/2024; IPCAe (BCB 10764) de setembro/2024 em diante."
       );
       criterios.push(
-        "Excesso apurado: diferença entre a parcela contratada e a parcela calculada com a taxa de referência (Price/SAC), aplicada sobre cada prestação já vencida."
+        "Juros de Mora: 0,5% ao mês até dezembro/2002; 1% ao mês de janeiro/2003 a agosto/2024; Taxa Selic mensal (BCB, série 4390) de setembro/2024 em diante (Lei 14.905/2024), incidentes sobre o excesso já corrigido monetariamente, desde o vencimento de cada parcela."
+      );
+      criterios.push(
+        "Excesso apurado: diferença entre a parcela contratada e a parcela calculada com a taxa de referência (Price/SAC), aplicada sobre cada prestação já vencida, com correção monetária e juros de mora incidentes desde o vencimento até a data do cálculo."
       );
       if (doc.aplicar_dobro) {
         criterios.push(
