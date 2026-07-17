@@ -9,6 +9,16 @@ import { classificarPrazo, resumoTexto, type SinalPrazo } from "@/lib/publicacao
 
 const BR_STATES = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
+// Uma advogada pode ter mais de um registro de OAB (ex: inscrição principal em SP e
+// suplementar em MG, cada uma com número próprio) — o DJEN identifica o advogado pela dupla
+// número+UF, então publicações ligadas ao registro de MG não aparecem buscando só pelo de SP.
+// Por isso a busca roda uma vez por registro marcado e junta os resultados.
+interface OabAlvo { state: string; number: string; checked: boolean }
+
+function chaveOab(o: { state: string; number: string }): string {
+  return `${o.state}:${o.number}`;
+}
+
 interface Publicacao {
   id: string;
   oabNumero: string;
@@ -52,8 +62,9 @@ function dataIso(diasAtras: number): string {
 
 export default function PublicacoesPage() {
   const { data: session } = useSession();
-  const [oabUf, setOabUf] = useState("MG");
-  const [oabNumero, setOabNumero] = useState("");
+  const [oabsBusca, setOabsBusca] = useState<OabAlvo[]>([{ state: "MG", number: "", checked: true }]);
+  const [novoUf, setNovoUf] = useState("MG");
+  const [novoNumero, setNovoNumero] = useState("");
   const [dataInicio, setDataInicio] = useState(() => dataIso(0));
   const [dataFim, setDataFim] = useState(() => dataIso(0));
   const [texto, setTexto] = useState("");
@@ -73,12 +84,29 @@ export default function PublicacoesPage() {
       const res = await fetch(`/api/usuarios/${session?.user?.id}`);
       if (res.ok) {
         const u = await res.json();
-        const primeira = u.oab?.[0];
-        if (primeira) { setOabUf(primeira.state); setOabNumero(primeira.number); }
+        const registros: { state: string; number: string }[] = u.oab ?? [];
+        if (registros.length > 0) {
+          setOabsBusca(registros.map(o => ({ state: o.state, number: o.number, checked: true })));
+        }
       }
     };
     if (session?.user?.id) loadPerfil();
   }, [session?.user?.id]);
+
+  const alternarOab = (chave: string) => {
+    setOabsBusca(prev => prev.map(o => chaveOab(o) === chave ? { ...o, checked: !o.checked } : o));
+  };
+
+  const removerOab = (chave: string) => {
+    setOabsBusca(prev => prev.filter(o => chaveOab(o) !== chave));
+  };
+
+  const adicionarOab = () => {
+    if (!novoNumero.trim()) return;
+    const novo = { state: novoUf, number: novoNumero.trim(), checked: true };
+    setOabsBusca(prev => prev.some(o => chaveOab(o) === chaveOab(novo)) ? prev : [...prev, novo]);
+    setNovoNumero("");
+  };
 
   const carregarLista = useCallback(async () => {
     setCarregando(true);
@@ -93,56 +121,73 @@ export default function PublicacoesPage() {
   useEffect(() => { carregarLista(); }, [carregarLista]);
 
   const buscar = async () => {
-    if (!oabNumero.trim()) { setMsg({ type: "err", text: "Informe o número da OAB." }); return; }
+    const alvos = oabsBusca.filter(o => o.checked && o.number.trim());
+    if (alvos.length === 0) { setMsg({ type: "err", text: "Marque ao menos um registro de OAB para buscar." }); return; }
     if (dataInicio && dataFim && dataInicio > dataFim) {
       setMsg({ type: "err", text: "A data inicial não pode ser depois da data final." });
       return;
     }
     setBuscando(true);
     setMsg(null);
-    // A busca no DJEN sai daqui do navegador (mesmo caminho que o comunica.pje.jus.br usa),
-    // não do servidor — o CNJ bloqueia por WAF as chamadas vindas de IP de datacenter/cloud.
-    let djenItems: DjenComunicacao[] = [];
-    let djenErro: string | undefined;
     try {
-      djenItems = await buscarComunicacoesPorOab({
-        numeroOab: oabNumero.trim(), ufOab: oabUf,
-        dataDisponibilizacaoInicio: dataInicio || undefined,
-        dataDisponibilizacaoFim: dataFim || undefined,
-        texto: texto.trim() || undefined,
-        numeroProcesso: numeroProcesso.trim() || undefined,
-        siglaTribunal: siglaTribunal.trim() || undefined,
-        meio: meio || undefined,
-      });
-    } catch (e) {
-      djenErro = e instanceof Error ? e.message : "Erro ao buscar no DJEN.";
-    }
-    try {
-      const res = await fetch("/api/publicacoes/buscar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          oabNumero: oabNumero.trim(), oabUf,
-          dataDisponibilizacaoInicio: dataInicio || undefined,
-          dataDisponibilizacaoFim: dataFim || undefined,
-          djenItems, djenErro,
-        }),
-      });
-      const data = await res.json();
-      const dica = data.fontesComErro?.includes("djen")
-        ? " Enquanto isso, consulte manualmente em comunica.pje.jus.br."
-        : "";
-      if (!res.ok) {
-        setMsg({ type: "err", text: `${data.error || "Erro ao buscar publicações."}${dica}` });
-        return;
+      let totalEncontradas = 0;
+      let totalNovas = 0;
+      const fontesComErro = new Set<string>();
+      let erroGeral: string | undefined;
+
+      // Um registro de OAB por vez: o DJEN identifica a advogada pela dupla número+UF, então
+      // quem tem mais de um registro (ex: SP e MG) precisa de uma busca por registro.
+      for (const alvo of alvos) {
+        // A busca no DJEN sai daqui do navegador (mesmo caminho que o comunica.pje.jus.br usa),
+        // não do servidor — o CNJ bloqueia por WAF as chamadas vindas de IP de datacenter/cloud.
+        let djenItems: DjenComunicacao[] = [];
+        let djenErro: string | undefined;
+        try {
+          djenItems = await buscarComunicacoesPorOab({
+            numeroOab: alvo.number.trim(), ufOab: alvo.state,
+            dataDisponibilizacaoInicio: dataInicio || undefined,
+            dataDisponibilizacaoFim: dataFim || undefined,
+            texto: texto.trim() || undefined,
+            numeroProcesso: numeroProcesso.trim() || undefined,
+            siglaTribunal: siglaTribunal.trim() || undefined,
+            meio: meio || undefined,
+          });
+        } catch (e) {
+          djenErro = e instanceof Error ? e.message : "Erro ao buscar no DJEN.";
+        }
+        try {
+          const res = await fetch("/api/publicacoes/buscar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              oabNumero: alvo.number.trim(), oabUf: alvo.state,
+              dataDisponibilizacaoInicio: dataInicio || undefined,
+              dataDisponibilizacaoFim: dataFim || undefined,
+              djenItems, djenErro,
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok) { erroGeral = data.error || erroGeral; continue; }
+          totalEncontradas += data.total ?? 0;
+          totalNovas += data.novas?.length ?? 0;
+          (data.fontesComErro ?? []).forEach((f: string) => fontesComErro.add(f));
+        } catch (e) {
+          erroGeral = e instanceof Error ? e.message : "Erro ao buscar publicações.";
+        }
       }
-      const qtdNovas = data.novas?.length ?? 0;
-      setMsg({
-        type: "ok",
-        text: qtdNovas > 0 ? `${qtdNovas} ${qtdNovas > 1 ? "publicações novas encontradas" : "publicação nova encontrada"}.` : "Nenhuma publicação nova encontrada.",
-      });
-      if (data.fontesComErro?.length) {
-        setMsg(prev => ({ type: "err", text: `${prev?.text ?? ""} Falha ao consultar: ${data.fontesComErro.join(", ")}.${dica}` }));
+
+      const dica = fontesComErro.has("djen") ? " Enquanto isso, consulte manualmente em comunica.pje.jus.br." : "";
+      const partes: string[] = [];
+      if (totalEncontradas > 0) {
+        partes.push(`${totalEncontradas} ${totalEncontradas > 1 ? "publicações encontradas" : "publicação encontrada"}`);
+        partes.push(totalNovas > 0 ? `${totalNovas} ${totalNovas > 1 ? "novas" : "nova"}` : "nenhuma nova");
+      } else {
+        partes.push("Nenhuma publicação encontrada para os filtros informados");
+      }
+      setMsg({ type: totalEncontradas > 0 || !erroGeral ? "ok" : "err", text: `${partes.join(" — ")}.` });
+      if (fontesComErro.size > 0 || erroGeral) {
+        const detalhe = [erroGeral, fontesComErro.size > 0 ? `Falha ao consultar: ${[...fontesComErro].join(", ")}.` : ""].filter(Boolean).join(" ");
+        setMsg(prev => ({ type: "err", text: `${prev?.text ?? ""} ${detalhe}${dica}`.trim() }));
       }
       carregarLista();
     } finally {
@@ -170,17 +215,36 @@ export default function PublicacoesPage() {
       </div>
 
       <Card className="mb-6">
-        <div className="grid grid-cols-2 md:grid-cols-[100px_1fr_140px_140px_auto] gap-3 items-end">
-          <div>
-            <Lbl>UF</Lbl>
-            <Select value={oabUf} onChange={e => setOabUf(e.target.value)}>
+        <div>
+          <Lbl>Registros de OAB para buscar</Lbl>
+          <div className="flex flex-wrap gap-2 mt-1">
+            {oabsBusca.map(o => {
+              const chave = chaveOab(o);
+              return (
+                <label key={chave} className="flex items-center gap-1.5 text-xs pl-2.5 pr-1.5 py-1.5 rounded-lg cursor-pointer select-none"
+                  style={{ border: "1px solid var(--border)", background: o.checked ? "rgba(201,168,76,0.12)" : "var(--surface2)", color: o.checked ? "var(--gold)" : "var(--text2)" }}>
+                  <input type="checkbox" checked={o.checked} onChange={() => alternarOab(chave)} className="accent-current" />
+                  {o.state} {o.number || "—"}
+                  <button type="button" onClick={e => { e.preventDefault(); removerOab(chave); }}
+                    className="ml-1 px-1 rounded" style={{ color: "var(--text3)" }} title="Remover">×</button>
+                </label>
+              );
+            })}
+          </div>
+          <div className="grid grid-cols-[100px_1fr_auto] gap-2 mt-2 max-w-md">
+            <Select value={novoUf} onChange={e => setNovoUf(e.target.value)}>
               {BR_STATES.map(uf => <option key={uf} value={uf}>{uf}</option>)}
             </Select>
+            <Input value={novoNumero} onChange={e => setNovoNumero(e.target.value)} placeholder="Adicionar outro nº de OAB"
+              onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); adicionarOab(); } }} />
+            <button onClick={adicionarOab} type="button"
+              className="px-3 py-2 rounded-lg text-sm whitespace-nowrap" style={{ border: "1px solid var(--border)", color: "var(--text2)" }}>
+              + Adicionar
+            </button>
           </div>
-          <div>
-            <Lbl>Número da OAB</Lbl>
-            <Input value={oabNumero} onChange={e => setOabNumero(e.target.value)} placeholder="Ex: 123456" />
-          </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-[140px_140px_auto] gap-3 items-end mt-4">
           <DateField label="Data inicial" value={dataInicio} onChange={setDataInicio} />
           <DateField label="Data final" value={dataFim} onChange={setDataFim} />
           <button onClick={buscar} disabled={buscando}
