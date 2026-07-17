@@ -78,6 +78,8 @@ export default function PublicacoesPage() {
   const [carregando, setCarregando] = useState(true);
   const [mostrarTratadas, setMostrarTratadas] = useState(false);
   const [expandido, setExpandido] = useState<string | null>(null);
+  const [pagina, setPagina] = useState(1);
+  const POR_PAGINA = 10;
 
   useEffect(() => {
     const loadPerfil = async () => {
@@ -113,6 +115,7 @@ export default function PublicacoesPage() {
     try {
       const res = await fetch(`/api/publicacoes${mostrarTratadas ? "" : "?tratada=false"}`);
       if (res.ok) setLista(await res.json());
+      setPagina(1);
     } finally {
       setCarregando(false);
     }
@@ -204,6 +207,10 @@ export default function PublicacoesPage() {
     });
     if (!mostrarTratadas) setLista(prev => prev.filter(p => p.id !== id));
   };
+
+  const totalPaginas = Math.max(1, Math.ceil(lista.length / POR_PAGINA));
+  const paginaAtual = Math.min(pagina, totalPaginas);
+  const listaPagina = lista.slice((paginaAtual - 1) * POR_PAGINA, paginaAtual * POR_PAGINA);
 
   return (
     <div className="p-6 md:p-8 max-w-5xl mx-auto w-full">
@@ -306,7 +313,7 @@ export default function PublicacoesPage() {
         <Card><p className="text-sm text-center py-6" style={{ color: "var(--text3)" }}>Nenhuma publicação encontrada. Use o campo acima para buscar.</p></Card>
       ) : (
         <div className="space-y-2">
-          {lista.map(p => {
+          {listaPagina.map(p => {
             const djen = dadosDjen(p);
             const prazo = classificarPrazo({ tipoComunicacao: p.tipoComunicacao, texto: p.texto });
             const textoLimpo = resumoTexto(p.texto, 100000);
@@ -382,6 +389,22 @@ export default function PublicacoesPage() {
               </Card>
             );
           })}
+        </div>
+      )}
+
+      {totalPaginas > 1 && (
+        <div className="flex items-center justify-center gap-4 mt-6">
+          <button onClick={() => setPagina(p => Math.max(1, p - 1))} disabled={paginaAtual === 1}
+            className="text-xs px-3 py-1.5 rounded-lg disabled:opacity-40"
+            style={{ border: "1px solid var(--border)", color: "var(--text2)" }}>
+            ‹ Anterior
+          </button>
+          <span className="text-xs" style={{ color: "var(--text3)" }}>Página {paginaAtual} de {totalPaginas}</span>
+          <button onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))} disabled={paginaAtual === totalPaginas}
+            className="text-xs px-3 py-1.5 rounded-lg disabled:opacity-40"
+            style={{ border: "1px solid var(--border)", color: "var(--text2)" }}>
+            Próxima ›
+          </button>
         </div>
       )}
     </div>
