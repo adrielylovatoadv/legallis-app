@@ -40,6 +40,7 @@ export interface DjenComunicacao {
   numero_processo: string;
   numeroprocessocommascara?: string;
   meio: string;
+  meiocompleto?: string;
   link?: string;
   tipoDocumento?: string;
   numeroComunicacao?: number;
@@ -59,6 +60,10 @@ export interface BuscarDjenParams {
   ufOab: string;
   dataDisponibilizacaoInicio?: string; // YYYY-MM-DD
   dataDisponibilizacaoFim?: string; // YYYY-MM-DD
+  texto?: string; // busca no teor da comunicação
+  siglaTribunal?: string; // ex: TJMG
+  meio?: string; // "D" (Diário de Justiça Eletrônico) ou "E" (Plataforma Nacional de Editais)
+  numeroProcesso?: string; // com ou sem máscara
 }
 
 // Busca todas as páginas (a API pagina em blocos de até 100 itens por padrão).
@@ -76,6 +81,10 @@ export async function buscarComunicacoesPorOab(params: BuscarDjenParams): Promis
     });
     if (params.dataDisponibilizacaoInicio) qs.set("dataDisponibilizacaoInicio", params.dataDisponibilizacaoInicio);
     if (params.dataDisponibilizacaoFim) qs.set("dataDisponibilizacaoFim", params.dataDisponibilizacaoFim);
+    if (params.texto) qs.set("texto", params.texto);
+    if (params.siglaTribunal) qs.set("siglaTribunal", params.siglaTribunal);
+    if (params.meio) qs.set("meio", params.meio);
+    if (params.numeroProcesso) qs.set("numeroProcesso", params.numeroProcesso);
 
     const res = await fetch(`${DJEN_URL}?${qs.toString()}`, {
       headers: { Accept: "application/json" },

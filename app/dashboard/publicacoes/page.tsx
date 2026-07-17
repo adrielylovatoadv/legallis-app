@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { Card, Input, FieldLabel as Lbl, Select } from "@/components/ui";
 import { DateField } from "@/components/ui/DateField";
 import { buscarComunicacoesPorOab, type DjenComunicacao } from "@/lib/integrations/djen";
+import { classificarPrazo, resumoTexto, type SinalPrazo } from "@/lib/publicacao-prazo";
 
 const BR_STATES = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
@@ -20,9 +21,20 @@ interface Publicacao {
   fonte: "djen" | "datajud" | "escavador";
   tratada: boolean;
   criado_em: string;
+  raw?: unknown;
 }
 
 const FONTE_LABEL: Record<Publicacao["fonte"], string> = { djen: "DJEN", datajud: "DataJud", escavador: "Escavador" };
+
+const SINAL_PRAZO_LABEL: Record<SinalPrazo, string> = { sim: "Pode gerar prazo", nao: "Não gera prazo", revisar: "Revisar prazo" };
+const SINAL_PRAZO_COLOR: Record<SinalPrazo, string> = { sim: "#f87171", nao: "#4ade80", revisar: "var(--text3)" };
+const SINAL_PRAZO_BG: Record<SinalPrazo, string> = { sim: "rgba(248,113,113,0.12)", nao: "rgba(74,222,128,0.12)", revisar: "rgba(255,255,255,0.06)" };
+
+// Só a fonte DJEN grava esse formato em `raw` (ver lib/integrations/djen.ts); as outras fontes
+// não têm partes/advogados/meio estruturados, então voltam undefined e a UI simplesmente omite.
+function dadosDjen(p: Publicacao): DjenComunicacao | undefined {
+  return p.fonte === "djen" ? (p.raw as DjenComunicacao | undefined) : undefined;
+}
 
 function fmtData(iso?: string) {
   if (!iso) return "—";
@@ -30,9 +42,8 @@ function fmtData(iso?: string) {
   return d && m && y ? `${d}/${m}/${y}` : iso;
 }
 
-// Padrão de 90 dias: o site oficial (comunica.pje.jus.br) exige um intervalo de datas e,
-// se a usuária deixar sem preencher, ele busca só o dia de hoje — o que sempre dá "sem
-// resultado". Aqui já vem preenchido com um intervalo razoável para evitar essa pegadinha.
+// Ambos os campos abrem com a data de hoje, igual ao padrão do site oficial
+// (comunica.pje.jus.br) — quem precisar de um período maior amplia manualmente a data inicial.
 function dataIso(diasAtras: number): string {
   const d = new Date();
   d.setDate(d.getDate() - diasAtras);
@@ -43,8 +54,13 @@ export default function PublicacoesPage() {
   const { data: session } = useSession();
   const [oabUf, setOabUf] = useState("MG");
   const [oabNumero, setOabNumero] = useState("");
-  const [dataInicio, setDataInicio] = useState(() => dataIso(90));
+  const [dataInicio, setDataInicio] = useState(() => dataIso(0));
   const [dataFim, setDataFim] = useState(() => dataIso(0));
+  const [texto, setTexto] = useState("");
+  const [numeroProcesso, setNumeroProcesso] = useState("");
+  const [siglaTribunal, setSiglaTribunal] = useState("");
+  const [meio, setMeio] = useState("");
+  const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [buscando, setBuscando] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [lista, setLista] = useState<Publicacao[]>([]);
@@ -93,6 +109,10 @@ export default function PublicacoesPage() {
         numeroOab: oabNumero.trim(), ufOab: oabUf,
         dataDisponibilizacaoInicio: dataInicio || undefined,
         dataDisponibilizacaoFim: dataFim || undefined,
+        texto: texto.trim() || undefined,
+        numeroProcesso: numeroProcesso.trim() || undefined,
+        siglaTribunal: siglaTribunal.trim() || undefined,
+        meio: meio || undefined,
       });
     } catch (e) {
       djenErro = e instanceof Error ? e.message : "Erro ao buscar no DJEN.";
@@ -169,6 +189,36 @@ export default function PublicacoesPage() {
             {buscando ? "Buscando..." : "Buscar novas publicações"}
           </button>
         </div>
+
+        <button onClick={() => setMostrarFiltros(v => !v)} className="text-xs mt-3" style={{ color: "var(--gold)" }}>
+          {mostrarFiltros ? "Ocultar opções de busca" : "Mais opções de busca"}
+        </button>
+
+        {mostrarFiltros && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-end mt-3">
+            <div className="col-span-2">
+              <Lbl>Teor da comunicação</Lbl>
+              <Input value={texto} onChange={e => setTexto(e.target.value)} placeholder="Buscar palavra no texto" />
+            </div>
+            <div>
+              <Lbl>Número do processo</Lbl>
+              <Input value={numeroProcesso} onChange={e => setNumeroProcesso(e.target.value)} placeholder="0000000-00.0000.0.00.0000" />
+            </div>
+            <div>
+              <Lbl>Tribunal</Lbl>
+              <Input value={siglaTribunal} onChange={e => setSiglaTribunal(e.target.value.toUpperCase())} placeholder="Ex: TJMG" />
+            </div>
+            <div>
+              <Lbl>Meio</Lbl>
+              <Select value={meio} onChange={e => setMeio(e.target.value)}>
+                <option value="">Todos</option>
+                <option value="D">Diário de Justiça Eletrônico</option>
+                <option value="E">Plataforma Nacional de Editais</option>
+              </Select>
+            </div>
+          </div>
+        )}
+
         <p className="text-xs mt-2" style={{ color: "var(--text3)" }}>
           A busca é limitada ao intervalo de datas acima — amplie o período se não encontrar o que procura.
         </p>
@@ -192,39 +242,82 @@ export default function PublicacoesPage() {
         <Card><p className="text-sm text-center py-6" style={{ color: "var(--text3)" }}>Nenhuma publicação encontrada. Use o campo acima para buscar.</p></Card>
       ) : (
         <div className="space-y-2">
-          {lista.map(p => (
-            <Card key={p.id} padding="p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(201,168,76,0.12)", color: "var(--gold)" }}>
-                      {FONTE_LABEL[p.fonte]}
-                    </span>
-                    <span className="text-xs" style={{ color: "var(--text3)" }}>{fmtData(p.dataDisponibilizacao)}</span>
-                    {p.tipoComunicacao && <span className="text-xs" style={{ color: "var(--text3)" }}>· {p.tipoComunicacao}</span>}
-                    {p.tratada && <span className="text-xs" style={{ color: "#4ade80" }}>· tratada</span>}
+          {lista.map(p => {
+            const djen = dadosDjen(p);
+            const prazo = classificarPrazo({ tipoComunicacao: p.tipoComunicacao, texto: p.texto });
+            const textoLimpo = resumoTexto(p.texto, 100000);
+            const advogados = (djen?.destinatarioadvogados ?? [])
+              .map(a => a.advogado ? `${a.advogado.nome} (OAB ${a.advogado.uf_oab}${a.advogado.numero_oab})` : null)
+              .filter((s): s is string => !!s);
+            return (
+              <Card key={p.id} padding="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(201,168,76,0.12)", color: "var(--gold)" }}>
+                        {FONTE_LABEL[p.fonte]}
+                      </span>
+                      {djen?.siglaTribunal && (
+                        <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "var(--surface2)", color: "var(--text2)" }}>
+                          {djen.siglaTribunal}
+                        </span>
+                      )}
+                      <span className="text-xs" style={{ color: "var(--text3)" }}>{fmtData(p.dataDisponibilizacao)}</span>
+                      {p.tipoComunicacao && <span className="text-xs" style={{ color: "var(--text3)" }}>· {p.tipoComunicacao}</span>}
+                      {djen?.meiocompleto && <span className="text-xs" style={{ color: "var(--text3)" }}>· {djen.meiocompleto}</span>}
+                      {p.tratada && <span className="text-xs" style={{ color: "#4ade80" }}>· tratada</span>}
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: SINAL_PRAZO_BG[prazo.sinal], color: SINAL_PRAZO_COLOR[prazo.sinal] }}>
+                        {SINAL_PRAZO_LABEL[prazo.sinal]}
+                      </span>
+                      <span className="text-xs" style={{ color: "var(--text3)" }}>{prazo.motivo}</span>
+                    </div>
+
+                    <p className="text-sm font-medium mt-1" style={{ color: "var(--text)" }}>{p.numeroProcesso || "Processo não identificado"}</p>
+                    {p.orgao && <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>{p.orgao}</p>}
+                    <p className={`text-sm mt-2 ${expandido === p.id ? "" : "line-clamp-2"}`} style={{ color: "var(--text2)" }}>
+                      {textoLimpo || "—"}
+                    </p>
+                    {textoLimpo.length > 160 && (
+                      <button onClick={() => setExpandido(expandido === p.id ? null : p.id)} className="text-xs mt-1" style={{ color: "var(--gold)" }}>
+                        {expandido === p.id ? "ver menos" : "ver mais"}
+                      </button>
+                    )}
+
+                    {djen && ((djen.destinatarios?.length ?? 0) > 0 || advogados.length > 0) && (
+                      <div className="mt-2 space-y-0.5">
+                        {djen.destinatarios && djen.destinatarios.length > 0 && (
+                          <p className="text-xs" style={{ color: "var(--text3)" }}>
+                            <span style={{ color: "var(--text2)" }}>Partes:</span> {djen.destinatarios.map(d => `${d.nome} (${d.polo === "A" ? "ativo" : d.polo === "P" ? "passivo" : d.polo})`).join(", ")}
+                          </p>
+                        )}
+                        {advogados.length > 0 && (
+                          <p className="text-xs" style={{ color: "var(--text3)" }}>
+                            <span style={{ color: "var(--text2)" }}>Advogados:</span> {advogados.join(", ")}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {djen?.link && (
+                      <a href={djen.link} target="_blank" rel="noopener noreferrer" className="text-xs mt-2 inline-block" style={{ color: "var(--gold)" }}>
+                        Ver inteiro teor ↗
+                      </a>
+                    )}
                   </div>
-                  <p className="text-sm font-medium" style={{ color: "var(--text)" }}>{p.numeroProcesso || "Processo não identificado"}</p>
-                  {p.orgao && <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>{p.orgao}</p>}
-                  <p className={`text-sm mt-2 ${expandido === p.id ? "" : "line-clamp-2"}`} style={{ color: "var(--text2)" }}>
-                    {p.texto || "—"}
-                  </p>
-                  {p.texto && p.texto.length > 160 && (
-                    <button onClick={() => setExpandido(expandido === p.id ? null : p.id)} className="text-xs mt-1" style={{ color: "var(--gold)" }}>
-                      {expandido === p.id ? "ver menos" : "ver mais"}
+                  {!p.tratada && (
+                    <button onClick={() => marcarTratada(p.id)}
+                      className="text-xs px-3 py-1.5 rounded-lg whitespace-nowrap"
+                      style={{ border: "1px solid var(--border)", color: "var(--text2)" }}>
+                      Marcar como tratada
                     </button>
                   )}
                 </div>
-                {!p.tratada && (
-                  <button onClick={() => marcarTratada(p.id)}
-                    className="text-xs px-3 py-1.5 rounded-lg whitespace-nowrap"
-                    style={{ border: "1px solid var(--border)", color: "var(--text2)" }}>
-                    Marcar como tratada
-                  </button>
-                )}
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
