@@ -9,10 +9,28 @@ import {
 } from "@/lib/financeiro";
 import { MetricCard, StatusBtn, sortByMesDesc, getCurrentMes } from "./_shared";
 
+const PCT_PADRAO_KEY = "legallis_pct_honorarios_execucao_padrao";
+const PCT_PADRAO_FALLBACK = 35;
+
+export function getPctExecucaoPadrao(): number {
+  if (typeof window === "undefined") return PCT_PADRAO_FALLBACK;
+  const v = parseFloat(localStorage.getItem(PCT_PADRAO_KEY) || "");
+  return Number.isFinite(v) ? v : PCT_PADRAO_FALLBACK;
+}
+
 export function ExecucoesView({ reload, filtroMes }: { reload: () => void; filtroMes?: string }) {
   const [execucoes, setExecucoes] = useState<Execucao[]>([]);
   const [novo, setNovo] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const [pctPadrao, setPctPadrao] = useState(PCT_PADRAO_FALLBACK);
+
+  useEffect(() => { setPctPadrao(getPctExecucaoPadrao()); }, []);
+
+  const salvarPctPadrao = (v: number) => {
+    const pct = Number.isFinite(v) ? v : PCT_PADRAO_FALLBACK;
+    setPctPadrao(pct);
+    localStorage.setItem(PCT_PADRAO_KEY, String(pct));
+  };
 
   const load = useCallback(async () => { setExecucoes(await getExecucoes()); }, []);
   useEffect(() => { load(); }, [load]);
@@ -32,8 +50,14 @@ export function ExecucoesView({ reload, filtroMes }: { reload: () => void; filtr
 
   return (
     <div className="space-y-4">
-      <div className="text-xs px-4 py-2.5 rounded-lg" style={{ background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.2)", color: "var(--text2)" }}>
-        📐 Honorários = 35% do valor percebido + honorários de sucumbência
+      <div className="text-xs px-4 py-2.5 rounded-lg flex items-center gap-2 flex-wrap" style={{ background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.2)", color: "var(--text2)" }}>
+        <span>📐 Honorários padrão (processo completo):</span>
+        <input type="number" step="0.5" min="0" max="100" value={pctPadrao}
+          onChange={e => salvarPctPadrao(parseFloat(e.target.value))}
+          className="w-16 px-2 py-0.5 rounded outline-none text-center font-semibold"
+          style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--gold)" }} />
+        <span style={{ color: "var(--gold)", fontWeight: 600 }}>% do valor percebido</span>
+        <span style={{ color: "var(--text3)" }}>+ sucumbência · ajustável em cada execução</span>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <MetricCard label="Total" value={total} color="var(--gold)" />
@@ -46,7 +70,7 @@ export function ExecucoesView({ reload, filtroMes }: { reload: () => void; filtr
         </span>
         <button onClick={() => setNovo(true)} className="px-3 py-1.5 rounded-lg text-sm font-semibold" style={{ background:"var(--gold)", color:"#000" }}>+ Nova</button>
       </div>
-      {novo && <ExecucaoForm onSave={async f => { await createExecucao(f); setNovo(false); load(); reload(); }} onCancel={() => setNovo(false)} />}
+      {novo && <ExecucaoForm initial={{ pct_honorarios: pctPadrao }} onSave={async f => { await createExecucao(f); setNovo(false); load(); reload(); }} onCancel={() => setNovo(false)} />}
       {execucoes.length === 0 && !novo ? (
         <p className="py-8 text-center text-sm" style={{ color:"var(--text3)" }}>Nenhuma execução cadastrada.</p>
       ) : (
@@ -55,14 +79,14 @@ export function ExecucoesView({ reload, filtroMes }: { reload: () => void; filtr
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom: "2px solid var(--border)" }}>
-                  {["Mês","Data","Cliente","Réu","Processo","Percebido","Sucumbência","Honorários","Status",""].map(h => (
+                  {["Mês","Data","Cliente","Réu","Processo","Percebido","%","Sucumbência","Honorários","Status",""].map(h => (
                     <th key={h} className="pb-2 text-left pr-3 text-xs uppercase tracking-wider" style={{ color:"var(--text3)" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {sorted.map(e => editId === e.id
-                  ? <tr key={e.id}><td colSpan={10} className="py-2"><ExecucaoForm initial={e}
+                  ? <tr key={e.id}><td colSpan={11} className="py-2"><ExecucaoForm initial={e}
                       onSave={async f => { await updateExecucao(e.id, f); setEditId(null); load(); reload(); }}
                       onCancel={() => setEditId(null)} /></td></tr>
                   : (
@@ -73,6 +97,9 @@ export function ExecucoesView({ reload, filtroMes }: { reload: () => void; filtr
                       <td className="py-2 pr-3 text-xs" style={{ color:"var(--text3)" }}>{e.reu}</td>
                       <td className="py-2 pr-3 text-xs font-mono max-w-32 truncate" style={{ color:"var(--text3)" }}>{e.processo}</td>
                       <td className="py-2 pr-3 tabular-nums text-xs" style={{ color:"var(--text2)" }}>{fmtBRL(e.valor_percebido)}</td>
+                      <td className="py-2 pr-3 tabular-nums text-xs" style={{ color:"var(--text3)" }}>
+                        {e.tipo_execucao === "honorarios_somente" ? "—" : `${(e.pct_honorarios ?? PCT_PADRAO_FALLBACK).toLocaleString("pt-BR")}%`}
+                      </td>
                       <td className="py-2 pr-3 tabular-nums text-xs" style={{ color:"var(--text2)" }}>{fmtBRL(e.sucumbencia)}</td>
                       <td className="py-2 pr-3 tabular-nums font-semibold text-xs" style={{ color:"#22c55e" }}>{fmtBRL(e.honorarios)}</td>
                       <td className="py-2 pr-3"><StatusBtn status={e.status} onClick={() => toggleStatus(e)} /></td>
