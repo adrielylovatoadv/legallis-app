@@ -14,8 +14,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params;
   const { data: body, error } = parseBody(acordoUpdateSchema, await req.json());
   if (error) return error;
+  const current = await acordosRepo.get(tid, id);
+  if (!current) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
   const patch: typeof body & { honorarios?: number } = { ...body };
-  if (patch.valor_acordo !== undefined) patch.honorarios = calcAcordo(patch.valor_acordo);
+  if (patch.valor_acordo !== undefined || patch.pct_honorarios !== undefined) {
+    const valor = patch.valor_acordo ?? current.valor_acordo;
+    const pct = patch.pct_honorarios ?? current.pct_honorarios;
+    patch.honorarios = calcAcordo(valor, pct);
+  }
   const acordo = await acordosRepo.update(tid, id, patch);
   if (!acordo) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
   return NextResponse.json(acordo);

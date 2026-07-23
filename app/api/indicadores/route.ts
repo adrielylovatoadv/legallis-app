@@ -76,7 +76,7 @@ export async function GET() {
   const casos_criados_por_mes = meses6.map(m => ({ mes: m.label, valor: criadosPorChave[m.chave] || 0 }));
 
   // Honorários recebidos por mês (mesma fonte usada em /api/financeiro/dashboard)
-  const acordos = acordosRaw.map(a => ({ ...a, honorarios: a.honorarios || calcAcordo(a.valor_acordo || 0) }));
+  const acordos = acordosRaw.map(a => ({ ...a, honorarios: a.honorarios || calcAcordo(a.valor_acordo || 0, a.pct_honorarios) }));
   const honorariosPorMes: Record<string, number> = {};
   const soma = (mes: string | undefined, valor: number, status: string) => {
     if (!mes || status === "pendente") return;

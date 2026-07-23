@@ -27,7 +27,7 @@ export async function GET() {
   ]);
   // Alguns acordos antigos têm "honorarios" zerado mesmo com valor_acordo preenchido —
   // recalcula na hora, igual a rota /api/financeiro/acordos já faz.
-  const acordos = acordosRaw.map(a => ({ ...a, honorarios: a.honorarios || calcAcordo(a.valor_acordo || 0) }));
+  const acordos = acordosRaw.map(a => ({ ...a, honorarios: a.honorarios || calcAcordo(a.valor_acordo || 0, a.pct_honorarios) }));
 
   // Receitas recebidas (não pendentes)
   const receitasPagas = [

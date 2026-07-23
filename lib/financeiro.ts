@@ -33,7 +33,7 @@ export type Status = "pago" | "pendente" | "repasse";
 export interface Acordo {
   id: string; mes: string; data_pagamento: string;
   cliente: string; reu: string; objeto: string; processo: string;
-  valor_acordo: number; honorarios: number; status: Status;
+  valor_acordo: number; pct_honorarios?: number; honorarios: number; status: Status;
   processoId?: string; criado_em?: string;
 }
 export type TipoExecucao = "processo_completo" | "honorarios_somente";

@@ -12,6 +12,7 @@ function rowToAcordo(r: Record<string, unknown>): Acordo {
     processo: r.processo as string,
     processoId: (r.processo_id as string) ?? undefined,
     valor_acordo: Number(r.valor_acordo),
+    pct_honorarios: r.pct_honorarios != null ? Number(r.pct_honorarios) : undefined,
     honorarios: Number(r.honorarios),
     status: r.status as Acordo["status"],
     criado_em: r.criado_em instanceof Date ? r.criado_em.toISOString() : (r.criado_em as string | undefined),
@@ -43,9 +44,10 @@ export async function create(tenantId: string, input: Omit<Acordo, "id">): Promi
   const sql = getSql()!;
   await sql`
     INSERT INTO acordos (tenant_id, id, mes, data_pagamento, cliente, reu, objeto, processo, processo_id,
-                          valor_acordo, honorarios, status, criado_em)
+                          valor_acordo, pct_honorarios, honorarios, status, criado_em)
     VALUES (${tenantId}, ${row.id}, ${row.mes}, ${row.data_pagamento}, ${row.cliente}, ${row.reu}, ${row.objeto},
-            ${row.processo}, ${row.processoId ?? null}, ${row.valor_acordo}, ${row.honorarios}, ${row.status}, ${row.criado_em})
+            ${row.processo}, ${row.processoId ?? null}, ${row.valor_acordo}, ${row.pct_honorarios ?? null},
+            ${row.honorarios}, ${row.status}, ${row.criado_em})
   `;
   return row;
 }
@@ -67,6 +69,7 @@ export async function update(tenantId: string, id: string, patch: Partial<Acordo
     UPDATE acordos SET mes = ${merged.mes}, data_pagamento = ${merged.data_pagamento}, cliente = ${merged.cliente},
       reu = ${merged.reu}, objeto = ${merged.objeto}, processo = ${merged.processo},
       processo_id = ${merged.processoId ?? null}, valor_acordo = ${merged.valor_acordo},
+      pct_honorarios = ${merged.pct_honorarios ?? null},
       honorarios = ${merged.honorarios}, status = ${merged.status}
     WHERE tenant_id = ${tenantId} AND id = ${id}
   `;
@@ -94,13 +97,14 @@ export function buildUpsertManyStatements(tenantId: string, rows: Acordo[]) {
   const sql = getSql()!;
   return rows.map(row => sql`
     INSERT INTO acordos (tenant_id, id, mes, data_pagamento, cliente, reu, objeto, processo, processo_id,
-                          valor_acordo, honorarios, status)
+                          valor_acordo, pct_honorarios, honorarios, status)
     VALUES (${tenantId}, ${row.id}, ${row.mes}, ${row.data_pagamento}, ${row.cliente}, ${row.reu}, ${row.objeto},
-            ${row.processo}, ${row.processoId ?? null}, ${row.valor_acordo}, ${row.honorarios}, ${row.status})
+            ${row.processo}, ${row.processoId ?? null}, ${row.valor_acordo}, ${row.pct_honorarios ?? null},
+            ${row.honorarios}, ${row.status})
     ON CONFLICT (tenant_id, id) DO UPDATE SET mes = EXCLUDED.mes, data_pagamento = EXCLUDED.data_pagamento,
       cliente = EXCLUDED.cliente, reu = EXCLUDED.reu, objeto = EXCLUDED.objeto, processo = EXCLUDED.processo,
       processo_id = EXCLUDED.processo_id, valor_acordo = EXCLUDED.valor_acordo,
-      honorarios = EXCLUDED.honorarios, status = EXCLUDED.status
+      pct_honorarios = EXCLUDED.pct_honorarios, honorarios = EXCLUDED.honorarios, status = EXCLUDED.status
   `);
 }
 

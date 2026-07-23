@@ -9,10 +9,28 @@ import {
 } from "@/lib/financeiro";
 import { MetricCard, StatusBtn, sortByMesDesc, getCurrentMes } from "./_shared";
 
+const PCT_PADRAO_KEY = "legallis_pct_honorarios_acordo_padrao";
+const PCT_PADRAO_FALLBACK = 41.5;
+
+export function getPctAcordoPadrao(): number {
+  if (typeof window === "undefined") return PCT_PADRAO_FALLBACK;
+  const v = parseFloat(localStorage.getItem(PCT_PADRAO_KEY) || "");
+  return Number.isFinite(v) ? v : PCT_PADRAO_FALLBACK;
+}
+
 export function AcordosView({ reload, filtroMes }: { reload: () => void; filtroMes?: string }) {
   const [acordos, setAcordos] = useState<Acordo[]>([]);
   const [novo, setNovo] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const [pctPadrao, setPctPadrao] = useState(PCT_PADRAO_FALLBACK);
+
+  useEffect(() => { setPctPadrao(getPctAcordoPadrao()); }, []);
+
+  const salvarPctPadrao = (v: number) => {
+    const pct = Number.isFinite(v) ? v : PCT_PADRAO_FALLBACK;
+    setPctPadrao(pct);
+    localStorage.setItem(PCT_PADRAO_KEY, String(pct));
+  };
 
   const load = useCallback(async () => { setAcordos(await getAcordos()); }, []);
   useEffect(() => { load(); }, [load]);
@@ -33,8 +51,14 @@ export function AcordosView({ reload, filtroMes }: { reload: () => void; filtroM
 
   return (
     <div className="space-y-4">
-      <div className="text-xs px-4 py-2.5 rounded-lg" style={{ background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.2)", color: "var(--text2)" }}>
-        📐 Honorários = 10% do valor + 35% do restante (= 41,5% do acordo)
+      <div className="text-xs px-4 py-2.5 rounded-lg flex items-center gap-2 flex-wrap" style={{ background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.2)", color: "var(--text2)" }}>
+        <span>📐 Honorários padrão para novos acordos:</span>
+        <input type="number" step="0.5" min="0" max="100" value={pctPadrao}
+          onChange={e => salvarPctPadrao(parseFloat(e.target.value))}
+          className="w-16 px-2 py-0.5 rounded outline-none text-center font-semibold"
+          style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--gold)" }} />
+        <span style={{ color: "var(--gold)", fontWeight: 600 }}>% do acordo</span>
+        <span style={{ color: "var(--text3)" }}>· pode ser ajustado individualmente em cada acordo</span>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricCard label="Total" value={total} color="var(--gold)" />
@@ -49,7 +73,7 @@ export function AcordosView({ reload, filtroMes }: { reload: () => void; filtroM
         <button onClick={() => setNovo(true)} className="px-3 py-1.5 rounded-lg text-sm font-semibold"
           style={{ background: "var(--gold)", color: "#000" }}>+ Novo</button>
       </div>
-      {novo && <AcordoForm onSave={async f => { await createAcordo(f); setNovo(false); load(); reload(); }} onCancel={() => setNovo(false)} />}
+      {novo && <AcordoForm initial={{ pct_honorarios: pctPadrao }} onSave={async f => { await createAcordo(f); setNovo(false); load(); reload(); }} onCancel={() => setNovo(false)} />}
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -97,8 +121,9 @@ function AcordoForm({ initial, onSave, onCancel }: {
   onSave: (f: Omit<Acordo,"id"|"honorarios">) => Promise<void>;
   onCancel: () => void;
 }) {
-  const blank = { mes: getCurrentMes(), data_pagamento:"", cliente:"", reu:"", objeto:"", processo:"", valor_acordo:0, status:"pendente" as Status };
+  const blank = { mes: getCurrentMes(), data_pagamento:"", cliente:"", reu:"", objeto:"", processo:"", valor_acordo:0, pct_honorarios: PCT_PADRAO_FALLBACK, status:"pendente" as Status };
   const [form, setForm] = useState({ ...blank, ...(initial || {}) });
+  const pct = form.pct_honorarios ?? PCT_PADRAO_FALLBACK;
   const [saving, setSaving] = useState(false);
   const [erroValor, setErroValor] = useState(false);
   const set = (k: string, v: string | number) => {
@@ -122,11 +147,16 @@ function AcordoForm({ initial, onSave, onCancel }: {
 
   return (
     <Card>
-      <div className="mb-3 text-xs px-3 py-2 rounded-lg" style={{ background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.2)", color:"var(--text2)" }}>
-        📐 Honorários = 10% do valor + 35% do restante <span style={{ color:"var(--gold)", fontWeight:600 }}>= 41,5% do acordo</span>
+      <div className="mb-3 text-xs px-3 py-2 rounded-lg flex items-center gap-2 flex-wrap" style={{ background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.2)", color:"var(--text2)" }}>
+        <span>📐 Honorários =</span>
+        <input type="number" step="0.5" min="0" max="100" value={pct}
+          onChange={e => { const v = parseFloat(e.target.value); set("pct_honorarios", Number.isNaN(v) ? PCT_PADRAO_FALLBACK : v); }}
+          className="w-16 px-2 py-0.5 rounded outline-none text-center font-semibold"
+          style={{ background:"var(--surface2)", border:"1px solid var(--border)", color:"var(--gold)" }} />
+        <span style={{ color:"var(--gold)", fontWeight:600 }}>% do acordo</span>
         {form.valor_acordo > 0 && (
-          <span className="ml-3 font-semibold" style={{ color:"#22c55e" }}>
-            → {fmtBRL(form.valor_acordo * 0.415)}
+          <span className="ml-1 font-semibold" style={{ color:"#22c55e" }}>
+            → {fmtBRL(form.valor_acordo * (pct / 100))}
           </span>
         )}
       </div>

@@ -32,7 +32,7 @@ export type Status = "pago" | "pendente" | "repasse";
 export interface Acordo {
   id: string; mes: string; data_pagamento: string;
   cliente: string; reu: string; objeto: string; processo: string;
-  valor_acordo: number; honorarios: number; status: Status;
+  valor_acordo: number; pct_honorarios?: number; honorarios: number; status: Status;
   processoId?: string; criado_em?: string;
 }
 export type TipoExecucao = "processo_completo" | "honorarios_somente";
@@ -154,8 +154,10 @@ export function newId() {
   return Math.random().toString(36).slice(2, 10);
 }
 
-export function calcAcordo(valor: number): number {
-  return Math.round((valor * 0.10 + valor * 0.90 * 0.35) * 100) / 100;
+export const PCT_ACORDO_PADRAO = 41.5;
+
+export function calcAcordo(valor: number, pct?: number): number {
+  return Math.round(valor * ((pct ?? PCT_ACORDO_PADRAO) / 100) * 100) / 100;
 }
 
 export function calcExecucao(

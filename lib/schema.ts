@@ -170,6 +170,7 @@ export async function initSchema(sql: Sql): Promise<void> {
   `;
   await sql`ALTER TABLE acordos ADD COLUMN IF NOT EXISTS repasse_cliente NUMERIC(14,2)`;
   await sql`ALTER TABLE acordos ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'`;
+  await sql`ALTER TABLE acordos ADD COLUMN IF NOT EXISTS pct_honorarios NUMERIC(6,3)`;
   // Ordena a lista de acordos pelo momento real do registro (não pela data de pagamento,
   // que muitas vezes fica em branco enquanto o acordo está pendente).
   await sql`ALTER TABLE acordos ADD COLUMN IF NOT EXISTS criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()`;

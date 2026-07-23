@@ -10,6 +10,7 @@ export const acordoCreateSchema = z.object({
   objeto: z.string().trim().default(""),
   processo: z.string().trim().default(""),
   valor_acordo: z.number().positive("Valor do acordo deve ser maior que zero"),
+  pct_honorarios: z.number().min(0).max(100).default(41.5),
   status: statusSchema.default("pendente"),
   processoId: z.string().optional(),
 });
