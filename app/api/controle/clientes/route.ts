@@ -38,7 +38,9 @@ export async function GET(req: NextRequest) {
     ]);
     return NextResponse.json(lista.map(c => {
       const cn = normNome(c.nome);
-      const procs = processos.filter(p => normNome(p.autor || "").includes(cn));
+      const procs = processos.filter(p =>
+        normNome(p.autor || "").includes(cn) || normNome(p.reu || "").includes(cn)
+      );
       const ativos = procs.filter(p => !isFinalizado(p));
       const finalizados = procs.filter(p => isFinalizado(p));
       const iniciais = iniciaisTodas.filter(i => normNome(i.cliente || "").includes(cn));
