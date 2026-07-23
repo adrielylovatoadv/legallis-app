@@ -79,14 +79,14 @@ export function AcordosView({ reload, filtroMes }: { reload: () => void; filtroM
           <table className="w-full text-sm">
             <thead>
               <tr style={{ borderBottom: "2px solid var(--border)" }}>
-                {["Mês","Data","Cliente","Réu","Processo","Valor Acordo","Honorários","Status",""].map(h => (
+                {["Mês","Data","Cliente","Réu","Processo","Valor Acordo","%","Honorários","Status",""].map(h => (
                   <th key={h} className="pb-2 text-left pr-3 text-xs uppercase tracking-wider" style={{ color: "var(--text3)" }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {sorted.map(a => editId === a.id
-                ? <tr key={a.id}><td colSpan={9} className="py-2"><AcordoForm initial={a}
+                ? <tr key={a.id}><td colSpan={10} className="py-2"><AcordoForm initial={a}
                     onSave={async f => { await updateAcordo(a.id, f); setEditId(null); load(); reload(); }}
                     onCancel={() => setEditId(null)} /></td></tr>
                 : (
@@ -97,6 +97,7 @@ export function AcordosView({ reload, filtroMes }: { reload: () => void; filtroM
                     <td className="py-2 pr-3 text-xs" style={{ color: "var(--text3)" }}>{a.reu}</td>
                     <td className="py-2 pr-3 text-xs font-mono max-w-36 truncate" style={{ color: "var(--text3)" }}>{a.processo}</td>
                     <td className="py-2 pr-3 tabular-nums text-xs" style={{ color: "var(--text2)" }}>{fmtBRL(a.valor_acordo)}</td>
+                    <td className="py-2 pr-3 tabular-nums text-xs" style={{ color: "var(--text3)" }}>{(a.pct_honorarios ?? PCT_PADRAO_FALLBACK).toLocaleString("pt-BR")}%</td>
                     <td className="py-2 pr-3 tabular-nums font-semibold text-xs" style={{ color: "#22c55e" }}>{fmtBRL(a.honorarios)}</td>
                     <td className="py-2 pr-3"><StatusBtn status={a.status} onClick={() => toggleStatus(a)} /></td>
                     <td className="py-2">
