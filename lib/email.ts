@@ -1,5 +1,5 @@
 const APP_URL = process.env.NEXTAUTH_URL ?? "https://app.legallis.app.br";
-const FROM = "Legallis <noreply@legallis.app.br>";
+const FROM = "Legarium <noreply@legallis.app.br>";
 
 async function send(to: string, subject: string, html: string) {
   // Avoid sending to internal @legallis emails in dev
@@ -31,28 +31,28 @@ const base = (content: string) => `
   .footer { margin-top:32px; font-size:12px; color:#666; text-align:center; }
 </style></head>
 <body><div class="container">
-  <div class="logo">LEGALLIS</div>
+  <div class="logo">LEGARIUM</div>
   ${content}
-  <div class="footer">LEGALLIS · Gestão Jurídica &amp; Financeira</div>
+  <div class="footer">LEGARIUM · Software Jurídico &amp; Financeiro</div>
 </div></body>
 </html>`;
 
 export async function sendWelcomeTrial(name: string, email: string, trialEndsAt: string) {
   const expiry = new Date(trialEndsAt).toLocaleDateString("pt-BR");
-  await send(email, "Bem-vindo ao Legallis! Seu teste gratuito começou.", base(`
+  await send(email, "Bem-vindo ao Legarium! Seu teste gratuito começou.", base(`
     <h1>Olá, ${name}! 👋</h1>
-    <p>Sua conta foi criada e seu <strong>teste gratuito de 4 dias</strong> já está ativo.</p>
+    <p>Sua conta foi criada e seu <strong>teste gratuito de 7 dias</strong> já está ativo.</p>
     <p>Você tem acesso completo ao sistema até <strong>${expiry}</strong>.</p>
-    <p>Explore o Controle Processual, a Calculadora Jurídica e todos os recursos disponíveis.</p>
+    <p>Explore o Controle Processual, o Financeiro, a Calculadora Jurídica e todos os recursos disponíveis.</p>
     <a class="btn" href="${APP_URL}/dashboard">Acessar o sistema →</a>
     <p style="margin-top:20px">Após o período de teste, escolha um plano para continuar com seus dados.</p>
   `));
 }
 
 export async function sendWelcomePaid(name: string, email: string, plan: string) {
-  const planLabels: Record<string, string> = { basic: "Básico", pro: "Pro", profissional: "Profissional" };
-  await send(email, "Assinatura confirmada — Legallis", base(`
-    <h1>Bem-vindo ao Legallis, ${name}!</h1>
+  const planLabels: Record<string, string> = { basic: "Básico", profissional: "Pro", pro: "Profissional" };
+  await send(email, "Assinatura confirmada — Legarium", base(`
+    <h1>Bem-vindo ao Legarium, ${name}!</h1>
     <p>Sua assinatura do plano <strong>${planLabels[plan] ?? plan}</strong> foi ativada com sucesso.</p>
     <p>Todos os recursos do seu plano já estão disponíveis.</p>
     <a class="btn" href="${APP_URL}/dashboard">Acessar o sistema →</a>
@@ -62,19 +62,19 @@ export async function sendWelcomePaid(name: string, email: string, plan: string)
 export async function sendTrialExpiringSoon(name: string, email: string, daysLeft: number, trialEndsAt: string) {
   const expiry = new Date(trialEndsAt).toLocaleDateString("pt-BR");
   const urgency = daysLeft === 0 ? "expira hoje" : `expira em ${daysLeft} dia${daysLeft !== 1 ? "s" : ""}`;
-  await send(email, `Seu teste gratuito ${urgency} — Legallis`, base(`
+  await send(email, `Seu teste gratuito ${urgency} — Legarium`, base(`
     <h1>Atenção, ${name}!</h1>
     <p>Seu <strong>teste gratuito ${urgency}</strong> (${expiry}).</p>
-    <p>Para continuar usando o Legallis e manter seus dados, escolha um plano agora.</p>
+    <p>Para continuar usando o Legarium e manter seus dados, escolha um plano agora.</p>
     <p>Seus dados ficam salvos por 1 dia após o vencimento.</p>
     <a class="btn" href="${APP_URL}/assinar">Ver planos →</a>
   `));
 }
 
 export async function sendPasswordReset(email: string, resetUrl: string) {
-  await send(email, "Redefinição de senha — Legallis", base(`
+  await send(email, "Redefinição de senha — Legarium", base(`
     <h1>Redefinir senha</h1>
-    <p>Você solicitou a redefinição de senha para sua conta no Legallis.</p>
+    <p>Você solicitou a redefinição de senha para sua conta no Legarium.</p>
     <p>Clique no botão abaixo para criar uma nova senha (válido por 1 hora):</p>
     <a class="btn" href="${resetUrl}">Redefinir senha →</a>
     <p style="margin-top:16px">Se você não solicitou, ignore este e-mail.</p>

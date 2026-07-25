@@ -54,7 +54,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-8 text-center text-xs tracking-widest uppercase" style={{ color: "var(--text3)" }}>
-        LEGALLIS · GESTÃO JURÍDICA & FINANCEIRA
+        LEGARIUM · SOFTWARE JURÍDICO & FINANCEIRO
       </div>
     </div>
   );

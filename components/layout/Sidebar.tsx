@@ -152,7 +152,7 @@ export default function Sidebar() {
       <div className="flex items-center h-16 flex-shrink-0 px-3" style={{ borderBottom: "1px solid var(--border)" }}>
         {!collapsed && (
           <div className="flex-1 min-w-0">
-            <Image src="/logo.png" alt="Legallis" width={120} height={36} className="object-contain" />
+            <Image src="/logo.png" alt="Legarium" width={120} height={36} className="object-contain" />
           </div>
         )}
         <button onClick={toggle} title={collapsed ? "Expandir menu" : "Recolher menu"}

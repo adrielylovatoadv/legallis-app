@@ -9,7 +9,7 @@ export default function BemVindoPage() {
       style={{ background: "var(--bg)" }}>
       <div className="w-full max-w-sm text-center space-y-6">
         <div className="flex justify-center">
-          <Image src="/logo.png" alt="Legallis" width={160} height={48} priority />
+          <Image src="/logo.png" alt="Legarium" width={160} height={55} className="object-contain" priority />
         </div>
 
         <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto"

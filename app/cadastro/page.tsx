@@ -11,28 +11,28 @@ const PLANS = [
     price: "R$ 97",
     period: "/mês",
     description: "Para advogados autônomos",
-    features: ["1 admin + até 2 usuários", "Controle Processual", "Calculadora Jurídica", "Export PDF"],
+    features: ["1 admin + até 2 usuários", "Até 100 processos", "Controle Processual", "Calculadora Jurídica e de Prazos", "Export PDF"],
     paymentLink: "https://buy.stripe.com/test_9B600ke867Gta2EdNveEo09",
     color: "var(--text3)",
   },
   {
     id: "profissional",
-    name: "Profissional",
+    name: "Pro",
     price: "R$ 197",
     period: "/mês",
     description: "Para pequenos escritórios",
-    features: ["1 admin + até 4 usuários", "Todos os módulos", "Financeiro completo", "Export PDF/Word/Excel", "Suporte por e-mail"],
+    features: ["1 admin + até 6 usuários", "Até 400 processos", "Todos os módulos", "Financeiro, Publicações e Kanban", "Export PDF/Word/Excel", "Suporte por e-mail"],
     paymentLink: "https://buy.stripe.com/test_00wfZi8NMe4RcaMfVDeEo0a",
     color: "var(--gold)",
     destaque: true,
   },
   {
     id: "pro",
-    name: "Pro",
+    name: "Profissional",
     price: "R$ 347",
     period: "/mês",
     description: "Para escritórios em crescimento",
-    features: ["1 admin + até 20 usuários", "Todos os módulos", "Export PDF/Word/Excel", "Suporte prioritário", "Onboarding incluso"],
+    features: ["1 admin + até 20 usuários", "Até 3.000 processos", "Todos os módulos + Indicadores e Auditoria", "Export PDF/Word/Excel", "Suporte prioritário", "Onboarding incluso"],
     paymentLink: "https://buy.stripe.com/test_eVq7sM1lk7Gt7Uw9xfeEo0b",
     color: "#818cf8",
   },
@@ -95,7 +95,7 @@ export default function CadastroPage() {
       <div className="max-w-5xl mx-auto">
         {/* Logo */}
         <div className="flex justify-center mb-10">
-          <Image src="/logo.png" alt="Legallis" width={160} height={48} priority />
+          <Image src="/logo.png" alt="Legarium" width={160} height={55} className="object-contain" priority />
         </div>
 
         {/* Steps */}

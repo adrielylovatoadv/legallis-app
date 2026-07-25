@@ -1,5 +1,6 @@
 import type { NextAuthConfig } from "next-auth";
 import type { SubscriptionStatus } from "./lib/users";
+import { canAccess, type Plan } from "./lib/plans";
 
 declare module "next-auth" {
   interface User {
@@ -70,10 +71,24 @@ export const authConfig = {
       }
 
       // Master panel only for plan=admin
+      const plan = (auth?.user as { plan?: string })?.plan as Plan | undefined;
       if (pathname.startsWith("/master")) {
-        const plan = (auth?.user as { plan?: string })?.plan;
         if (plan !== "admin") {
           return Response.redirect(new URL("/dashboard", request.url));
+        }
+      }
+
+      // Módulos liberados conforme o plano contratado (ver lib/plans.ts)
+      const MODULE_PATHS: [string, string][] = [
+        ["/dashboard/financeiro", "financeiro"],
+        ["/dashboard/kanban", "kanban"],
+        ["/dashboard/publicacoes", "publicacoes"],
+        ["/dashboard/indicadores", "indicadores"],
+        ["/dashboard/auditoria", "auditoria"],
+      ];
+      for (const [path, mod] of MODULE_PATHS) {
+        if (pathname.startsWith(path) && plan && !canAccess(plan, mod)) {
+          return Response.redirect(new URL("/assinar?upgrade=1", request.url));
         }
       }
 

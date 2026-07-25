@@ -25,7 +25,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 const PLAN_LABELS: Record<string, string> = {
-  admin: "Admin", profissional: "Profissional", pro: "Pro", basic: "Básico",
+  admin: "Admin", profissional: "Pro", pro: "Profissional", basic: "Básico",
 };
 
 export default function MasterClientesPage() {
@@ -225,8 +225,8 @@ function MasterClientesContent() {
                   className="w-full px-3 py-2 rounded-lg text-sm outline-none"
                   style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
                   <option value="basic">Básico</option>
-                  <option value="pro">Pro</option>
-                  <option value="profissional">Profissional</option>
+                  <option value="profissional">Pro</option>
+                  <option value="pro">Profissional</option>
                 </select>
               </div>
               <div>

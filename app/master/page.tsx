@@ -77,7 +77,7 @@ export default function MasterPage() {
       <div className="mb-8">
         <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "var(--gold)" }}>Painel Master</p>
         <h1 className="font-serif text-2xl font-semibold" style={{ color: "var(--text)" }}>Dashboard Geral</h1>
-        <p className="text-sm mt-1" style={{ color: "var(--text3)" }}>Visão completa do SaaS Legallis</p>
+        <p className="text-sm mt-1" style={{ color: "var(--text3)" }}>Visão completa do SaaS Legarium</p>
       </div>
 
       {stats && (

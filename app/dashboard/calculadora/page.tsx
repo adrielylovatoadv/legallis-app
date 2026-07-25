@@ -798,7 +798,7 @@ export default function CalculadoraPage() {
           <div className="hidden print:block mb-6 pb-4 border-b border-gray-300">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-lg font-bold">LEGALLIS — Demonstrativo de Débito</p>
+                <p className="text-lg font-bold">LEGARIUM — Demonstrativo de Débito</p>
                 {userProfile?.company?.name && <p className="text-sm">{userProfile.company.name}</p>}
                 {userProfile?.oab && userProfile.oab.length > 0 && (
                   <p className="text-sm">OAB: {userProfile.oab.map(o => `${o.state} ${o.number}`).join(" | ")}</p>

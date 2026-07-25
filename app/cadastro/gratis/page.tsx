@@ -72,7 +72,7 @@ export default function CadastroGratisPage() {
     <div className="min-h-screen py-12 px-4" style={{ background: "var(--bg)" }}>
       <div className="max-w-md mx-auto">
         <div className="flex justify-center mb-10">
-          <Image src="/logo.png" alt="Legallis" width={160} height={48} priority />
+          <Image src="/logo.png" alt="Legarium" width={160} height={55} className="object-contain" priority />
         </div>
 
         <div className="flex justify-center mb-6">
@@ -81,7 +81,7 @@ export default function CadastroGratisPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            4 dias grátis · Sem cartão de crédito
+            7 dias grátis · Sem cartão de crédito
           </div>
         </div>
 
@@ -89,7 +89,7 @@ export default function CadastroGratisPage() {
           style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div className="text-center">
             <h1 className="font-serif text-2xl font-semibold" style={{ color: "var(--text)" }}>Começar gratuitamente</h1>
-            <p className="text-sm mt-1" style={{ color: "var(--text3)" }}>Crie sua conta e explore o Legallis por 4 dias sem custo</p>
+            <p className="text-sm mt-1" style={{ color: "var(--text3)" }}>Crie sua conta e explore o Legarium por 7 dias sem custo</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -197,7 +197,7 @@ export default function CadastroGratisPage() {
             </button>
 
             <p className="text-xs text-center" style={{ color: "var(--text3)" }}>
-              Após 4 dias, selecione um plano para continuar. Os dados são mantidos por 1 dia após o vencimento.
+              Após 7 dias, selecione um plano para continuar. Os dados são mantidos por 1 dia após o vencimento.
             </p>
           </form>
         </div>

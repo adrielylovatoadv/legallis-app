@@ -45,7 +45,7 @@ async function sendEmail(to: string, subject: string, html: string) {
   const { Resend } = await import("resend");
   const resend = new Resend(process.env.RESEND_API_KEY);
   await resend.emails.send({
-    from: "Legallis <noreply@legallis.app.br>",
+    from: "Legarium <noreply@legallis.app.br>",
     to: to.includes("@legallis") ? (process.env.ADMIN_EMAIL ?? "noreply@legallis.app.br") : to,
     subject,
     html,
@@ -88,11 +88,11 @@ export async function POST(req: NextRequest) {
         const planLabels: Record<string, string> = { basic: "Básico", pro: "Pro", profissional: "Profissional" };
         await sendEmail(
           user.email,
-          "Bem-vindo ao Legallis! Assinatura confirmada.",
+          "Bem-vindo ao Legarium! Assinatura confirmada.",
           `<h2>Olá, ${user.name}!</h2>
            <p>Sua assinatura do plano <strong>${planLabels[plan] ?? plan}</strong> foi ativada com sucesso.</p>
            <p>Acesse agora: <a href="${process.env.NEXTAUTH_URL}/dashboard">${process.env.NEXTAUTH_URL}/dashboard</a></p>
-           <p>Equipe Legallis</p>`
+           <p>Equipe Legarium</p>`
         );
       }
       break;
@@ -158,11 +158,11 @@ export async function POST(req: NextRequest) {
         console.log(`[Stripe] Pagamento falhou: ${user.email}`);
         await sendEmail(
           user.email,
-          "Problema com seu pagamento — Legallis",
+          "Problema com seu pagamento — Legarium",
           `<h2>Olá, ${user.name}!</h2>
            <p>Houve um problema ao processar seu pagamento. Por favor, atualize suas informações de pagamento.</p>
            <p>Acesse: <a href="${process.env.NEXTAUTH_URL}/assinar">${process.env.NEXTAUTH_URL}/assinar</a></p>
-           <p>Equipe Legallis</p>`
+           <p>Equipe Legarium</p>`
         );
       }
       break;
@@ -183,11 +183,11 @@ export async function POST(req: NextRequest) {
         console.log(`[Stripe] Assinatura cancelada: ${user.email}`);
         await sendEmail(
           user.email,
-          "Assinatura cancelada — Legallis",
+          "Assinatura cancelada — Legarium",
           `<h2>Olá, ${user.name}!</h2>
            <p>Sua assinatura foi cancelada. Seus dados ficam disponíveis por mais 1 dia.</p>
            <p>Para reativar: <a href="${process.env.NEXTAUTH_URL}/assinar">${process.env.NEXTAUTH_URL}/assinar</a></p>
-           <p>Equipe Legallis</p>`
+           <p>Equipe Legarium</p>`
         );
       }
       break;

@@ -16,7 +16,7 @@ type SafeUser = {
   tenantId?: string;
 };
 
-const PLANS: Plan[] = ["basic", "pro", "admin"];
+const PLANS: Plan[] = ["basic", "profissional", "pro", "admin"];
 
 function PlanBadge({ plan }: { plan: Plan }) {
   const colors: Record<Plan, string> = {

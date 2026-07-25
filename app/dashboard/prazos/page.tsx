@@ -150,7 +150,7 @@ export default function PrazosPage() {
 
       await exportarPDF({
         titulo: "Comprovante de Cálculo de Prazo Processual",
-        subtitulo: "Ferramenta de referência — Legallis",
+        subtitulo: "Ferramenta de referência — Legarium",
         data_calculo: today,
         processo: processo.trim() || undefined,
         criterios,

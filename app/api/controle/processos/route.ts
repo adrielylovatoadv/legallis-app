@@ -6,6 +6,7 @@ import { normalizeData, normText } from "@/lib/controle";
 import * as processosRepo from "@/lib/repo/processos";
 import { processoCreateSchema } from "@/lib/validation/controle";
 import { parseBody } from "@/lib/validation/helpers";
+import { PLAN_FEATURES, type Plan } from "@/lib/plans";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -58,6 +59,14 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   if (hasControleRestrito(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para este módulo" }, { status: 403 });
   const tid = session.user.tenantId;
+
+  const plan = (session.user.plan as Plan) ?? "basic";
+  const maxProcessos = PLAN_FEATURES[plan]?.maxProcessos ?? 0;
+  const atuais = await processosRepo.list(tid);
+  if (atuais.length >= maxProcessos) {
+    return NextResponse.json({ error: `Limite de ${maxProcessos} processos atingido para o plano ${PLAN_FEATURES[plan]?.label ?? plan}. Faça upgrade para cadastrar mais.` }, { status: 403 });
+  }
+
   const { data: body, error } = parseBody(processoCreateSchema, await req.json());
   if (error) return error;
   const novo = await processosRepo.create(tid, body);

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const metadata = { title: "Termos de Uso — Legallis" };
+export const metadata = { title: "Termos de Uso — Legarium" };
 
 export default function TermosPage() {
   return (
@@ -15,12 +15,12 @@ export default function TermosPage() {
         <div className="space-y-8 text-sm leading-7" style={{ color: "var(--text2, #ccc)" }}>
           <section>
             <h2 className="font-semibold text-base mb-2" style={{ color: "var(--text, #f0f0f0)" }}>1. Aceitação dos Termos</h2>
-            <p>Ao criar uma conta ou utilizar o Legallis, você concorda com estes Termos de Uso. Caso não concorde, não utilize a plataforma.</p>
+            <p>Ao criar uma conta ou utilizar o Legarium, você concorda com estes Termos de Uso. Caso não concorde, não utilize a plataforma.</p>
           </section>
 
           <section>
             <h2 className="font-semibold text-base mb-2" style={{ color: "var(--text, #f0f0f0)" }}>2. Descrição do Serviço</h2>
-            <p>O Legallis é uma plataforma de gestão jurídica destinada a advogados e escritórios de advocacia, oferecendo controle processual, gestão financeira e calculadora jurídica.</p>
+            <p>O Legarium é uma plataforma de gestão jurídica e financeira destinada a advogados e escritórios de advocacia, oferecendo controle processual, gestão financeira e calculadora jurídica.</p>
           </section>
 
           <section>
@@ -35,7 +35,7 @@ export default function TermosPage() {
 
           <section>
             <h2 className="font-semibold text-base mb-2" style={{ color: "var(--text, #f0f0f0)" }}>5. Período de Teste</h2>
-            <p>O plano Básico oferece 4 dias de teste gratuito. Nenhum dado de cartão é solicitado durante o período de teste. Ao término, o acesso é suspenso até a contratação de um plano.</p>
+            <p>O plano Básico oferece 7 dias de teste gratuito. Nenhum dado de cartão é solicitado durante o período de teste. Ao término, o acesso é suspenso até a contratação de um plano.</p>
           </section>
 
           <section>
@@ -47,7 +47,7 @@ export default function TermosPage() {
 
           <section>
             <h2 className="font-semibold text-base mb-2" style={{ color: "var(--text, #f0f0f0)" }}>7. Limitação de Responsabilidade</h2>
-            <p>O Legallis é uma ferramenta de apoio à gestão. Não nos responsabilizamos por decisões tomadas com base nas informações geridas pela plataforma. O uso é de responsabilidade exclusiva do usuário.</p>
+            <p>O Legarium é uma ferramenta de apoio à gestão. Não nos responsabilizamos por decisões tomadas com base nas informações geridas pela plataforma. O uso é de responsabilidade exclusiva do usuário.</p>
           </section>
 
           <section>

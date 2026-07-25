@@ -5,8 +5,8 @@ import { ThemeProvider } from "@/components/layout/ThemeContext";
 import { ToastProvider } from "@/components/ui/Toast";
 
 export const metadata: Metadata = {
-  title: "Legallis — Gestão Jurídica & Financeira",
-  description: "Software jurídico para advocacia cível e consumerista",
+  title: "Legarium — Software Jurídico & Financeiro",
+  description: "Software jurídico e financeiro para advocacia cível e consumerista",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -10,34 +10,33 @@ const PLANS = [
     price: "R$ 97",
     period: "/mês",
     description: "cobrado mensalmente",
-    trial: "4 dias grátis · sem cartão de crédito",
+    trial: "7 dias grátis · sem cartão de crédito",
     features: [
       { text: "1 admin + até 2 usuários", ok: true },
-      { text: "Até 80 processos cadastrados", ok: true },
+      { text: "Até 100 processos cadastrados", ok: true },
       { text: "Controle Processual completo", ok: true },
-      { text: "Calculadora Jurídica (TJMG/TJSP)", ok: true },
+      { text: "Calculadora Jurídica e de Prazos", ok: true },
       { text: "Export em PDF", ok: true },
-      { text: "Financeiro do escritório", ok: false },
+      { text: "Financeiro, Publicações e Kanban", ok: false },
       { text: "Export Word e Excel", ok: false },
     ],
     paymentLink: "https://buy.stripe.com/test_9B600ke867Gta2EdNveEo09",
     color: "var(--text3)",
-    btnLabel: "Testar grátis por 4 dias",
+    btnLabel: "Testar grátis por 7 dias",
     btnStyle: "outline",
   },
   {
     id: "profissional",
-    name: "Profissional",
+    name: "Pro",
     price: "R$ 197",
     period: "/mês",
     description: "cobrado mensalmente",
     trial: null,
     features: [
-      { text: "1 admin + até 4 usuários", ok: true },
-      { text: "Até 200 processos cadastrados", ok: true },
-      { text: "Todos os módulos", ok: true },
-      { text: "Calculadora Jurídica (TJMG/TJSP)", ok: true },
-      { text: "Financeiro completo", ok: true },
+      { text: "1 admin + até 6 usuários", ok: true },
+      { text: "Até 400 processos cadastrados", ok: true },
+      { text: "Todos os módulos (Financeiro, Publicações, Kanban)", ok: true },
+      { text: "Calculadora Jurídica e de Prazos", ok: true },
       { text: "Export PDF, Word e Excel", ok: true },
       { text: "Suporte por e-mail", ok: true },
     ],
@@ -49,16 +48,15 @@ const PLANS = [
   },
   {
     id: "pro",
-    name: "Pro",
+    name: "Profissional",
     price: "R$ 347",
     period: "/mês",
     description: "cobrado mensalmente",
     trial: null,
     features: [
       { text: "1 admin + até 20 usuários", ok: true },
-      { text: "Até 5.000 processos cadastrados", ok: true },
-      { text: "Todos os módulos", ok: true },
-      { text: "Calculadora Jurídica (TJMG/TJSP)", ok: true },
+      { text: "Até 3.000 processos cadastrados", ok: true },
+      { text: "Todos os módulos + Indicadores e Auditoria", ok: true },
       { text: "Export PDF, Word e Excel", ok: true },
       { text: "Suporte prioritário", ok: true },
       { text: "Onboarding incluso", ok: true },
@@ -79,7 +77,7 @@ export default function AssinarPage() {
     <div className="min-h-screen py-12 px-4" style={{ background: "var(--bg)" }}>
       <div className="max-w-5xl mx-auto">
         <div className="flex justify-between items-center mb-10">
-          <Image src="/logo.png" alt="Legallis" width={140} height={42} priority />
+          <Image src="/logo.png" alt="Legarium" width={140} height={48} className="object-contain" priority />
           <button onClick={() => signOut({ callbackUrl: "/login" })}
             className="text-xs px-4 py-2 rounded-lg transition-colors"
             style={{ background: "var(--surface2)", color: "var(--text3)" }}>
@@ -96,7 +94,7 @@ export default function AssinarPage() {
             <div>
               <p className="font-semibold text-sm" style={{ color: "#f87171" }}>Período de teste encerrado</p>
               <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>
-                Seus dados estão salvos por mais 1 dia. Assine um plano para continuar usando o Legallis.
+                Seus dados estão salvos por mais 1 dia. Assine um plano para continuar usando o Legarium.
               </p>
             </div>
           </div>

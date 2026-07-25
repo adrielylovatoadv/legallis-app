@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const metadata = { title: "Política de Privacidade — Legallis" };
+export const metadata = { title: "Política de Privacidade — Legarium" };
 
 export default function PrivacidadePage() {
   return (
@@ -20,7 +20,7 @@ export default function PrivacidadePage() {
 
           <section>
             <h2 className="font-semibold text-base mb-2" style={{ color: "var(--text, #f0f0f0)" }}>2. Uso dos Dados</h2>
-            <p>Seus dados são utilizados exclusivamente para prestação do serviço Legallis: autenticação, armazenamento de informações jurídicas e comunicação sobre a conta (confirmações, renovações, alertas).</p>
+            <p>Seus dados são utilizados exclusivamente para prestação do serviço Legarium: autenticação, armazenamento de informações jurídicas e comunicação sobre a conta (confirmações, renovações, alertas).</p>
           </section>
 
           <section>

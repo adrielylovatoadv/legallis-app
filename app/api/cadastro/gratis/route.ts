@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Este e-mail já está cadastrado." }, { status: 409 });
   }
 
-  const trialEndsAt = new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString();
+  const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
   const user = await createUserAsync({
     name: nome,

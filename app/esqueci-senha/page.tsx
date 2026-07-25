@@ -26,7 +26,7 @@ export default function EsqueciSenhaPage() {
       style={{ background: "var(--bg)" }}>
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-8">
-          <Image src="/logo.png" alt="Legallis" width={180} height={54} priority />
+          <Image src="/logo.png" alt="Legarium" width={180} height={62} className="object-contain" priority />
         </div>
 
         <div className="rounded-2xl px-8 py-8 space-y-6"

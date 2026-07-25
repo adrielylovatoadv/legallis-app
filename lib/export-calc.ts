@@ -389,7 +389,7 @@ export async function exportarPDF(doc: ExportDoc, nomeArquivo: string) {
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(6.5);
     pdf.setTextColor(...GRAY_TEXT);
-    pdf.text("Legallis · Calculadora Jurídica", M, 293);
+    pdf.text("Legarium · Calculadora Jurídica", M, 293);
     if (pageCount > 1) pdf.text(`Página ${i} / ${pageCount}`, PW - M, 293, { align: "right" });
   }
 
