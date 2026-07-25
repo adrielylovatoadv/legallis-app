@@ -1,6 +1,13 @@
 // Fórmulas de cálculo jurídico — port TypeScript do app.py de referência
-// TJMG: INPC (até ago/2024) + IPCA-E (set/2024 em diante) + juros simples 1%/mês
-// TJSP: Tabela Prática (fatores acumulados) + juros simples
+//
+// Regra nacional (Lei 14.905/2024, art. 389 e 406 CC, vigente desde 30/08/2024):
+// - Correção monetária: IPCA puro (não IPCA-E) quando não há índice convencionado.
+// - Juros de mora ("taxa legal"): Selic do mês MENOS o IPCA do mesmo mês (Res. CMN 5.171/2024),
+//   uma taxa real — não a Selic cheia. Fonte primária: documento oficial da Contadoria Judicial
+//   do TJSC ("Adequação do módulo de cálculos judiciais às novas regras de atualização
+//   monetária no Código Civil"), que cita os artigos e confirma a metodologia na prática.
+// Antes de 30/08/2024, cada tribunal seguia seu próprio índice — ver PRE_LEI14905_INDEX abaixo.
+// TJSP é o único com tabela própria (fatores acumulados, não decorre de INPC/IPCA-E puro).
 
 import fs from "fs";
 import path from "path";
@@ -42,12 +49,25 @@ function* iterMonths(start: Date, end: Date): Generator<[number, number]> {
   }
 }
 
-function getCorrectionIndex(year: number, month: number, idx: Indices): number {
+// Índice usado por cada tribunal ANTES do corte de 30/08/2024 (Lei 14.905/2024). Tribunais não
+// listados usam INPC (padrão histórico da maioria dos estados pesquisados — ver memória do
+// projeto). A partir de 30/08/2024 todos usam IPCA puro, por força da lei federal.
+const PRE_LEI14905_INDEX: Record<string, "inpc" | "ipcae"> = {
+  TJRJ: "ipcae", // Lei 6.899/81 já usava IPCA-E como padrão histórico no RJ
+  TJAM: "ipcae", // Manual MCALC/TJAM: IPCA-E como último elo da cadeia histórica (desde 2015)
+  TJPE: "ipcae", // Manual de Cálculos da Justiça Federal, adotado pelo TJPE p/ condenações cíveis gerais
+};
+
+export function getPreIndexKey(tribunal: string): "inpc" | "ipcae" {
+  return PRE_LEI14905_INDEX[tribunal] ?? "inpc";
+}
+
+function getCorrectionIndex(year: number, month: number, idx: Indices, tribunal = "TJMG"): number {
   const key = monthKey(year, month);
   if (year < 2024 || (year === 2024 && month <= 8)) {
-    return idx.inpc[key] ?? 0;
+    return idx[getPreIndexKey(tribunal)][key] ?? 0;
   }
-  return idx.ipcae[key] ?? 0;
+  return idx.ipca[key] ?? 0;
 }
 
 function getTJSPFactor(key: string, idx: Indices): number | null {
@@ -89,9 +109,13 @@ function calcCorrecaoTJSP(
 function getInterestRate(year: number, month: number, idx: Indices): number {
   if (year <= 2002) return 0.5;
   if (year < 2024 || (year === 2024 && month <= 8)) return 1.0;
-  // Lei 14.905/2024: taxa Selic efetiva mensal (BCB série 4390) — Selic nominal
+  // Lei 14.905/2024, art. 406 §1º CC: "taxa legal" = Selic do mês MENOS o IPCA do mesmo mês
+  // (Res. CMN 5.171/2024) — taxa real, não a Selic cheia (que já é aplicada, em separado,
+  // como correção monetária via getCorrectionIndex/idx.ipca).
   const key = monthKey(year, month);
-  return idx.selic[key] ?? 1.0;
+  const selic = idx.selic[key] ?? 0;
+  const ipca = idx.ipca[key] ?? 0;
+  return selic - ipca;
 }
 
 function round2(v: number): number {
@@ -141,17 +165,19 @@ export function calculateCharge(
     // Juros: a partir de moraStart
     for (const [y, m] of iterMonths(moraStart, dateCalc)) {
       totalInterestPct += getInterestRate(y, m, idx);
-      indicesUsados.push(y < 2024 || (y === 2024 && m <= 8) ? "TJSP-INPC" : "TJSP-14905/Selic");
+      indicesUsados.push(y < 2024 || (y === 2024 && m <= 8) ? "TJSP-INPC" : "TJSP-14905/Taxa Legal");
     }
   } else {
-    // Correção TJMG: INPC/IPCAe (dateCharge → dateCalc)
+    // Correção: índice pré-Lei 14.905/2024 do tribunal (INPC ou IPCA-E, ver PRE_LEI14905_INDEX)
+    // até 30/08/2024, IPCA puro a partir daí (dateCharge → dateCalc)
+    const preLabel = getPreIndexKey(tribunal) === "ipcae" ? "IPCA-E" : "INPC";
     correctionFactor = 1.0;
     months = 0;
     for (const [y, m] of iterMonths(dateCharge, dateCalc)) {
-      const corrIdx = getCorrectionIndex(y, m, idx);
+      const corrIdx = getCorrectionIndex(y, m, idx, tribunal);
       correctionFactor *= 1 + corrIdx / 100;
       months++;
-      indicesUsados.push(y < 2024 || (y === 2024 && m <= 8) ? "INPC" : "IPCA-E/Selic");
+      indicesUsados.push(y < 2024 || (y === 2024 && m <= 8) ? preLabel : "IPCA/Taxa Legal");
     }
     corrected = value * correctionFactor;
     // Juros: a partir de moraStart (pode ser data da citação)
@@ -210,14 +236,15 @@ export function calcCorrigirExcesso(
   excesso: number,
   dataVenc: Date,
   dataCalc: Date,
-  idx: Indices
+  idx: Indices,
+  tribunal = "TJMG"
 ): number {
   if (dataVenc >= dataCalc || excesso <= 0) return excesso;
   let fatorCorr = 1.0;
   let totalMoraPct = 0;
   for (const [y, m] of iterMonths(dataVenc, dataCalc)) {
-    fatorCorr *= 1 + getCorrectionIndex(y, m, idx) / 100;
-    totalMoraPct += getInterestRate(y, m, idx); // Selic pós-set/2024 (Lei 14.905/2024)
+    fatorCorr *= 1 + getCorrectionIndex(y, m, idx, tribunal) / 100;
+    totalMoraPct += getInterestRate(y, m, idx); // taxa legal (Selic − IPCA) pós-set/2024 (Lei 14.905/2024)
   }
   const corrigido = excesso * fatorCorr;
   return round2(corrigido + corrigido * totalMoraPct / 100);
@@ -248,12 +275,13 @@ export function calcCorrecaoHonorario(
   if (isTJSP) {
     [, corr_factor, meses_corr] = calcCorrecaoTJSP(valor, dataOrigem, dataCalculo, idx);
   } else {
+    const preLabel = getPreIndexKey(tribunal) === "ipcae" ? "IPCA-E" : "INPC";
     corr_factor = 1.0;
     meses_corr = 0;
     for (const [y, m] of iterMonths(dataOrigem, dataCalculo)) {
-      corr_factor *= 1 + getCorrectionIndex(y, m, idx) / 100;
+      corr_factor *= 1 + getCorrectionIndex(y, m, idx, tribunal) / 100;
       meses_corr++;
-      indicesUsados.push(y < 2024 || (y === 2024 && m <= 8) ? "INPC" : "IPCA-E/Selic");
+      indicesUsados.push(y < 2024 || (y === 2024 && m <= 8) ? preLabel : "IPCA/Taxa Legal");
     }
   }
 

@@ -100,6 +100,22 @@ const MODOS = [
   { value: "revisional_emprestimo", label: "Revisional de Contratos Bancários" },
 ];
 
+// Índice pré-Lei 14.905/2024 entre parênteses (todos passam a usar IPCA puro desde 30/08/2024)
+const TRIBUNAIS = [
+  { value: "TJMG", label: "TJMG — Minas Gerais (INPC/IPCA)" },
+  { value: "TJSP", label: "TJSP — São Paulo (Tabela Prática)" },
+  { value: "TJRJ", label: "TJRJ — Rio de Janeiro (IPCA-E/IPCA)" },
+  { value: "TJRS", label: "TJRS — Rio Grande do Sul (INPC/IPCA)" },
+  { value: "TJPR", label: "TJPR — Paraná (INPC/IPCA)" },
+  { value: "TJSC", label: "TJSC — Santa Catarina (INPC/IPCA)" },
+  { value: "TJDFT", label: "TJDFT — Distrito Federal (INPC/IPCA)" },
+  { value: "TJGO", label: "TJGO — Goiás (INPC/IPCA)" },
+  { value: "TJMT", label: "TJMT — Mato Grosso (INPC/IPCA)" },
+  { value: "TJAM", label: "TJAM — Amazonas (IPCA-E/IPCA)" },
+  { value: "TJPE", label: "TJPE — Pernambuco (IPCA-E/IPCA)" },
+  { value: "TJMA", label: "TJMA — Maranhão (INPC/IPCA)" },
+];
+
 // ── tipos de irregularidade para Revisional de Contratos ──
 const IRREGULARIDADES = [
   { key: "juros_abusivos", label: "Juros abusivos" },
@@ -429,7 +445,7 @@ export default function CalculadoraPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="font-serif text-2xl font-semibold" style={{ color: "var(--text)" }}>Calculadora Jurídica</h1>
-          <p className="text-sm mt-0.5" style={{ color: "var(--text3)" }}>Correção monetária e juros — TJMG / TJSP</p>
+          <p className="text-sm mt-0.5" style={{ color: "var(--text3)" }}>Correção monetária e juros — 12 tribunais</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {(rows.length > 0 || honResult || revResult) && (
@@ -498,8 +514,7 @@ export default function CalculadoraPage() {
                 <div>
                   <Label>Tribunal</Label>
                   <Select value={tribunal} onChange={e => setTribunal(e.target.value)} className="mt-1">
-                    <option value="TJMG">TJMG — Tribunal de Justiça de MG</option>
-                    <option value="TJSP">TJSP — Tribunal de Justiça de SP</option>
+                    {TRIBUNAIS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </Select>
                 </div>
                 <div>
@@ -661,8 +676,7 @@ export default function CalculadoraPage() {
             <div className="space-y-4">
               <div><Label>Tribunal</Label>
                 <Select value={honTribunal} onChange={e => setHonTribunal(e.target.value)} className="mt-1">
-                  <option value="TJMG">TJMG (INPC/IPCAe)</option>
-                  <option value="TJSP">TJSP (Tabela Prática)</option>
+                  {TRIBUNAIS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                 </Select></div>
               <div><Label>Percentual de honorário (%)</Label>
                 <Input type="number" value={honPct} onChange={e => setHonPct(e.target.value)} min="0" max="100" step="0.5" className="mt-1" /></div>

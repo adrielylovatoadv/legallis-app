@@ -79,7 +79,9 @@ describe("Cumprimento de Sentença — TJMG", () => {
     const honorarios = r2(subtotal * 0.20);
     const multa = r2(subtotal * 0.10);
     const totalGeral = r2(subtotal + honorarios + multa);
-    expect(totalGeral).toBe(r2(subtotal * 1.30));
+    // Cada parcela é arredondada individualmente antes de somar, então pode divergir
+    // 1 centavo do valor obtido arredondando subtotal*1.30 de uma vez só.
+    expect(totalGeral).toBeCloseTo(r2(subtotal * 1.30), 1);
   });
 });
 

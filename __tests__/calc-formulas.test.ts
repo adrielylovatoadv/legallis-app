@@ -50,9 +50,9 @@ describe("calculateCharge — TJMG (INPC/IPCA-E)", () => {
     expect(res.correction_factor).toBeGreaterThan(1);
   });
 
-  test("correção usa IPCA-E + Selic a partir de set/2024 (Lei 14.905/2024)", () => {
+  test("correção usa IPCA + Taxa Legal a partir de set/2024 (Lei 14.905/2024)", () => {
     const res = calculateCharge(1000, d("2024-09-01"), d("2024-12-01"), INDICES, "TJMG");
-    expect(res.indice_label).toBe("IPCA-E/Selic");
+    expect(res.indice_label).toBe("IPCA/Taxa Legal");
     expect(res.months).toBe(3);
   });
 
@@ -89,6 +89,39 @@ describe("calculateCharge — TJSP (Tabela Prática)", () => {
     // Fator deve ser positivo e > 1 para período com inflação
     expect(res.correction_factor).toBeGreaterThan(0);
     expect(res.corrected).toBeGreaterThan(0);
+  });
+});
+
+// ── 2b. Novos tribunais (Grupo 1 — cadeia nacional INPC/IPCA-E → IPCA) ────────
+describe("calculateCharge — novos tribunais (Grupo 1)", () => {
+  test.each([
+    ["TJSC", "INPC"], ["TJDFT", "INPC"], ["TJMT", "INPC"], ["TJGO", "INPC"],
+    ["TJRS", "INPC"], ["TJPR", "INPC"], ["TJMA", "INPC"],
+  ])("%s usa INPC até ago/2024", (tribunal, esperado) => {
+    const res = calculateCharge(1000, d("2023-01-01"), d("2023-06-01"), INDICES, tribunal);
+    expect(res.indice_label).toBe(esperado);
+  });
+
+  test.each(["TJRJ", "TJAM", "TJPE"])("%s usa IPCA-E (não INPC) até ago/2024", (tribunal) => {
+    const res = calculateCharge(1000, d("2023-01-01"), d("2023-06-01"), INDICES, tribunal);
+    expect(res.indice_label).toBe("IPCA-E");
+  });
+
+  test.each(["TJSC", "TJDFT", "TJMT", "TJGO", "TJRS", "TJPR", "TJMA", "TJRJ", "TJAM", "TJPE"])(
+    "%s usa IPCA + Taxa Legal a partir de set/2024, igual a TJMG",
+    (tribunal) => {
+      const res = calculateCharge(1000, d("2024-09-01"), d("2024-12-01"), INDICES, tribunal);
+      const mg = calculateCharge(1000, d("2024-09-01"), d("2024-12-01"), INDICES, "TJMG");
+      expect(res.indice_label).toBe("IPCA/Taxa Legal");
+      // Regra pós-14.905 é nacional — mesmo resultado que TJMG no mesmo período
+      expect(res.corrected).toBe(mg.corrected);
+      expect(res.interest_pct).toBe(mg.interest_pct);
+    }
+  );
+
+  test("tribunal desconhecido cai no padrão INPC (mesmo comportamento de antes da mudança)", () => {
+    const res = calculateCharge(1000, d("2023-01-01"), d("2023-06-01"), INDICES, "TJXX");
+    expect(res.indice_label).toBe("INPC");
   });
 });
 
@@ -217,17 +250,18 @@ describe("Valores exatos — casos jurídicos de referência", () => {
 
   // Caso 2: TJMG pós-Lei 14.905/2024
   // R$1.000 em set/2024, cálculo jan/2025
-  // Correção: IPCA-E set+out+nov+dez/2024 = fator 1.016393
-  // Juros: Selic set(0.84)+out(0.93)+nov(0.79)+dez(0.93) = 3.49% simples
-  // Corrigido: R$1.016,39 | Juros: R$35,47 | Total: R$1.051,86
-  test("TJMG pós-14905 set/2024→jan/2025: IPCA-E + Selic simples (valores exatos)", () => {
+  // Correção: IPCA (puro, não IPCA-E) set+out+nov+dez/2024 = fator 1.019236
+  // Juros ("taxa legal" = Selic − IPCA do mesmo mês, art. 406 §1º CC):
+  //   set(0.84−0.44)+out(0.93−0.56)+nov(0.79−0.39)+dez(0.93−0.52) = 1,58% simples
+  // Corrigido: R$1.019,24 | Juros: R$16,10 | Total: R$1.035,34
+  test("TJMG pós-14905 set/2024→jan/2025: IPCA + Taxa Legal simples (valores exatos)", () => {
     const res = calculateCharge(1000, d("2024-09-01"), d("2025-01-01"), INDICES, "TJMG");
-    expect(res.corrected).toBe(1016.39);
-    expect(res.interest_pct).toBeCloseTo(3.49, 2);
-    expect(res.interest_value).toBe(35.47);
-    expect(res.total).toBe(1051.86);
+    expect(res.corrected).toBe(1019.24);
+    expect(res.interest_pct).toBeCloseTo(1.58, 2);
+    expect(res.interest_value).toBe(16.10);
+    expect(res.total).toBe(1035.34);
     expect(res.months).toBe(4);
-    expect(res.indice_label).toBe("IPCA-E/Selic");
+    expect(res.indice_label).toBe("IPCA/Taxa Legal");
   });
 
   // Caso 3: Juros são SIMPLES, não compostos
@@ -244,16 +278,16 @@ describe("Valores exatos — casos jurídicos de referência", () => {
     expect(res.interest_value).toBeLessThan(jurosCompostoHipotetico);
   });
 
-  // Caso 4: Fronteira da transição — ago/2024 ainda usa INPC + 1%, set/2024 usa IPCA-E + Selic
-  test("fronteira ago/2024: INPC + 1% | set/2024: IPCA-E + Selic", () => {
+  // Caso 4: Fronteira da transição — ago/2024 ainda usa INPC + 1%, set/2024 usa IPCA + Taxa Legal
+  test("fronteira ago/2024: INPC + 1% | set/2024: IPCA + Taxa Legal", () => {
     const preTransicao = calculateCharge(1000, d("2024-08-01"), d("2024-09-01"), INDICES, "TJMG");
     const posTransicao = calculateCharge(1000, d("2024-09-01"), d("2024-10-01"), INDICES, "TJMG");
 
     expect(preTransicao.indice_label).toBe("INPC");
     expect(preTransicao.interest_pct).toBe(1); // 1% fixo
 
-    expect(posTransicao.indice_label).toBe("IPCA-E/Selic");
-    expect(posTransicao.interest_pct).toBeCloseTo(0.84, 2); // Selic set/2024
+    expect(posTransicao.indice_label).toBe("IPCA/Taxa Legal");
+    expect(posTransicao.interest_pct).toBeCloseTo(0.40, 2); // Selic(0,84) − IPCA(0,44) de set/2024
   });
 
   // Caso 5: TJSP não confunde correção e juros — são calculados separadamente

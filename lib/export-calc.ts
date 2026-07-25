@@ -1,5 +1,7 @@
 // Exportação de cálculos da calculadora jurídica
 
+import { getPreIndexKey } from "./calc-formulas";
+
 export interface ExportRow { [key: string]: string | number }
 
 export interface AdvogadoInfo {
@@ -273,6 +275,9 @@ export async function exportarPDF(doc: ExportDoc, nomeArquivo: string) {
     const siglaTribunal = doc.tribunal ?? "TJMG";
     const uf = siglaTribunal.replace("TJ", "");
     const criterios: string[] = [];
+    const preIndiceLabel = getPreIndexKey(siglaTribunal) === "ipcae"
+      ? "IPCA-E (IBGE, série BCB 10764)"
+      : "INPC (IBGE, série BCB 188)";
 
     const isRevisional = doc.modo === "revisional_veiculo" || doc.modo === "revisional_emprestimo";
 
@@ -280,10 +285,10 @@ export async function exportarPDF(doc: ExportDoc, nomeArquivo: string) {
       criterios.push(
         isTJSP
           ? "Atualização Monetária: Tabela Prática do TJSP (atualizada mensalmente pelo Tribunal de Justiça de São Paulo)."
-          : "Atualização Monetária: INPC (IBGE, série BCB 188) de julho/1995 a agosto/2024; IPCAe (BCB 10764) de setembro/2024 em diante."
+          : `Atualização Monetária: ${preIndiceLabel} até agosto/2024; IPCA (IBGE, série BCB 433) de setembro/2024 em diante.`
       );
       criterios.push(
-        "Juros de Mora: 0,5% ao mês até dezembro/2002; 1% ao mês de janeiro/2003 a agosto/2024; Taxa Selic mensal (BCB, série 4390) de setembro/2024 em diante (Lei 14.905/2024)."
+        "Juros de Mora: 0,5% ao mês até dezembro/2002; 1% ao mês de janeiro/2003 a agosto/2024; Taxa Legal (Selic mensal deduzida do IPCA do mesmo mês, art. 406 §1º CC — Lei 14.905/2024 e Resolução CMN 5.171/2024) de setembro/2024 em diante."
       );
       criterios.push("Juros calculados sobre o débito corrigido — regime de juros simples (não composto).");
       criterios.push(`Tribunal de referência: ${siglaTribunal} (CGJ/${uf}).`);
@@ -299,7 +304,7 @@ export async function exportarPDF(doc: ExportDoc, nomeArquivo: string) {
         criterios.push(
           isTJSP
             ? "Atualização Monetária: Tabela Prática do TJSP."
-            : "Atualização Monetária: INPC (BCB 188) até agosto/2024; IPCAe (BCB 10764) de setembro/2024 em diante."
+            : `Atualização Monetária: ${preIndiceLabel} até agosto/2024; IPCA (BCB 433) de setembro/2024 em diante.`
         );
       }
       criterios.push("Juros de mora: não aplicados na execução de honorários advocatícios contratuais.");
@@ -315,10 +320,10 @@ export async function exportarPDF(doc: ExportDoc, nomeArquivo: string) {
           : "Taxa de referência: média BACEN para a modalidade (quando não informada, estimada com base na Taxa Selic vigente)."
       );
       criterios.push(
-        "Correção monetária do excesso de parcelas vencidas: INPC (IBGE, série BCB 188) até agosto/2024; IPCAe (BCB 10764) de setembro/2024 em diante."
+        "Correção monetária do excesso de parcelas vencidas: INPC (IBGE, série BCB 188) até agosto/2024; IPCA (BCB 433) de setembro/2024 em diante."
       );
       criterios.push(
-        "Juros de Mora: 0,5% ao mês até dezembro/2002; 1% ao mês de janeiro/2003 a agosto/2024; Taxa Selic mensal (BCB, série 4390) de setembro/2024 em diante (Lei 14.905/2024), incidentes sobre o excesso já corrigido monetariamente, desde o vencimento de cada parcela."
+        "Juros de Mora: 0,5% ao mês até dezembro/2002; 1% ao mês de janeiro/2003 a agosto/2024; Taxa Legal (Selic mensal deduzida do IPCA do mesmo mês, art. 406 §1º CC — Lei 14.905/2024) de setembro/2024 em diante, incidentes sobre o excesso já corrigido monetariamente, desde o vencimento de cada parcela."
       );
       criterios.push(
         "Excesso apurado: diferença entre a parcela contratada e a parcela calculada com a taxa de referência (Price/SAC), aplicada sobre cada prestação já vencida, com correção monetária e juros de mora incidentes desde o vencimento até a data do cálculo."
