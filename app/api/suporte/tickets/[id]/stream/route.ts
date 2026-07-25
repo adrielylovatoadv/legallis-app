@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 
   const { id } = await params;
-  const ticket = getTicketById(id);
+  const ticket = await getTicketById(id);
   if (!ticket) return new Response("Not found", { status: 404 });
   // Só a própria escritora que abriu o chamado ou a equipe da Legallis (plan="admin") pode ver —
   // ver nota de segurança em app/api/usuarios/[id]/route.ts sobre não usar `role` aqui.
@@ -28,10 +28,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       const initialData = `data: ${JSON.stringify({ type: "init", count: lastCount })}\n\n`;
       controller.enqueue(new TextEncoder().encode(initialData));
 
-      const interval = setInterval(() => {
+      const interval = setInterval(async () => {
         if (closed) { clearInterval(interval); return; }
         try {
-          const current = getTicketById(id);
+          const current = await getTicketById(id);
           if (!current) { clearInterval(interval); controller.close(); return; }
 
           if (current.messages.length > lastCount) {

@@ -12,8 +12,8 @@ export async function GET(req: NextRequest) {
   // deve conceder visibilidade de chamados de OUTROS escritórios — ver nota de segurança em
   // app/api/usuarios/[id]/route.ts.
   const tickets = session.user.plan === "admin"
-    ? getTickets()
-    : getTicketsByUser(session.user.id);
+    ? await getTickets()
+    : await getTicketsByUser(session.user.id);
 
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Campos obrigatórios faltando." }, { status: 400 });
   }
 
-  const ticket = createTicket({
+  const ticket = await createTicket({
     userId: session.user.id,
     userName: session.user.name ?? "",
     userEmail: session.user.email ?? "",
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
   // Add first message
   const { addMessage } = await import("@/lib/suporte");
-  addMessage(ticket.id, {
+  await addMessage(ticket.id, {
     authorId: session.user.id,
     authorName: session.user.name ?? "",
     authorRole: session.user.plan === "admin" ? "admin" : "user",

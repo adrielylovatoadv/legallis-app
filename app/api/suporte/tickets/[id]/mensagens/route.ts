@@ -7,7 +7,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
 
-  const ticket = getTicketById(id);
+  const ticket = await getTicketById(id);
   if (!ticket) return NextResponse.json({ error: "Not found" }, { status: 404 });
   // Só a própria escritora que abriu o chamado ou a equipe da Legallis (plan="admin") pode ver —
   // ver nota de segurança em app/api/usuarios/[id]/route.ts sobre não usar `role` aqui.
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { content } = await req.json();
   if (!content?.trim()) return NextResponse.json({ error: "Mensagem vazia." }, { status: 400 });
 
-  const msg = addMessage(id, {
+  const msg = await addMessage(id, {
     authorId: session.user.id,
     authorName: session.user.name ?? "",
     authorRole: session.user.plan === "admin" ? "admin" : "user",

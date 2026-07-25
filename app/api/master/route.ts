@@ -10,7 +10,7 @@ export async function GET() {
   }
 
   const users = await getUsersAsync();
-  const tickets = getTickets();
+  const tickets = await getTickets();
 
   const now = Date.now();
   // Assinatura é por escritório (tenant): contas de equipe usam o plano do
