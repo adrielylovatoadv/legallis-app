@@ -12,7 +12,7 @@ import { FinanceiroPanel } from "./_financeiro-panel";
 
 const POR_PAGINA = 50;
 
-type Aba = "ativos" | "audiencias" | "prazos" | "standby" | "suspenso" | "procedente" | "novo";
+type Aba = "ativos" | "audiencias" | "prazos" | "pericia" | "standby" | "suspenso" | "procedente" | "novo";
 
 function ProcessoForm({ initial, onSave, onCancel, responsaveis = [] }: {
   initial?: Partial<Processo>;
@@ -195,6 +195,89 @@ function ProcessoRow({ p, onEdit, onDelete, onOk }: {
   );
 }
 
+function ProcessoCardMobile({ p, onEdit, onDelete, onOk }: {
+  p: Processo;
+  onEdit: (p: Processo) => void;
+  onDelete: (id: string) => void;
+  onOk: (id: string) => void;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const url = gcalUrl(p);
+  const hoje = new Date().toISOString().split("T")[0];
+  const d = normalizeData(p.data);
+  const diasAte = d ? Math.floor((new Date(d).getTime() - new Date(hoje).getTime()) / 86400000) : null;
+  const alertaCor = diasAte !== null ? (diasAte <= 0 ? "#ef4444" : diasAte <= 3 ? "#f97316" : undefined) : undefined;
+  const dFatal = normalizeData(p.prazo_fatal || "");
+  const diasAteFatal = dFatal ? Math.floor((new Date(dFatal).getTime() - new Date(hoje).getTime()) / 86400000) : null;
+
+  return (
+    <div className="rounded-lg p-3"
+      style={{
+        background: p.atencao ? "rgba(239,68,68,0.06)" : "var(--surface2)",
+        border: "1px solid var(--border)",
+      }}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="font-medium text-sm truncate" style={{ color: p.atencao ? "#ef4444" : "var(--text)" }}>
+            {p.atencao && <span className="mr-1">🚨</span>}
+            {p.autor}
+          </p>
+          {p.reu && <p className="text-xs mt-0.5" style={{ color:"var(--text2)" }}>× {p.reu}</p>}
+          {p.responsavel && <p className="text-xs mt-0.5" style={{ color:"var(--text3)" }}>👤 {p.responsavel}</p>}
+          {p.numero_processo && <p className="text-xs mt-0.5 font-mono" style={{ color:"var(--text3)" }}>{p.numero_processo}</p>}
+        </div>
+        {p.andamento && (
+          <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${badgeAndamento(p.andamento)}`}>
+            {p.andamento}
+          </span>
+        )}
+      </div>
+
+      {p.objeto && <p className="text-xs mt-2" style={{ color:"var(--text3)" }}>{p.objeto}</p>}
+      {p.observacoes && <p className="text-xs mt-1" style={{ color:"var(--text3)" }}>{p.observacoes}</p>}
+
+      {dFatal && (
+        <p className="text-xs font-semibold mt-2"
+          style={{ color: diasAteFatal !== null && diasAteFatal <= 3 ? "#ef4444" : "#f97316" }}>
+          ⛔ Prazo fatal: {fmtData(p.prazo_fatal || "")}
+          {diasAteFatal !== null && (diasAteFatal < 0
+            ? ` (vencido há ${Math.abs(diasAteFatal)}d)`
+            : diasAteFatal === 0 ? " (hoje!)" : ` (faltam ${diasAteFatal}d)`)}
+        </p>
+      )}
+
+      {(p.data || url) && (
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-xs tabular-nums" style={{ color: alertaCor || "var(--text3)" }}>
+            {fmtData(p.data)}{p.hora && ` ${p.hora}`}
+            {diasAte !== null && diasAte <= 0 && <span className="ml-1">🔴</span>}
+            {diasAte !== null && diasAte > 0 && diasAte <= 3 && <span className="ml-1">⚠️</span>}
+          </span>
+          {url && (
+            <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color:"#60a5fa" }}>
+              📅 Calendar
+            </a>
+          )}
+        </div>
+      )}
+
+      <div className="flex items-center gap-1.5 mt-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
+        <button onClick={() => onOk(p.id)} title="Marcar OK"
+          className="text-xs px-2.5 py-1.5 rounded"
+          style={{ background:"rgba(34,197,94,0.12)", color:"#4ade80" }}>✅ OK</button>
+        <button onClick={() => onEdit(p)} className="text-xs px-2.5 py-1.5 rounded"
+          style={{ background:"var(--surface)", color:"var(--text2)", border:"1px solid var(--border)" }}>✏️ Editar</button>
+        {confirming
+          ? <button onClick={() => { onDelete(p.id); setConfirming(false); }}
+              className="text-xs px-2.5 py-1.5 rounded bg-red-500/20 text-red-400">Confirmar exclusão</button>
+          : <button onClick={() => setConfirming(true)} className="text-xs px-2.5 py-1.5 rounded ml-auto"
+              style={{ background:"var(--surface)", color:"var(--text3)", border:"1px solid var(--border)" }}>🗑</button>
+        }
+      </div>
+    </div>
+  );
+}
+
 export function ProcessosTab() {
   const [processos, setProcessos] = useState<Processo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -229,6 +312,10 @@ export function ProcessosTab() {
   };
   const isSuspenso = (p: Processo) => (p.andamento || "").toUpperCase() === "SUSPENSO";
   const isProcedente = (p: Processo) => (p.andamento || "").toUpperCase() === "PROCEDENTE";
+  const isPericia = (p: Processo) => {
+    const a = (p.andamento || "").toUpperCase().trim();
+    return a === "PERÍCIA" || a === "PERICIA";
+  };
 
   const filtrar = useCallback((lista: Processo[]) => {
     let r = lista;
@@ -274,15 +361,16 @@ export function ProcessosTab() {
   const prazos = filtrar(processos.filter(p => {
     const a = (p.andamento || "").toUpperCase();
     const isAud = a.includes("AIJ") || a.startsWith("AC");
-    return !!p.data && !isAud && !isFin(p) && !isProcedente(p);
+    return !!p.data && !isAud && !isFin(p) && !isProcedente(p) && !isPericia(p);
   }));
   const standby = filtrar(processos.filter(p => {
     const a = (p.andamento||"").toUpperCase();
     const isAud = a.includes("AIJ") || a.startsWith("AC");
-    return ((!p.data) || (isAud && normalizeData(p.data) < hoje)) && !isFin(p) && !isSuspenso(p) && !isProcedente(p);
+    return ((!p.data) || (isAud && normalizeData(p.data) < hoje)) && !isFin(p) && !isSuspenso(p) && !isProcedente(p) && !isPericia(p);
   }));
   const suspensos = filtrar(processos.filter(p => isSuspenso(p) && !isFin(p)));
   const procedentes = filtrar(processos.filter(p => isProcedente(p) && !isFin(p)));
+  const pericias = filtrar(processos.filter(p => isPericia(p) && !isFin(p)));
 
   const handleSave = async (form: Omit<Processo,"id"|"criado_em">) => {
     if (editando) { await updateProcesso(editando.id, form); setEditando(null); }
@@ -295,8 +383,9 @@ export function ProcessosTab() {
   const ABAS: { id: Aba; label: string }[] = [
     { id:"ativos", label:`📋 Ativos (${processos.filter(p => !isFin(p)).length})` },
     { id:"audiencias", label:`🔴 Audiências (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); return (a.includes("AIJ")||a.startsWith("AC"))&&normalizeData(p.data)>=hoje&&!isFin(p); }).length})` },
-    { id:"prazos", label:`📅 Prazos (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); return !!p.data&&!a.includes("AIJ")&&!a.startsWith("AC")&&!isFin(p)&&a!=="PROCEDENTE"; }).length})` },
-    { id:"standby", label:`⏸️ Standby (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); const isAud=a.includes("AIJ")||a.startsWith("AC"); return ((!p.data)||(isAud&&normalizeData(p.data)<hoje))&&!isFin(p)&&a!=="SUSPENSO"&&a!=="PROCEDENTE"; }).length})` },
+    { id:"prazos", label:`📅 Prazos (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); return !!p.data&&!a.includes("AIJ")&&!a.startsWith("AC")&&!isFin(p)&&a!=="PROCEDENTE"&&!isPericia(p); }).length})` },
+    { id:"pericia", label:`🔬 Perícia (${processos.filter(p => isPericia(p) && !isFin(p)).length})` },
+    { id:"standby", label:`⏸️ Standby (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); const isAud=a.includes("AIJ")||a.startsWith("AC"); return ((!p.data)||(isAud&&normalizeData(p.data)<hoje))&&!isFin(p)&&a!=="SUSPENSO"&&a!=="PROCEDENTE"&&!isPericia(p); }).length})` },
     { id:"suspenso", label:`⏸ Suspenso (${processos.filter(p => (p.andamento||"").toUpperCase()==="SUSPENSO"&&!isFin(p)).length})` },
     { id:"procedente", label:`✅ Procedente (${processos.filter(p => (p.andamento||"").toUpperCase()==="PROCEDENTE"&&!isFin(p)).length})` },
     { id:"novo", label:"➕ Novo" },
@@ -329,7 +418,8 @@ export function ProcessosTab() {
               ⬇️ Exportar CSV
             </button>
           </div>
-          <div className="overflow-x-auto">
+          {/* Desktop: tabela */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom:"2px solid var(--border)" }}>
@@ -350,6 +440,15 @@ export function ProcessosTab() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile: cards */}
+          <div className="md:hidden space-y-2">
+            {paginada.map(p =>
+              editando?.id === p.id
+                ? <ProcessoForm key={p.id} initial={editando} onSave={handleSave} onCancel={() => setEditando(null)} responsaveis={users} />
+                : <ProcessoCardMobile key={p.id} p={p} onEdit={setEditando} onDelete={handleDelete} onOk={handleOk} />
+            )}
           </div>
           {totalPaginas > 1 && (
             <div className="flex items-center justify-center gap-2 mt-4">
@@ -393,6 +492,7 @@ export function ProcessosTab() {
   const listaAtual = aba === "ativos" ? ativos
     : aba === "audiencias" ? audiencias
     : aba === "prazos" ? prazos
+    : aba === "pericia" ? pericias
     : aba === "suspenso" ? suspensos
     : aba === "procedente" ? procedentes
     : standby;
