@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getUserByIdAsync, getTenantUsersAsync, createUserAsync, updateUserAsync, isOwner } from "@/lib/users";
+import { getUserByIdAsync, getTenantUsersAsync, createUserAsync, updateUserAsync, isOwner, toSafeUser } from "@/lib/users";
 import { PLAN_FEATURES } from "@/lib/plans";
 
 // Gerencia usuários do próprio escritório. O dono do tenant, um funcionário com role="admin"
@@ -23,7 +23,7 @@ export async function GET() {
   const currentUser = await requireManager(session.user.id);
   if (!currentUser) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
 
-  const users = (await getTenantUsersAsync(currentUser)).map(({ password: _, ...u }) => u);
+  const users = (await getTenantUsersAsync(currentUser)).map(toSafeUser);
   return NextResponse.json(users);
 }
 
@@ -66,6 +66,5 @@ export async function POST(req: NextRequest) {
     isActive: true,
     tenantId: currentUser.tenantId,
   });
-  const { password: _, ...safe } = user;
-  return NextResponse.json(safe, { status: 201 });
+  return NextResponse.json(toSafeUser(user), { status: 201 });
 }

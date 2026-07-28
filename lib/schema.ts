@@ -36,6 +36,10 @@ export async function initSchema(sql: Sql): Promise<void> {
   `;
   await sql`ALTER TABLE processos ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'`;
   await sql`ALTER TABLE processos ADD COLUMN IF NOT EXISTS prazo_fatal TEXT`;
+  // Duas colunas porque um processo pode ter, ao mesmo tempo, uma audiência/perícia (data+hora)
+  // E um prazo fatal — são dois compromissos distintos, cada um com seu próprio evento no Google.
+  await sql`ALTER TABLE processos ADD COLUMN IF NOT EXISTS google_event_id_audiencia TEXT`;
+  await sql`ALTER TABLE processos ADD COLUMN IF NOT EXISTS google_event_id_prazo TEXT`;
   await sql`CREATE INDEX IF NOT EXISTS idx_processos_tenant ON processos (tenant_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_processos_numero ON processos (tenant_id, numero_processo)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_processos_finalizado ON processos (tenant_id, finalizado)`;
@@ -120,6 +124,7 @@ export async function initSchema(sql: Sql): Promise<void> {
       PRIMARY KEY (tenant_id, id)
     )
   `;
+  await sql`ALTER TABLE atendimentos ADD COLUMN IF NOT EXISTS google_event_id TEXT`;
   await sql`CREATE INDEX IF NOT EXISTS idx_atendimentos_tenant ON atendimentos (tenant_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_atendimentos_data ON atendimentos (tenant_id, data)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_atendimentos_cliente_id ON atendimentos (tenant_id, cliente_id)`;

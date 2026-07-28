@@ -80,3 +80,29 @@ export async function sendPasswordReset(email: string, resetUrl: string) {
     <p style="margin-top:16px">Se você não solicitou, ignore este e-mail.</p>
   `));
 }
+
+// label/deUserName/motivo/fromName/preview vêm de texto livre digitado por usuários — diferente
+// dos campos acima (nome de perfil, datas), aqui escapamos pra não deixar HTML/links arbitrários
+// serem injetados no e-mail de quem recebe o aviso.
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+}
+
+export async function sendNovaDesignacao(toName: string, toEmail: string, label: string, deUserName: string, motivo?: string) {
+  await send(toEmail, `Nova designação — ${escapeHtml(label)}`, base(`
+    <h1>Olá, ${toName}</h1>
+    <p><strong>${escapeHtml(deUserName)}</strong> te enviou uma solicitação de redesignação:</p>
+    <p><strong>${escapeHtml(label)}</strong></p>
+    ${motivo ? `<p>Motivo: ${escapeHtml(motivo)}</p>` : ""}
+    <a class="btn" href="${APP_URL}/dashboard/designacoes">Ver designações →</a>
+  `));
+}
+
+export async function sendNovaMensagem(toName: string, toEmail: string, fromName: string, preview: string) {
+  await send(toEmail, `Nova mensagem de ${fromName} — Legarium`, base(`
+    <h1>Olá, ${toName}</h1>
+    <p><strong>${escapeHtml(fromName)}</strong> te enviou uma mensagem:</p>
+    <p style="font-style:italic">"${escapeHtml(preview)}"</p>
+    <a class="btn" href="${APP_URL}/dashboard/chat">Responder →</a>
+  `));
+}

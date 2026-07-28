@@ -22,22 +22,46 @@ export default function PerfilPage() {
   const [tab, setTab] = useState<"dados" | "senha">("dados");
   const [avatarUrl, setAvatarUrl] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const [googleCalendar, setGoogleCalendar] = useState<{ connected: boolean; connectedAt: string } | null>(null);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleMsg, setGoogleMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  const loadProfile = async () => {
+    const res = await fetch(`/api/usuarios/${session?.user?.id}`);
+    if (res.ok) {
+      const u = await res.json();
+      setName(u.name ?? "");
+      setEmail(u.email ?? "");
+      setPhone(u.phone ?? "");
+      setSexo(u.sexo ?? "");
+      setOabs(u.oab?.length ? u.oab : [{ state: "MG", number: "" }]);
+      setAvatarUrl(u.avatar ?? "");
+      setGoogleCalendar(u.googleCalendar ?? { connected: false, connectedAt: "" });
+    }
+  };
 
   useEffect(() => {
-    const loadProfile = async () => {
-      const res = await fetch(`/api/usuarios/${session?.user?.id}`);
-      if (res.ok) {
-        const u = await res.json();
-        setName(u.name ?? "");
-        setEmail(u.email ?? "");
-        setPhone(u.phone ?? "");
-        setSexo(u.sexo ?? "");
-        setOabs(u.oab?.length ? u.oab : [{ state: "MG", number: "" }]);
-        setAvatarUrl(u.avatar ?? "");
-      }
-    };
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (session?.user?.id) loadProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.user?.id]);
+
+  useEffect(() => {
+    // Lido direto de window (não useSearchParams) pra não forçar essa página inteira a bailar
+    // de prerender estático só por causa desse parâmetro lido uma vez no mount.
+    const google = new URLSearchParams(window.location.search).get("google");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (google === "conectado") setGoogleMsg({ type: "ok", text: "Google Calendar conectado com sucesso." });
+    else if (google === "erro") setGoogleMsg({ type: "err", text: "Não foi possível conectar ao Google Calendar. Tente novamente." });
+  }, []);
+
+  const disconnectGoogle = async () => {
+    setGoogleLoading(true);
+    await fetch("/api/google/disconnect", { method: "POST" });
+    await loadProfile();
+    setGoogleLoading(false);
+    setGoogleMsg({ type: "ok", text: "Google Calendar desconectado." });
+  };
 
   const uploadAvatar = async (file: File) => {
     const fd = new FormData();
@@ -122,6 +146,43 @@ export default function PerfilPage() {
             <p className="text-xs mt-1" style={{ color: "var(--text3)" }}>JPG, PNG ou GIF. Máx 2MB.</p>
           </div>
         </div>
+      </div>
+
+      {/* Google Calendar */}
+      <div className="rounded-2xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        <h2 className="font-semibold mb-1" style={{ color: "var(--text)" }}>Google Calendar</h2>
+        <p className="text-xs mb-4" style={{ color: "var(--text3)" }}>
+          Sincroniza automaticamente audiências, perícias e prazos fatais dos processos em que
+          você é o responsável — o lembrete chega como notificação do Google Calendar no celular.
+        </p>
+        {googleMsg && (
+          <div className="text-sm px-4 py-2.5 rounded-lg mb-4"
+            style={{
+              background: googleMsg.type === "ok" ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+              border: `1px solid ${googleMsg.type === "ok" ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`,
+              color: googleMsg.type === "ok" ? "#4ade80" : "#f87171",
+            }}>
+            {googleMsg.text}
+          </div>
+        )}
+        {googleCalendar?.connected ? (
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm" style={{ color: "var(--text2)" }}>
+              ✅ Conectado{googleCalendar.connectedAt ? ` em ${new Date(googleCalendar.connectedAt).toLocaleDateString("pt-BR")}` : ""}
+            </span>
+            <button onClick={disconnectGoogle} disabled={googleLoading}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              style={{ background: "var(--surface2)", color: "var(--text)", border: "1px solid var(--border)", opacity: googleLoading ? 0.7 : 1 }}>
+              {googleLoading ? "Desconectando..." : "Desconectar"}
+            </button>
+          </div>
+        ) : (
+          <a href="/api/google/connect"
+            className="inline-block px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            style={{ background: "var(--gold)", color: "#000" }}>
+            Conectar Google Calendar
+          </a>
+        )}
       </div>
 
       {/* Tabs */}

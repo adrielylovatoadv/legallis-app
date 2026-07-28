@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hasControleRestrito } from "@/lib/acl";
 import * as processosRepo from "@/lib/repo/processos";
+import { syncProcessoEvent } from "@/lib/google-calendar";
 
 export async function POST(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -13,5 +14,6 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     data: "", hora: "", andamento: "AGUARDANDO DESPACHO", responsavel: "", dashboard_ok: true,
   });
   if (!atualizado) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  await syncProcessoEvent(tid, atualizado);
   return NextResponse.json(atualizado);
 }

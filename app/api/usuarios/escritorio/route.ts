@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getUserByIdAsync, getTenantUsersAsync } from "@/lib/users";
+import { getUserByIdAsync, getTenantUsersAsync, toSafeUser } from "@/lib/users";
 
 // Retorna todos os usuários do mesmo escritório (tenantId) do usuário logado
 export async function GET() {
@@ -11,6 +11,5 @@ export async function GET() {
   if (!currentUser) return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
 
   const colegas = await getTenantUsersAsync(currentUser);
-  const safe = colegas.map(({ password: _, ...u }) => u);
-  return NextResponse.json(safe);
+  return NextResponse.json(colegas.map(toSafeUser));
 }

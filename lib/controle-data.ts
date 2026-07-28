@@ -13,6 +13,7 @@ export interface Processo {
   andamento: string; responsavel: string; observacoes: string;
   atencao: boolean; finalizado: boolean; criado_em: string;
   dashboard_ok?: boolean; vara?: string; tribunal?: string; prazo_fatal?: string;
+  google_event_id_audiencia?: string; google_event_id_prazo?: string;
 }
 
 export interface Cliente {
@@ -38,6 +39,7 @@ export interface Atendimento {
   cliente: string; cliente_id?: string; telefone: string;
   forma: string; observacoes: string; status: string; responsavel: string;
   processo_id?: string; criado_em: string;
+  google_event_id?: string;
 }
 
 export interface FinalizadoSemHonor {

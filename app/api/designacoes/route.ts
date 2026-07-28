@@ -7,6 +7,7 @@ import * as iniciaisRepo from "@/lib/repo/iniciais";
 import { addSystemMessage, getOrCreateDM, addMessage } from "@/lib/chat";
 import { logEvent } from "@/lib/audit";
 import { getUserByIdAsync } from "@/lib/users";
+import { sendNovaDesignacao } from "@/lib/email";
 
 // GET /api/designacoes -> solicitações de redesignação pendentes recebidas pelo usuário logado
 export async function GET() {
@@ -72,6 +73,12 @@ export async function POST(req: NextRequest) {
     await addMessage({ conversationId: conv.id, from: userId, fromName: userName, text: msg, type: "user" }, tid);
     logEvent({ tenantId: tid, tipo: "Redesignação", descricao: msg, usuario: userName, usuarioId: userId, detalhe: `${pedido.tipo} ID ${pedido.itemId}` });
 
+    const solicitante = await getUserByIdAsync(pedido.deUserId).catch(() => null);
+    if (solicitante?.email) {
+      await sendNovaDesignacao(solicitante.name, solicitante.email, pedido.label, userName,
+        aceitar ? "Redesignação aceita" : "Redesignação recusada — item voltou sem responsável");
+    }
+
     return NextResponse.json({ ok: true });
   }
 
@@ -99,6 +106,7 @@ export async function POST(req: NextRequest) {
       const conv = await getOrCreateDM(userId, adminId, tid);
       await addMessage({ conversationId: conv.id, from: userId, fromName: userName, text: msg, type: "user" }, tid);
       logEvent({ tenantId: tid, tipo: "Redesignação", descricao: msg, usuario: userName, usuarioId: userId, detalhe: `Processo ID ${id}` });
+      if (admin?.email) await sendNovaDesignacao(admin.name, admin.email, label, userName, motivo);
     }
   } else if (tipo === "inicial") {
     const item = await iniciaisRepo.get(tid, id);
@@ -133,6 +141,7 @@ export async function POST(req: NextRequest) {
       const conv = await getOrCreateDM(userId, adminId, tid);
       await addMessage({ conversationId: conv.id, from: userId, fromName: userName, text: msg, type: "user" }, tid);
       logEvent({ tenantId: tid, tipo: "Redesignação", descricao: msg, usuario: userName, usuarioId: userId, detalhe: `Inicial ID ${id}` });
+      if (admin?.email) await sendNovaDesignacao(admin.name, admin.email, label, userName, motivo);
     }
   }
 

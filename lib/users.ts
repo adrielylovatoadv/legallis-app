@@ -46,6 +46,19 @@ export interface User {
   tenantId?: string;
   sexo?: "feminino" | "masculino";
   cargo?: "administrador" | "socio" | "advogado" | "estagiario" | "assistente";
+  googleCalendar?: { connected: boolean; refreshTokenEnc: string; connectedAt: string };
+}
+
+// Remove segredos antes de mandar o usuário pro cliente: nunca a senha, e do googleCalendar só
+// o que a UI precisa pra mostrar status de conexão — nunca o refreshTokenEnc.
+export function toSafeUser(user: User): Omit<User, "password" | "googleCalendar"> & { googleCalendar?: { connected: boolean; connectedAt: string } } {
+  const { password: _pw, googleCalendar, ...safe } = user;
+  return {
+    ...safe,
+    googleCalendar: googleCalendar
+      ? { connected: googleCalendar.connected, connectedAt: googleCalendar.connectedAt }
+      : undefined,
+  };
 }
 
 export interface ResetToken {

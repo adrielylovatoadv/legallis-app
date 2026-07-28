@@ -7,6 +7,7 @@ import * as processosRepo from "@/lib/repo/processos";
 import * as finalizadosRepo from "@/lib/repo/finalizados-sem-honor";
 import { processoUpdateSchema } from "@/lib/validation/controle";
 import { parseBody } from "@/lib/validation/helpers";
+import { syncProcessoEvent, deleteProcessoEvents } from "@/lib/google-calendar";
 
 const ANDAMENTOS_FINAIS = ["ACORDO", "ARQUIVADO", "DESISTÊNCIA", "DESISTENCIA", "IMPROCEDENTE", "IMPROCEDÊNCIA", "IMPROCEDENCIA", "EXTINÇÃO", "EXTINCAO", "CANCELADO"];
 
@@ -67,6 +68,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (novoFinalizado) await finalizadosRepo.create(tid, novoFinalizado);
   }
 
+  await syncProcessoEvent(tid, merged);
   return NextResponse.json(merged);
 }
 
@@ -76,6 +78,8 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
   if (hasControleRestrito(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para este módulo" }, { status: 403 });
   const tid = session.user.tenantId;
   const { id } = await params;
+  const existente = await processosRepo.get(tid, id);
   await processosRepo.remove(tid, id);
+  if (existente) await deleteProcessoEvents(tid, existente);
   return NextResponse.json({ ok: true });
 }

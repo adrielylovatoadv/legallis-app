@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getUsersAsync } from "@/lib/users";
+import { getUsersAsync, toSafeUser } from "@/lib/users";
 
 export async function GET() {
   const session = await auth();
@@ -9,5 +9,5 @@ export async function GET() {
   }
 
   const users = await getUsersAsync();
-  return NextResponse.json(users.map(({ password: _pw, ...u }) => u));
+  return NextResponse.json(users.map(toSafeUser));
 }

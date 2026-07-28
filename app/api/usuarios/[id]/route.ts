@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { auth } from "@/auth";
-import { updateUserAsync, deleteUserAsync, getUserByIdAsync, isOwner } from "@/lib/users";
+import { updateUserAsync, deleteUserAsync, getUserByIdAsync, isOwner, toSafeUser } from "@/lib/users";
 
 const USER_EDITABLE_FIELDS = ["name", "phone", "theme", "oab", "company", "avatar", "password", "sexo"] as const;
 // Campos que o dono do escritório (ou super-admin) pode alterar em outro usuário do seu tenant
@@ -34,13 +34,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (session.user.id === id) {
     const user = await getUserByIdAsync(id);
     if (!user) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
-    const { password: _pw, ...safe } = user;
-    return NextResponse.json(safe);
+    return NextResponse.json(toSafeUser(user));
   }
   const managed = await requireManagerForTarget(session.user.id, id);
   if (!managed) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
-  const { password: _pw, ...safe } = managed.targetUser;
-  return NextResponse.json(safe);
+  return NextResponse.json(toSafeUser(managed.targetUser));
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -68,8 +66,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
   const updated = await updateUserAsync(id, body);
   if (!updated) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
-  const { password: _, ...safe } = updated;
-  return NextResponse.json(safe);
+  return NextResponse.json(toSafeUser(updated));
 }
 
 export async function DELETE(req2: NextRequest, { params }: { params: Promise<{ id: string }> }) {

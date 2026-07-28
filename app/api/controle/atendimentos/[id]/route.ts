@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import * as atendimentosRepo from "@/lib/repo/atendimentos";
 import { atendimentoUpdateSchema } from "@/lib/validation/controle";
 import { parseBody } from "@/lib/validation/helpers";
+import { syncAtendimentoEvent, deleteAtendimentoEvent } from "@/lib/google-calendar";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -13,6 +14,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (error) return error;
   const atendimento = await atendimentosRepo.update(tid, id, body);
   if (!atendimento) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  await syncAtendimentoEvent(tid, atendimento);
   return NextResponse.json(atendimento);
 }
 
@@ -21,6 +23,8 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   const tid = session.user.tenantId;
   const { id } = await params;
+  const existente = await atendimentosRepo.get(tid, id);
   await atendimentosRepo.remove(tid, id);
+  if (existente) await deleteAtendimentoEvent(tid, existente);
   return NextResponse.json({ ok: true });
 }

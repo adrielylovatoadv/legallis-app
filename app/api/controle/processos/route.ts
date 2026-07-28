@@ -7,6 +7,7 @@ import * as processosRepo from "@/lib/repo/processos";
 import { processoCreateSchema } from "@/lib/validation/controle";
 import { parseBody } from "@/lib/validation/helpers";
 import { PLAN_FEATURES, type Plan } from "@/lib/plans";
+import { syncProcessoEvent } from "@/lib/google-calendar";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -70,5 +71,9 @@ export async function POST(req: NextRequest) {
   const { data: body, error } = parseBody(processoCreateSchema, await req.json());
   if (error) return error;
   const novo = await processosRepo.create(tid, body);
+  // Aguarda (não fire-and-forget): funções serverless podem ser congeladas assim que a resposta
+  // é enviada, então uma sincronização não aguardada corre risco de nunca terminar. syncProcessoEvent
+  // já engole os próprios erros — não derruba a criação do processo se o Google falhar.
+  await syncProcessoEvent(tid, novo);
   return NextResponse.json(novo, { status: 201 });
 }

@@ -15,6 +15,7 @@ function rowToAtendimento(r: Record<string, unknown>): Atendimento {
     responsavel: r.responsavel as string,
     processo_id: (r.processo_id as string) ?? undefined,
     criado_em: r.criado_em instanceof Date ? r.criado_em.toISOString() : (r.criado_em as string),
+    google_event_id: (r.google_event_id as string) ?? undefined,
   };
 }
 
@@ -39,10 +40,10 @@ export function buildCreateStatement(tenantId: string, row: Atendimento) {
   const sql = getSql()!;
   return sql`
     INSERT INTO atendimentos (tenant_id, id, data, hora, cliente, cliente_id, telefone, forma,
-                               observacoes, status, responsavel, processo_id, criado_em)
+                               observacoes, status, responsavel, processo_id, google_event_id, criado_em)
     VALUES (${tenantId}, ${row.id}, ${row.data}, ${row.hora}, ${row.cliente}, ${row.cliente_id ?? null},
             ${row.telefone}, ${row.forma}, ${row.observacoes}, ${row.status}, ${row.responsavel},
-            ${row.processo_id ?? null}, ${row.criado_em})
+            ${row.processo_id ?? null}, ${row.google_event_id ?? null}, ${row.criado_em})
   `;
 }
 
@@ -66,7 +67,7 @@ export function buildUpdateStatement(tenantId: string, merged: Atendimento) {
     UPDATE atendimentos SET data = ${merged.data}, hora = ${merged.hora}, cliente = ${merged.cliente},
       cliente_id = ${merged.cliente_id ?? null}, telefone = ${merged.telefone}, forma = ${merged.forma},
       observacoes = ${merged.observacoes}, status = ${merged.status}, responsavel = ${merged.responsavel},
-      processo_id = ${merged.processo_id ?? null}
+      processo_id = ${merged.processo_id ?? null}, google_event_id = ${merged.google_event_id ?? null}
     WHERE tenant_id = ${tenantId} AND id = ${merged.id}
   `;
 }

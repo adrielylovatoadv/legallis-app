@@ -4,6 +4,7 @@ import * as atendimentosRepo from "@/lib/repo/atendimentos";
 import { normText } from "@/lib/controle";
 import { atendimentoCreateSchema } from "@/lib/validation/controle";
 import { parseBody } from "@/lib/validation/helpers";
+import { syncAtendimentoEvent } from "@/lib/google-calendar";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -37,5 +38,6 @@ export async function POST(req: NextRequest) {
   const { data: body, error } = parseBody(atendimentoCreateSchema, await req.json());
   if (error) return error;
   const novo = await atendimentosRepo.create(tid, body);
+  await syncAtendimentoEvent(tid, novo);
   return NextResponse.json(novo, { status: 201 });
 }
