@@ -1,9 +1,21 @@
+import fs from "fs";
+import path from "path";
 import { dbGet, dbSet } from "@/lib/db";
-import { loadIndices, type Indices } from "@/lib/calc-formulas";
+import type { Indices } from "@/lib/calc-formulas";
 
 const DB_KEY = "indices_juridicos_overrides";
 let _cache: { data: Indices; fetchedAt: number } | null = null;
 const CACHE_TTL = 60 * 60 * 1000; // 1 hora
+
+let _cachedIndices: Indices | null = null;
+
+function loadIndices(): Indices {
+  if (_cachedIndices) return _cachedIndices;
+  const file = path.join(process.cwd(), "data", "indices_juridicos.json");
+  const raw = JSON.parse(fs.readFileSync(file, "utf-8")) as Indices;
+  _cachedIndices = raw;
+  return raw;
+}
 
 export async function loadIndicesAsync(): Promise<Indices> {
   if (_cache && Date.now() - _cache.fetchedAt < CACHE_TTL) return _cache.data;

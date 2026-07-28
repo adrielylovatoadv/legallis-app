@@ -9,9 +9,6 @@
 // Antes de 30/08/2024, cada tribunal seguia seu próprio índice — ver PRE_LEI14905_INDEX abaixo.
 // TJSP é o único com tabela própria (fatores acumulados, não decorre de INPC/IPCA-E puro).
 
-import fs from "fs";
-import path from "path";
-
 export interface Indices {
   inpc: Record<string, number>;
   ipcae: Record<string, number>;
@@ -20,16 +17,6 @@ export interface Indices {
   tjsp_inpc: Record<string, number>;
   tjsp_14905: Record<string, number>;
   ultima_atualizacao?: string;
-}
-
-let _cachedIndices: Indices | null = null;
-
-export function loadIndices(): Indices {
-  if (_cachedIndices) return _cachedIndices;
-  const file = path.join(process.cwd(), "data", "indices_juridicos.json");
-  const raw = JSON.parse(fs.readFileSync(file, "utf-8")) as Indices;
-  _cachedIndices = raw;
-  return raw;
 }
 
 function monthKey(year: number, month: number): string {
