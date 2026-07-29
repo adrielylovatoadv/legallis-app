@@ -115,8 +115,8 @@ function ClienteForm({ initial, onSave, onCancel }: {
           onChange={v => set("telefones_adicionais", v)} placeholder="(31) 99999-0000" />
         <ListaRepetivel label="E-mails adicionais" valores={form.emails_adicionais}
           onChange={v => set("emails_adicionais", v)} placeholder="email@exemplo.com" />
-        <div><Lbl>Senha Gov.br</Lbl><Inp type="password" autoComplete="new-password" value={form.senha_gov} onChange={e => set("senha_gov",e.target.value)} /></div>
-        <div><Lbl>Senha Serasa</Lbl><Inp type="password" autoComplete="new-password" value={form.senha_serasa} onChange={e => set("senha_serasa",e.target.value)} /></div>
+        <div><Lbl>Senha Gov.br</Lbl><Inp type="text" autoComplete="new-password" value={form.senha_gov} onChange={e => set("senha_gov",e.target.value)} /></div>
+        <div><Lbl>Senha Serasa</Lbl><Inp type="text" autoComplete="new-password" value={form.senha_serasa} onChange={e => set("senha_serasa",e.target.value)} /></div>
         <div><Lbl>Banco</Lbl><Inp value={form.banco} onChange={e => set("banco",e.target.value)} /></div>
         <div><Lbl>Agência</Lbl><Inp value={form.agencia} onChange={e => set("agencia",e.target.value)} /></div>
         <div><Lbl>Conta</Lbl><Inp type="password" autoComplete="new-password" value={form.conta} onChange={e => set("conta",e.target.value)} /></div>
