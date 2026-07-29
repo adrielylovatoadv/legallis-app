@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { PLAN_FEATURES, type Plan } from "@/lib/plans";
 
 const BR_STATES = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
@@ -25,6 +26,9 @@ export default function PerfilPage() {
   const [googleCalendar, setGoogleCalendar] = useState<{ connected: boolean; connectedAt: string } | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleMsg, setGoogleMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const plan = (session?.user?.plan ?? "basic") as Plan;
+  const maxOabs = PLAN_FEATURES[plan]?.maxOabs ?? 1;
+  const oabAtLimit = oabs.length >= maxOabs;
 
   const loadProfile = async () => {
     const res = await fetch(`/api/usuarios/${session?.user?.id}`);
@@ -77,7 +81,7 @@ export default function PerfilPage() {
     }
   };
 
-  const addOab = () => setOabs([...oabs, { state: "MG", number: "" }]);
+  const addOab = () => { if (!oabAtLimit) setOabs([...oabs, { state: "MG", number: "" }]); };
   const removeOab = (i: number) => setOabs(oabs.filter((_, idx) => idx !== i));
   const updateOab = (i: number, field: keyof OABEntry, value: string) => {
     setOabs(oabs.map((o, idx) => idx === i ? { ...o, [field]: value } : o));
@@ -237,13 +241,20 @@ export default function PerfilPage() {
           {/* OAB */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs uppercase tracking-wider" style={{ color: "var(--text3)" }}>OAB</label>
-              <button type="button" onClick={addOab}
-                className="text-xs px-3 py-1 rounded-lg flex items-center gap-1 transition-colors"
+              <label className="text-xs uppercase tracking-wider" style={{ color: "var(--text3)" }}>
+                OAB ({oabs.length} de {maxOabs === Infinity ? "∞" : maxOabs})
+              </label>
+              <button type="button" onClick={addOab} disabled={oabAtLimit}
+                className="text-xs px-3 py-1 rounded-lg flex items-center gap-1 transition-colors disabled:opacity-50"
                 style={{ background: "var(--surface2)", color: "var(--gold)", border: "1px solid var(--border)" }}>
                 + Adicionar OAB
               </button>
             </div>
+            {oabAtLimit && (
+              <p className="text-xs mb-2" style={{ color: "#f87171" }}>
+                Limite de {maxOabs} registros de OAB atingido para o plano {PLAN_FEATURES[plan]?.label ?? plan}. Faça upgrade para cadastrar mais.
+              </p>
+            )}
             <div className="space-y-2">
               {oabs.map((oab, i) => (
                 <div key={i} className="flex gap-2 items-center">

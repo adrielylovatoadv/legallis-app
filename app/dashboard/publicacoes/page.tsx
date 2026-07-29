@@ -6,6 +6,7 @@ import { Card, Input, FieldLabel as Lbl, Select } from "@/components/ui";
 import { DateField } from "@/components/ui/DateField";
 import { buscarComunicacoesPorOab, type DjenComunicacao } from "@/lib/integrations/djen";
 import { classificarPrazo, resumoTexto, type SinalPrazo } from "@/lib/publicacao-prazo";
+import { PLAN_FEATURES, type Plan } from "@/lib/plans";
 
 const BR_STATES = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
@@ -76,10 +77,13 @@ export default function PublicacoesPage() {
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [lista, setLista] = useState<Publicacao[]>([]);
   const [carregando, setCarregando] = useState(true);
-  const [mostrarTratadas, setMostrarTratadas] = useState(false);
+  const [aba, setAba] = useState<"pendentes" | "tratadas">("pendentes");
   const [expandido, setExpandido] = useState<string | null>(null);
   const [pagina, setPagina] = useState(1);
   const POR_PAGINA = 10;
+  const plan = (session?.user?.plan ?? "basic") as Plan;
+  const maxOabs = PLAN_FEATURES[plan]?.maxOabs ?? 1;
+  const planLabel = PLAN_FEATURES[plan]?.label ?? plan;
 
   useEffect(() => {
     const loadPerfil = async () => {
@@ -96,7 +100,14 @@ export default function PublicacoesPage() {
   }, [session?.user?.id]);
 
   const alternarOab = (chave: string) => {
-    setOabsBusca(prev => prev.map(o => chaveOab(o) === chave ? { ...o, checked: !o.checked } : o));
+    setOabsBusca(prev => {
+      const alvo = prev.find(o => chaveOab(o) === chave);
+      if (alvo && !alvo.checked && prev.filter(o => o.checked).length >= maxOabs) {
+        setMsg({ type: "err", text: `Limite de ${maxOabs} registros de OAB simultâneos para o plano ${planLabel}. Desmarque outro para marcar este.` });
+        return prev;
+      }
+      return prev.map(o => chaveOab(o) === chave ? { ...o, checked: !o.checked } : o);
+    });
   };
 
   const removerOab = (chave: string) => {
@@ -105,6 +116,10 @@ export default function PublicacoesPage() {
 
   const adicionarOab = () => {
     if (!novoNumero.trim()) return;
+    if (oabsBusca.length >= maxOabs) {
+      setMsg({ type: "err", text: `Limite de ${maxOabs} registros de OAB atingido para o plano ${planLabel}. Faça upgrade para adicionar mais.` });
+      return;
+    }
     const novo = { state: novoUf, number: novoNumero.trim(), checked: true };
     setOabsBusca(prev => prev.some(o => chaveOab(o) === chaveOab(novo)) ? prev : [...prev, novo]);
     setNovoNumero("");
@@ -113,19 +128,23 @@ export default function PublicacoesPage() {
   const carregarLista = useCallback(async () => {
     setCarregando(true);
     try {
-      const res = await fetch(`/api/publicacoes${mostrarTratadas ? "" : "?tratada=false"}`);
+      const res = await fetch(`/api/publicacoes?tratada=${aba === "tratadas"}`);
       if (res.ok) setLista(await res.json());
       setPagina(1);
     } finally {
       setCarregando(false);
     }
-  }, [mostrarTratadas]);
+  }, [aba]);
 
   useEffect(() => { carregarLista(); }, [carregarLista]);
 
   const buscar = async () => {
     const alvos = oabsBusca.filter(o => o.checked && o.number.trim());
     if (alvos.length === 0) { setMsg({ type: "err", text: "Marque ao menos um registro de OAB para buscar." }); return; }
+    if (alvos.length > maxOabs) {
+      setMsg({ type: "err", text: `Limite de ${maxOabs} registros de OAB simultâneos para o plano ${planLabel}. Desmarque alguns para buscar.` });
+      return;
+    }
     if (dataInicio && dataFim && dataInicio > dataFim) {
       setMsg({ type: "err", text: "A data inicial não pode ser depois da data final." });
       return;
@@ -199,13 +218,21 @@ export default function PublicacoesPage() {
   };
 
   const marcarTratada = async (id: string) => {
-    setLista(prev => prev.map(p => p.id === id ? { ...p, tratada: true } : p));
+    setLista(prev => prev.filter(p => p.id !== id));
     await fetch(`/api/publicacoes/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tratada: true }),
     });
-    if (!mostrarTratadas) setLista(prev => prev.filter(p => p.id !== id));
+  };
+
+  const reabrirPublicacao = async (id: string) => {
+    setLista(prev => prev.filter(p => p.id !== id));
+    await fetch(`/api/publicacoes/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tratada: false }),
+    });
   };
 
   const totalPaginas = Math.max(1, Math.ceil(lista.length / POR_PAGINA));
@@ -223,7 +250,7 @@ export default function PublicacoesPage() {
 
       <Card className="mb-6">
         <div>
-          <Lbl>Registros de OAB para buscar</Lbl>
+          <Lbl>Registros de OAB para buscar ({oabsBusca.length} de {maxOabs === Infinity ? "∞" : maxOabs})</Lbl>
           <div className="flex flex-wrap gap-2 mt-1">
             {oabsBusca.map(o => {
               const chave = chaveOab(o);
@@ -244,8 +271,8 @@ export default function PublicacoesPage() {
             </Select>
             <Input value={novoNumero} onChange={e => setNovoNumero(e.target.value)} placeholder="Adicionar outro nº de OAB"
               onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); adicionarOab(); } }} />
-            <button onClick={adicionarOab} type="button"
-              className="px-3 py-2 rounded-lg text-sm whitespace-nowrap" style={{ border: "1px solid var(--border)", color: "var(--text2)" }}>
+            <button onClick={adicionarOab} type="button" disabled={oabsBusca.length >= maxOabs}
+              className="px-3 py-2 rounded-lg text-sm whitespace-nowrap disabled:opacity-50" style={{ border: "1px solid var(--border)", color: "var(--text2)" }}>
               + Adicionar
             </button>
           </div>
@@ -298,20 +325,29 @@ export default function PublicacoesPage() {
         )}
       </Card>
 
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-medium" style={{ color: "var(--text2)" }}>
-          {mostrarTratadas ? "Todas as publicações" : "Pendentes de tratamento"}
-          {!carregando && <span style={{ color: "var(--text3)" }}> ({lista.length})</span>}
-        </h2>
-        <button onClick={() => setMostrarTratadas(v => !v)} className="text-xs" style={{ color: "var(--gold)" }}>
-          {mostrarTratadas ? "Ver só pendentes" : "Ver todas"}
-        </button>
+      <div className="flex items-center gap-1 mb-4" style={{ borderBottom: "1px solid var(--border)" }}>
+        {([
+          { key: "pendentes", label: "Pendentes de tratamento" },
+          { key: "tratadas", label: "Tratadas" },
+        ] as const).map(({ key, label }) => (
+          <button key={key} onClick={() => setAba(key)}
+            className="text-sm px-3 py-2 -mb-px"
+            style={{
+              color: aba === key ? "var(--gold)" : "var(--text3)",
+              borderBottom: aba === key ? "2px solid var(--gold)" : "2px solid transparent",
+              fontWeight: aba === key ? 500 : 400,
+            }}>
+            {label}{!carregando && aba === key ? ` (${lista.length})` : ""}
+          </button>
+        ))}
       </div>
 
       {carregando ? (
         <p className="text-sm" style={{ color: "var(--text3)" }}>Carregando...</p>
       ) : lista.length === 0 ? (
-        <Card><p className="text-sm text-center py-6" style={{ color: "var(--text3)" }}>Nenhuma publicação encontrada. Use o campo acima para buscar.</p></Card>
+        <Card><p className="text-sm text-center py-6" style={{ color: "var(--text3)" }}>
+          {aba === "tratadas" ? "Nenhuma publicação tratada ainda." : "Nenhuma publicação encontrada. Use o campo acima para buscar."}
+        </p></Card>
       ) : (
         <div className="space-y-2">
           {listaPagina.map(p => {
@@ -379,7 +415,13 @@ export default function PublicacoesPage() {
                       </a>
                     )}
                   </div>
-                  {!p.tratada && (
+                  {p.tratada ? (
+                    <button onClick={() => reabrirPublicacao(p.id)}
+                      className="text-xs px-3 py-1.5 rounded-lg whitespace-nowrap"
+                      style={{ border: "1px solid var(--border)", color: "var(--text2)" }}>
+                      Reabrir
+                    </button>
+                  ) : (
                     <button onClick={() => marcarTratada(p.id)}
                       className="text-xs px-3 py-1.5 rounded-lg whitespace-nowrap"
                       style={{ border: "1px solid var(--border)", color: "var(--text2)" }}>

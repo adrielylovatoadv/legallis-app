@@ -12,6 +12,7 @@ export const PLAN_FEATURES: Record<Plan, {
   canAssignTasks: boolean;
   maxUsers: number;
   maxProcessos: number;
+  maxOabs: number;
 }> = {
   basic: {
     label: "Básico",
@@ -20,6 +21,7 @@ export const PLAN_FEATURES: Record<Plan, {
     canAssignTasks: false,
     maxUsers: 3, // 1 admin + até 2 usuários
     maxProcessos: 100,
+    maxOabs: 2,
   },
   profissional: {
     label: "Pro",
@@ -28,6 +30,7 @@ export const PLAN_FEATURES: Record<Plan, {
     canAssignTasks: true,
     maxUsers: 7, // 1 admin + até 6 usuários
     maxProcessos: 400,
+    maxOabs: 10,
   },
   pro: {
     label: "Profissional",
@@ -36,6 +39,7 @@ export const PLAN_FEATURES: Record<Plan, {
     canAssignTasks: true,
     maxUsers: 21, // 1 admin + até 20 usuários
     maxProcessos: 3000,
+    maxOabs: Infinity,
   },
   admin: {
     label: "Administrador",
@@ -44,6 +48,7 @@ export const PLAN_FEATURES: Record<Plan, {
     canAssignTasks: true,
     maxUsers: Infinity,
     maxProcessos: Infinity,
+    maxOabs: Infinity,
   },
 };
 
