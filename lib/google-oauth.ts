@@ -6,7 +6,7 @@ const AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const SCOPE = "https://www.googleapis.com/auth/calendar.events";
 
 function appUrl(): string {
-  return process.env.NEXTAUTH_URL ?? "https://app.legallis.app.br";
+  return process.env.NEXTAUTH_URL ?? "https://app.legarium.app.br";
 }
 
 export function getRedirectUri(): string {

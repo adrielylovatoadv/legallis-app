@@ -1,9 +1,9 @@
-const APP_URL = process.env.NEXTAUTH_URL ?? "https://app.legallis.app.br";
-const FROM = "Legarium <noreply@legallis.app.br>";
+const APP_URL = process.env.NEXTAUTH_URL ?? "https://app.legarium.app.br";
+const FROM = "Legarium <noreply@legarium.app.br>";
 
 async function send(to: string, subject: string, html: string) {
   // Avoid sending to internal @legallis emails in dev
-  const recipient = to.includes("@legallis") ? (process.env.DEV_EMAIL ?? "noreply@legallis.app.br") : to;
+  const recipient = to.includes("@legallis") ? (process.env.DEV_EMAIL ?? "noreply@legarium.app.br") : to;
 
   if (!process.env.RESEND_API_KEY) {
     console.log(`[Email dev] To: ${recipient}\nSubject: ${subject}`);
