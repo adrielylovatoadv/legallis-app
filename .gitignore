@@ -43,6 +43,7 @@ next-env.d.ts
 # dados sensíveis de usuários — não versionar
 /data/users.json
 /data/controle_data.json
+/data/controle_data_t_*.json
 /data/financeiro_data.json
 /data/reset_tokens.json
 
