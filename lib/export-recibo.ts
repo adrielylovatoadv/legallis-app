@@ -135,9 +135,9 @@ export async function exportarReciboRepasse(doc: ReciboDoc, nomeArquivo: string)
     // Cláusula
     const clausula =
       `O(a) recebedor(a) qualificado(a) acima declara ter recebido a quantia líquida e certa acima indicada` +
-      `${doc.processo ? `, referente ao processo nº ${doc.processo}` : ""}. Quitação restrita, exclusivamente, ` +
-      `ao valor ora recebido, sem quitação de quaisquer outras verbas ou valores relativos ao mesmo processo, ` +
-      `que permanecem exigíveis na forma da lei.`;
+      `${doc.processo ? `, referente ao processo nº ${doc.processo}` : ""}. A presente quitação refere-se ` +
+      `exclusivamente ao valor líquido recebido pela parte Autora, correspondente ao montante remanescente ` +
+      `após a dedução dos honorários advocatícios contratuais e sucumbenciais, quando devidos.`;
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(8.8);
     pdf.setTextColor(...INK_SOFT);
