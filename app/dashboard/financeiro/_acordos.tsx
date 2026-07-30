@@ -7,7 +7,7 @@ import {
   fmtBRL, MESES, NEXT_STATUS,
   type Acordo, type Status,
 } from "@/lib/financeiro";
-import { MetricCard, StatusBtn, sortByMesDesc, getCurrentMes } from "./_shared";
+import { MetricCard, StatusBtn, sortByMesDesc, getCurrentMes, ReciboRepasseModal } from "./_shared";
 
 const PCT_PADRAO_KEY = "legallis_pct_honorarios_acordo_padrao";
 const PCT_PADRAO_FALLBACK = 41.5;
@@ -23,6 +23,7 @@ export function AcordosView({ reload, filtroMes }: { reload: () => void; filtroM
   const [novo, setNovo] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [pctPadrao, setPctPadrao] = useState(PCT_PADRAO_FALLBACK);
+  const [reciboAcordo, setReciboAcordo] = useState<Acordo | null>(null);
 
   useEffect(() => { setPctPadrao(getPctAcordoPadrao()); }, []);
 
@@ -102,6 +103,10 @@ export function AcordosView({ reload, filtroMes }: { reload: () => void; filtroM
                     <td className="py-2 pr-3"><StatusBtn status={a.status} onClick={() => toggleStatus(a)} /></td>
                     <td className="py-2">
                       <div className="flex gap-1">
+                        {a.valor_acordo - a.honorarios > 0 && (
+                          <button onClick={() => setReciboAcordo(a)} title="Emitir recibo de repasse"
+                            className="text-xs px-2 py-1 rounded" style={{ background:"var(--surface2)", color:"var(--gold)", border:"1px solid var(--border)" }}>🧾</button>
+                        )}
                         <button onClick={() => setEditId(a.id)} className="text-xs px-2 py-1 rounded" style={{ background:"var(--surface2)", color:"var(--text2)", border:"1px solid var(--border)" }}>✏️</button>
                         <button onClick={() => { if(confirm("Excluir?")) del(a.id); }} className="text-xs px-2 py-1 rounded" style={{ background:"var(--surface2)", color:"var(--text3)", border:"1px solid var(--border)" }}>🗑</button>
                       </div>
@@ -113,6 +118,15 @@ export function AcordosView({ reload, filtroMes }: { reload: () => void; filtroM
           </table>
         </div>
       </Card>
+      {reciboAcordo && (
+        <ReciboRepasseModal
+          cliente={reciboAcordo.cliente}
+          processo={reciboAcordo.processo}
+          referente={`repasse de valores recebidos em acordo${reciboAcordo.objeto ? ` referente a ${reciboAcordo.objeto}` : ""}`}
+          valorSugerido={Math.round((reciboAcordo.valor_acordo - reciboAcordo.honorarios) * 100) / 100}
+          onClose={() => setReciboAcordo(null)}
+        />
+      )}
     </div>
   );
 }

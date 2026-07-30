@@ -7,7 +7,7 @@ import {
   fmtBRL, MESES, NEXT_STATUS,
   type Execucao, type Status, type TipoExecucao,
 } from "@/lib/financeiro";
-import { MetricCard, StatusBtn, sortByMesDesc, getCurrentMes } from "./_shared";
+import { MetricCard, StatusBtn, sortByMesDesc, getCurrentMes, ReciboRepasseModal } from "./_shared";
 
 const PCT_PADRAO_KEY = "legallis_pct_honorarios_execucao_padrao";
 const PCT_PADRAO_FALLBACK = 35;
@@ -18,11 +18,18 @@ export function getPctExecucaoPadrao(): number {
   return Number.isFinite(v) ? v : PCT_PADRAO_FALLBACK;
 }
 
+function repasseCliente(e: Execucao): number {
+  if (e.tipo_execucao === "honorarios_somente") return 0;
+  const pct = e.pct_honorarios ?? PCT_PADRAO_FALLBACK;
+  return Math.round(e.valor_percebido * (1 - pct / 100) * 100) / 100;
+}
+
 export function ExecucoesView({ reload, filtroMes }: { reload: () => void; filtroMes?: string }) {
   const [execucoes, setExecucoes] = useState<Execucao[]>([]);
   const [novo, setNovo] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [pctPadrao, setPctPadrao] = useState(PCT_PADRAO_FALLBACK);
+  const [reciboExecucao, setReciboExecucao] = useState<Execucao | null>(null);
 
   useEffect(() => { setPctPadrao(getPctExecucaoPadrao()); }, []);
 
@@ -105,6 +112,10 @@ export function ExecucoesView({ reload, filtroMes }: { reload: () => void; filtr
                       <td className="py-2 pr-3"><StatusBtn status={e.status} onClick={() => toggleStatus(e)} /></td>
                       <td className="py-2">
                         <div className="flex gap-1">
+                          {repasseCliente(e) > 0 && (
+                            <button onClick={() => setReciboExecucao(e)} title="Emitir recibo de repasse"
+                              className="text-xs px-2 py-1 rounded" style={{ background:"var(--surface2)", color:"var(--gold)", border:"1px solid var(--border)" }}>🧾</button>
+                          )}
                           <button onClick={() => setEditId(e.id)} className="text-xs px-2 py-1 rounded" style={{ background:"var(--surface2)", color:"var(--text2)", border:"1px solid var(--border)" }}>✏️</button>
                           <button onClick={() => { if(confirm("Excluir?")) del(e.id); }} className="text-xs px-2 py-1 rounded" style={{ background:"var(--surface2)", color:"var(--text3)", border:"1px solid var(--border)" }}>🗑</button>
                         </div>
@@ -116,6 +127,15 @@ export function ExecucoesView({ reload, filtroMes }: { reload: () => void; filtr
             </table>
           </div>
         </Card>
+      )}
+      {reciboExecucao && (
+        <ReciboRepasseModal
+          cliente={reciboExecucao.cliente}
+          processo={reciboExecucao.processo}
+          referente={`repasse de valores recebidos em execução movida em face de ${reciboExecucao.reu || "___________"}`}
+          valorSugerido={repasseCliente(reciboExecucao)}
+          onClose={() => setReciboExecucao(null)}
+        />
       )}
     </div>
   );
