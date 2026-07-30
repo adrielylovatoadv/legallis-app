@@ -13,6 +13,7 @@ import { ClientesTab } from "./_clientes";
 import { FinalizadosTab } from "./_finalizados";
 import { AtendimentosTab } from "./_atendimentos";
 import { Card, MetricCard as MetricCardBase } from "@/components/ui";
+import { DateField } from "@/components/ui/DateField";
 import { hasControleRestrito } from "@/lib/acl";
 
 function MetricCard({ value, label, color }: { value: number; label: string; color: string }) {
@@ -132,8 +133,9 @@ function ModalEditar({ p, onClose, onSaved }: {
           <Field label="Réu" value={form.reu} onChange={v => set("reu", v)} />
           <Field label="Objeto" value={form.objeto} onChange={v => set("objeto", v)} />
           <Field label="Nº Processo" value={form.numero_processo} onChange={v => set("numero_processo", v)} />
-          <Field label="Data (YYYY-MM-DD)" value={form.data} onChange={v => set("data", v)} />
+          <DateField label="Data" value={form.data} onChange={v => set("data", v)} />
           <Field label="Hora" value={form.hora} onChange={v => set("hora", v)} />
+          <DateField label="⛔ Prazo fatal" value={form.prazo_fatal ?? ""} onChange={v => set("prazo_fatal", v)} />
           <div>
             <label className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Andamento</label>
             <select value={form.andamento} onChange={e => set("andamento", e.target.value)}

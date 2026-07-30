@@ -70,6 +70,8 @@ export async function POST(req: NextRequest) {
 
   const { data: body, error } = parseBody(processoCreateSchema, await req.json());
   if (error) return error;
+  if (body.data) { const n = normalizeData(body.data); if (n) body.data = n; }
+  if (body.prazo_fatal) { const n = normalizeData(body.prazo_fatal); if (n) body.prazo_fatal = n; }
   const novo = await processosRepo.create(tid, body);
   // Aguarda (não fire-and-forget): funções serverless podem ser congeladas assim que a resposta
   // é enviada, então uma sincronização não aguardada corre risco de nunca terminar. syncProcessoEvent

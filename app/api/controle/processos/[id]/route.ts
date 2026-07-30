@@ -8,6 +8,7 @@ import * as finalizadosRepo from "@/lib/repo/finalizados-sem-honor";
 import { processoUpdateSchema } from "@/lib/validation/controle";
 import { parseBody } from "@/lib/validation/helpers";
 import { syncProcessoEvent, deleteProcessoEvents } from "@/lib/google-calendar";
+import { normalizeData } from "@/lib/controle";
 
 const ANDAMENTOS_FINAIS = ["ACORDO", "ARQUIVADO", "DESISTÊNCIA", "DESISTENCIA", "IMPROCEDENTE", "IMPROCEDÊNCIA", "IMPROCEDENCIA", "EXTINÇÃO", "EXTINCAO", "CANCELADO"];
 
@@ -30,6 +31,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params;
   const { data: body, error } = parseBody(processoUpdateSchema, await req.json());
   if (error) return error;
+
+  // Aceita data em ISO ou BR e normaliza pra ISO antes de persistir — datas fora desse
+  // formato (ex: digitadas à mão em campo de texto livre) quebram silenciosamente os
+  // filtros/ordenação de prazos (normalizeData() dessas telas vira "" e o processo some
+  // das abas de Prazos mesmo com o salvamento tendo funcionado).
+  if (body.data) { const n = normalizeData(body.data); if (n) body.data = n; }
+  if (body.prazo_fatal) { const n = normalizeData(body.prazo_fatal); if (n) body.prazo_fatal = n; }
+
   const anterior = await processosRepo.get(tid, id);
   if (!anterior) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
