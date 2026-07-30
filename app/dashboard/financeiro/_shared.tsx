@@ -102,8 +102,8 @@ function hojeISO(): string {
 
 const EMITENTE_ESCRITORIO = "escritorio";
 
-export function ReciboRepasseModal({ cliente, processo, valorSugerido, onClose }: {
-  cliente: string; processo?: string; valorSugerido: number; onClose: () => void;
+export function ReciboRepasseModal({ cliente, processo, valorSugerido, natureza, onClose }: {
+  cliente: string; processo?: string; valorSugerido: number; natureza?: string; onClose: () => void;
 }) {
   const { data: session } = useSession();
   const [perfil, setPerfil] = useState<UsuarioPerfil | null>(null);
@@ -153,7 +153,7 @@ export function ReciboRepasseModal({ cliente, processo, valorSugerido, onClose }
     try {
       await exportarReciboRepasse({
         emitenteNome: emitente.nome, emitenteIdentificacao: emitente.identificacao,
-        cliente, cpf: cpf.trim(), processo, valor, local, data,
+        cliente, cpf: cpf.trim(), processo, valor, local, data, natureza,
       }, `recibo_${cliente.replace(/\s+/g, "_").toLowerCase()}`);
       onClose();
     } catch { setErro("Erro ao gerar recibo."); }

@@ -11,8 +11,13 @@ export interface ReciboDoc {
   cpf: string;
   processo?: string;
   valor: number;
-  local: string;   // cidade/UF
+  local: string;    // cidade/UF
   data: string;     // ISO (YYYY-MM-DD) ou já formatada
+  // Classificação contábil do valor — deixa explícito para quem contabiliza
+  // que não é receita do escritório, e sim dinheiro de titularidade do cliente
+  // apenas em trânsito por ele. Só muda se, no futuro, este mesmo gerador for
+  // reaproveitado para recibo de honorários (receita própria do escritório).
+  natureza?: string;
 }
 
 const INK:       [number, number, number] = [26, 26, 26];
@@ -45,6 +50,7 @@ export async function exportarReciboRepasse(doc: ReciboDoc, nomeArquivo: string)
 
   const valorExtenso = valorPorExtenso(doc.valor);
   const dataFmt = dataPorExtenso(doc.data);
+  const natureza = doc.natureza || "Repasse de valores ao cliente — não constitui receita do escritório";
 
   function hairline(x1: number, yy: number, x2: number, weight = 0.3, cor: [number, number, number] = GRAY_LINE) {
     pdf.setDrawColor(...cor);
@@ -84,7 +90,7 @@ export async function exportarReciboRepasse(doc: ReciboDoc, nomeArquivo: string)
     pdf.setFontSize(17);
     pdf.setTextColor(...INK);
     pdf.text("RECIBO", PW / 2, y, { align: "center", charSpace: 0.8 });
-    y += 10;
+    y += 9;
 
     // Valor
     label("Valor recebido", M, y);
@@ -99,10 +105,10 @@ export async function exportarReciboRepasse(doc: ReciboDoc, nomeArquivo: string)
     pdf.setTextColor(...GRAY);
     const linhasExtenso = pdf.splitTextToSize(`(${valorExtenso})`, CW);
     pdf.text(linhasExtenso, M, y);
-    y += linhasExtenso.length * 3.6 + 5;
+    y += linhasExtenso.length * 3.6 + 4;
 
     hairline(M, y, PW - M);
-    y += 7;
+    y += 6;
 
     // Cliente / CPF
     label("Recebedor(a)", M, y);
@@ -115,22 +121,32 @@ export async function exportarReciboRepasse(doc: ReciboDoc, nomeArquivo: string)
     pdf.setFontSize(9);
     pdf.setTextColor(...INK_SOFT);
     pdf.text(`CPF ${doc.cpf}`, M + CW, y, { align: "right" });
-    y += 8;
+    y += 7;
+
+    // Natureza — classificação contábil do valor (repasse x receita).
+    label("Natureza", M, y);
+    y += 4.5;
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(9);
+    pdf.setTextColor(...INK_SOFT);
+    const linhasNatureza = pdf.splitTextToSize(natureza, CW);
+    pdf.text(linhasNatureza, M, y);
+    y += linhasNatureza.length * 4 + 2;
 
     // Processo
     if (doc.processo) {
       label("Processo nº", M, y);
-      y += 4.8;
+      y += 4.5;
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(9.5);
       pdf.setTextColor(...INK_SOFT);
       pdf.text(doc.processo, M, y);
-      y += 8;
+      y += 7;
     }
 
-    y += 2;
+    y += 1;
     hairline(M, y, PW - M);
-    y += 7;
+    y += 6;
 
     // Cláusula
     const clausula =
@@ -142,25 +158,26 @@ export async function exportarReciboRepasse(doc: ReciboDoc, nomeArquivo: string)
     pdf.setFontSize(8.8);
     pdf.setTextColor(...INK_SOFT);
     const linhasClausula = pdf.splitTextToSize(clausula, CW);
-    pdf.text(linhasClausula, M, y, { lineHeightFactor: 1.4 });
-    y += linhasClausula.length * 4 + 5;
+    pdf.text(linhasClausula, M, y, { lineHeightFactor: 1.32 });
+    y += linhasClausula.length * 3.8 + 4;
 
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(9);
     pdf.setTextColor(...INK);
     pdf.text(`${doc.local || "___________"}, ${dataFmt || "___________"}.`, M, y);
 
-    // Assinatura — ancorada ao rodapé da via.
-    const linhaAssinaturaY = yBase + VIA_H - 16;
+    // Assinatura — ancorada ao rodapé da via, mas nunca mais perto do texto
+    // acima do que 8mm (conteúdo variável: natureza/processo podem empurrá-la).
+    const linhaAssinaturaY = Math.max(y + 8, yBase + VIA_H - 16);
     hairline(PW / 2 - 40, linhaAssinaturaY, PW / 2 + 40, 0.3, INK_SOFT);
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(9);
     pdf.setTextColor(...INK);
-    pdf.text(doc.cliente, PW / 2, linhaAssinaturaY + 4.3, { align: "center" });
+    pdf.text(doc.cliente, PW / 2, linhaAssinaturaY + 4.2, { align: "center" });
     pdf.setFont("helvetica", "italic");
     pdf.setFontSize(6.8);
     pdf.setTextColor(...GRAY);
-    pdf.text("assinatura do(a) recebedor(a)", PW / 2, linhaAssinaturaY + 7.8, { align: "center", charSpace: 0.2 });
+    pdf.text("assinatura do(a) recebedor(a)", PW / 2, linhaAssinaturaY + 7.4, { align: "center", charSpace: 0.2 });
   }
 
   desenharVia(M, "1ª via", true);

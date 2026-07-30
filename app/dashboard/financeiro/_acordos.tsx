@@ -123,6 +123,7 @@ export function AcordosView({ reload, filtroMes }: { reload: () => void; filtroM
           cliente={reciboAcordo.cliente}
           processo={reciboAcordo.processo}
           valorSugerido={Math.round((reciboAcordo.valor_acordo - reciboAcordo.honorarios) * 100) / 100}
+          natureza="Repasse de valores recebidos em acordo judicial — não constitui receita do escritório"
           onClose={() => setReciboAcordo(null)}
         />
       )}

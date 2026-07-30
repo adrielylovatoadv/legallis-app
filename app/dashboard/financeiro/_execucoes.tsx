@@ -133,6 +133,7 @@ export function ExecucoesView({ reload, filtroMes }: { reload: () => void; filtr
           cliente={reciboExecucao.cliente}
           processo={reciboExecucao.processo}
           valorSugerido={repasseCliente(reciboExecucao)}
+          natureza="Repasse de valores recebidos em execução judicial — não constitui receita do escritório"
           onClose={() => setReciboExecucao(null)}
         />
       )}
