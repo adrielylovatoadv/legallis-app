@@ -1,4 +1,5 @@
 export { Input } from "./Input";
+export { CurrencyInput } from "./CurrencyInput";
 export { Select } from "./Select";
 export { FieldLabel } from "./FieldLabel";
 export { Card } from "./Card";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Card, Input as Inp, Select as Sel } from "@/components/ui";
+import { Card, Input as Inp, Select as Sel, CurrencyInput } from "@/components/ui";
 import {
   getAcordos, createAcordo, updateAcordo, deleteAcordo, statusAcordo,
   fmtBRL, MESES, NEXT_STATUS,
@@ -194,8 +194,7 @@ function AcordoForm({ initial, onSave, onCancel }: {
           <Inp value={form.processo} onChange={e => set("processo",e.target.value)} /></div>
         <div>
           <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Valor do Acordo (R$)</span>
-          <Inp value={form.valor_acordo || ""} type="number" step="0.01" min="0"
-            onChange={e => set("valor_acordo", parseFloat(e.target.value) || 0)}
+          <CurrencyInput value={form.valor_acordo} onChange={v => set("valor_acordo", v)} placeholder="0,00"
             style={erroValor ? { background:"rgba(239,68,68,0.08)", border:"1px solid #ef4444", color:"var(--text)" } : undefined} />
           {erroValor && <p className="text-xs mt-1" style={{ color:"#f87171" }}>Informe o valor do acordo (não pode ser R$ 0,00)</p>}
         </div>

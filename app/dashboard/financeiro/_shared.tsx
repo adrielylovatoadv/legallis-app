@@ -89,12 +89,7 @@ interface UsuarioPerfil {
   company?: { name?: string; cnpj?: string; address?: string; defaultPdfSignerId?: string };
 }
 
-function cidadeDoEndereco(endereco?: string): string {
-  if (!endereco) return "";
-  const antesDoUf = endereco.split("-")[0];
-  const partes = antesDoUf.split(",").map(p => p.trim()).filter(Boolean);
-  return partes[partes.length - 1] || "";
-}
+const CIDADE_PADRAO = "Itamogi/MG";
 
 function hojeISO(): string {
   return new Date().toISOString().slice(0, 10);
@@ -112,7 +107,7 @@ export function ReciboRepasseModal({ cliente, processo, valorSugerido, natureza,
   const [valor, setValor] = useState(valorSugerido);
   const [cpf, setCpf] = useState("");
   const [data, setData] = useState(hojeISO);
-  const [local, setLocal] = useState("");
+  const [local, setLocal] = useState(CIDADE_PADRAO);
   const [gerando, setGerando] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -123,7 +118,6 @@ export function ReciboRepasseModal({ cliente, processo, valorSugerido, natureza,
       .then(d => {
         if (!d) return;
         setPerfil(d);
-        setLocal(cidadeDoEndereco(d.company?.address));
         setEmitenteId(d.company?.defaultPdfSignerId ?? d.id ?? "");
       })
       .catch(() => {});
