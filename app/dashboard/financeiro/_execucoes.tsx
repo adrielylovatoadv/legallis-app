@@ -132,7 +132,6 @@ export function ExecucoesView({ reload, filtroMes }: { reload: () => void; filtr
         <ReciboRepasseModal
           cliente={reciboExecucao.cliente}
           processo={reciboExecucao.processo}
-          referente={`repasse de valores recebidos em execução movida em face de ${reciboExecucao.reu || "___________"}`}
           valorSugerido={repasseCliente(reciboExecucao)}
           onClose={() => setReciboExecucao(null)}
         />

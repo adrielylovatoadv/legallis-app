@@ -122,7 +122,6 @@ export function AcordosView({ reload, filtroMes }: { reload: () => void; filtroM
         <ReciboRepasseModal
           cliente={reciboAcordo.cliente}
           processo={reciboAcordo.processo}
-          referente={`repasse de valores recebidos em acordo${reciboAcordo.objeto ? ` referente a ${reciboAcordo.objeto}` : ""}`}
           valorSugerido={Math.round((reciboAcordo.valor_acordo - reciboAcordo.honorarios) * 100) / 100}
           onClose={() => setReciboAcordo(null)}
         />

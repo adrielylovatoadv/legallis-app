@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { fmtBRL, COLS, statusBadge, statusLabel } from "@/lib/financeiro";
-import { MetricCard as MetricCardBase, Card, Input as Inp } from "@/components/ui";
+import { MetricCard as MetricCardBase, Card, Input as Inp, Select as Sel } from "@/components/ui";
 import { exportarReciboRepasse } from "@/lib/export-recibo";
 
 export function MetricCard({ label, value, color }: { label: string; value: number; color: string }) {
@@ -82,10 +82,11 @@ export function getNextMes(): string {
 }
 
 // ── recibo de repasse ao cliente (acordos e execuções) ──────────────────────
-interface EmpresaPerfil {
+interface UsuarioPerfil {
+  id?: string;
   name?: string;
   oab?: Array<{ state: string; number: string }>;
-  company?: { name?: string; cnpj?: string; address?: string };
+  company?: { name?: string; cnpj?: string; address?: string; defaultPdfSignerId?: string };
 }
 
 function cidadeDoEndereco(endereco?: string): string {
@@ -99,19 +100,19 @@ function hojeISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-export function ReciboRepasseModal({ cliente, processo, referente, valorSugerido, onClose }: {
-  cliente: string; processo?: string; referente: string; valorSugerido: number; onClose: () => void;
+const EMITENTE_ESCRITORIO = "escritorio";
+
+export function ReciboRepasseModal({ cliente, processo, valorSugerido, onClose }: {
+  cliente: string; processo?: string; valorSugerido: number; onClose: () => void;
 }) {
   const { data: session } = useSession();
-  const [perfil, setPerfil] = useState<EmpresaPerfil | null>(null);
+  const [perfil, setPerfil] = useState<UsuarioPerfil | null>(null);
+  const [colegas, setColegas] = useState<UsuarioPerfil[]>([]);
+  const [emitenteId, setEmitenteId] = useState("");
   const [valor, setValor] = useState(valorSugerido);
+  const [cpf, setCpf] = useState("");
   const [data, setData] = useState(hojeISO);
-  const [dataTransferencia, setDataTransferencia] = useState("");
   const [local, setLocal] = useState("");
-  const [formaPagamento, setFormaPagamento] = useState("");
-  const [refText, setRefText] = useState(referente);
-  const [pagador, setPagador] = useState("");
-  const [documentoRecebedor, setDocumentoRecebedor] = useState("");
   const [gerando, setGerando] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -119,24 +120,40 @@ export function ReciboRepasseModal({ cliente, processo, referente, valorSugerido
     if (!session?.user?.id) return;
     fetch(`/api/usuarios/${session.user.id}`)
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) { setPerfil(d); setLocal(cidadeDoEndereco(d.company?.address)); } })
+      .then(d => {
+        if (!d) return;
+        setPerfil(d);
+        setLocal(cidadeDoEndereco(d.company?.address));
+        setEmitenteId(d.company?.defaultPdfSignerId ?? d.id ?? "");
+      })
+      .catch(() => {});
+    fetch("/api/usuarios/escritorio")
+      .then(r => r.ok ? r.json() : [])
+      .then(d => Array.isArray(d) && setColegas(d))
       .catch(() => {});
   }, [session?.user?.id]);
 
+  const opcoesAdvogados = colegas.length > 0 ? colegas : (perfil ? [perfil] : []);
+
+  const emitente = (() => {
+    if (emitenteId === EMITENTE_ESCRITORIO) {
+      return { nome: perfil?.company?.name || "", identificacao: perfil?.company?.cnpj ? `CNPJ ${perfil.company.cnpj}` : undefined };
+    }
+    const adv = opcoesAdvogados.find(u => u.id === emitenteId) ?? perfil;
+    const oab = adv?.oab?.map(o => `OAB/${o.state} ${o.number}`).join(" · ");
+    return { nome: adv?.name || "", identificacao: oab || undefined };
+  })();
+
   const gerar = async () => {
     if (!(valor > 0)) { setErro("Informe o valor recebido."); return; }
-    if (!documentoRecebedor.trim()) { setErro("Informe o CPF/CNPJ do(a) recebedor(a) — necessário para a validade probatória do recibo."); return; }
-    if (!local.trim()) { setErro("Informe a cidade/UF de emissão."); return; }
+    if (!cpf.trim()) { setErro("Informe o CPF do(a) cliente."); return; }
+    if (!local.trim()) { setErro("Informe a cidade/UF."); return; }
+    if (!emitente.nome) { setErro("Selecione quem emite o recibo (advogado ou escritório)."); return; }
     setGerando(true); setErro("");
     try {
-      const oab = perfil?.oab?.map(o => `OAB/${o.state} ${o.number}`).join(" · ");
       await exportarReciboRepasse({
-        emitente: { nome: perfil?.company?.name, cnpj: perfil?.company?.cnpj, endereco: perfil?.company?.address },
-        representante: perfil?.name ? { nome: perfil.name, oab } : undefined,
-        pagador: pagador || undefined,
-        recebedor: cliente, documentoRecebedor: documentoRecebedor.trim(), valor, referente: refText,
-        processo, formaPagamento: formaPagamento || undefined,
-        dataTransferencia: dataTransferencia || undefined, local, data,
+        emitenteNome: emitente.nome, emitenteIdentificacao: emitente.identificacao,
+        cliente, cpf: cpf.trim(), processo, valor, local, data,
       }, `recibo_${cliente.replace(/\s+/g, "_").toLowerCase()}`);
       onClose();
     } catch { setErro("Erro ao gerar recibo."); }
@@ -145,48 +162,43 @@ export function ReciboRepasseModal({ cliente, processo, referente, valorSugerido
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.75)" }} onClick={onClose}>
-      <div className="w-full max-w-lg" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-md" onClick={e => e.stopPropagation()}>
         <Card>
           <h2 className="font-semibold text-base mb-1" style={{ color: "var(--text)" }}>🧾 Emitir recibo</h2>
           <p className="text-xs mb-4" style={{ color: "var(--text3)" }}>
-            Gera um PDF com 2 vias idênticas (emitente e recebedor) para assinatura na entrega do valor.
+            Gera um PDF com 2 vias idênticas para assinatura na entrega do valor.
           </p>
           <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Emitido por</span>
+              <Sel value={emitenteId} onChange={e => setEmitenteId(e.target.value)}>
+                {perfil?.company?.name && <option value={EMITENTE_ESCRITORIO}>Escritório · {perfil.company.name}</option>}
+                {opcoesAdvogados.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+              </Sel>
+            </div>
             <div>
-              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Recebedor(a)</span>
+              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Cliente</span>
               <Inp value={cliente} disabled />
             </div>
             <div>
-              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>CPF/CNPJ do(a) recebedor(a) *</span>
-              <Inp value={documentoRecebedor} onChange={e => setDocumentoRecebedor(e.target.value)} placeholder="000.000.000-00" />
+              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>CPF *</span>
+              <Inp value={cpf} onChange={e => setCpf(e.target.value)} placeholder="000.000.000-00" />
             </div>
             <div>
               <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Valor recebido (R$) *</span>
               <Inp type="number" step="0.01" min="0" value={valor || ""} onChange={e => setValor(parseFloat(e.target.value) || 0)} />
             </div>
             <div>
-              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Pagador (opcional)</span>
-              <Inp value={pagador} onChange={e => setPagador(e.target.value)} placeholder="se distinto do emitente" />
-            </div>
-            <div>
-              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Data do documento *</span>
+              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Data *</span>
               <Inp type="date" value={data} onChange={e => setData(e.target.value)} />
-            </div>
-            <div>
-              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Data da transferência</span>
-              <Inp type="date" value={dataTransferencia} onChange={e => setDataTransferencia(e.target.value)} />
             </div>
             <div>
               <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Cidade/UF *</span>
               <Inp value={local} onChange={e => setLocal(e.target.value)} placeholder="Cidade/UF" />
             </div>
             <div>
-              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Forma de pagamento</span>
-              <Inp value={formaPagamento} onChange={e => setFormaPagamento(e.target.value)} placeholder="PIX, transferência..." />
-            </div>
-            <div className="col-span-2">
-              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Referente a *</span>
-              <Inp value={refText} onChange={e => setRefText(e.target.value)} />
+              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Processo</span>
+              <Inp value={processo || ""} disabled />
             </div>
           </div>
           {erro && <p className="text-xs mt-2" style={{ color: "#f87171" }}>{erro}</p>}
