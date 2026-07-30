@@ -37,8 +37,11 @@ export default function UsuariosPage() {
   const [newPassword, setNewPassword] = useState("");
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
-  const isSuperAdmin = session?.user?.role === "admin";
   const isOwner = !!session?.user && session.user.tenantId === `t_${session.user.id}`;
+  // Quem administra o próprio escritório (dono do tenant OU alguém com o cargo interno
+  // "Administrador do sistema") — nunca confundir com Super Admin da plataforma, que é
+  // exclusivamente `plan === "admin"` e nunca é atribuído/alterado por esta tela.
+  const isTenantManager = isOwner || session?.user?.role === "admin";
 
   const load = useCallback(async () => {
     const res = await fetch("/api/usuarios");
@@ -48,9 +51,9 @@ export default function UsuariosPage() {
 
   useEffect(() => {
     if (status === "loading") return;
-    if (!isSuperAdmin && !isOwner) { router.push("/dashboard/configuracoes"); return; }
+    if (!isTenantManager) { router.push("/dashboard/configuracoes"); return; }
     load();
-  }, [session, status, router, load, isSuperAdmin, isOwner]);
+  }, [session, status, router, load, isTenantManager]);
 
   const plan = (session?.user?.plan ?? "basic") as Plan;
   const maxUsers = PLAN_FEATURES[plan]?.maxUsers ?? 1;
@@ -160,7 +163,7 @@ export default function UsuariosPage() {
               className={inp} style={inpStyle}>
               {CARGOS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
-            {isSuperAdmin && (
+            {isTenantManager && (
               <select value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value as Role })}
                 className={inp} style={inpStyle}>
                 {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
@@ -200,16 +203,32 @@ export default function UsuariosPage() {
                 </td>
                 <td className="px-4 py-3">
                   {editingId === u.id ? (
-                    <select value={editData.cargo ?? u.cargo ?? ""} onChange={e => setEditData({ ...editData, cargo: e.target.value as Cargo })}
-                      className="px-2 py-1 rounded text-sm" style={inpStyle}>
-                      <option value="">—</option>
-                      {CARGOS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                    </select>
+                    <div className="flex flex-col gap-1">
+                      <select value={editData.cargo ?? u.cargo ?? ""} onChange={e => setEditData({ ...editData, cargo: e.target.value as Cargo })}
+                        className="px-2 py-1 rounded text-sm" style={inpStyle}>
+                        <option value="">—</option>
+                        {CARGOS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                      </select>
+                      {isTenantManager && u.id !== session?.user?.id && (
+                        <select value={editData.role ?? u.role} onChange={e => setEditData({ ...editData, role: e.target.value as Role })}
+                          className="px-2 py-1 rounded text-sm" style={inpStyle}>
+                          {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                        </select>
+                      )}
+                    </div>
                   ) : (
-                    <span className="px-2 py-0.5 rounded-full text-xs"
-                      style={{ background: "var(--surface2)", color: "var(--text2)" }}>
-                      {cargoLabel(u.cargo)}
-                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      <span className="px-2 py-0.5 rounded-full text-xs"
+                        style={{ background: "var(--surface2)", color: "var(--text2)" }}>
+                        {cargoLabel(u.cargo)}
+                      </span>
+                      {u.role === "admin" && (
+                        <span className="px-2 py-0.5 rounded-full text-xs"
+                          style={{ background: "rgba(201,168,76,0.12)", color: "var(--gold)" }}>
+                          Administrador do sistema
+                        </span>
+                      )}
+                    </div>
                   )}
                 </td>
                 <td className="px-4 py-3">
