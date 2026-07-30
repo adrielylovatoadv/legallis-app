@@ -95,17 +95,23 @@ function cidadeDoEndereco(endereco?: string): string {
   return partes[partes.length - 1] || "";
 }
 
+function hojeISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export function ReciboRepasseModal({ cliente, processo, referente, valorSugerido, onClose }: {
   cliente: string; processo?: string; referente: string; valorSugerido: number; onClose: () => void;
 }) {
   const { data: session } = useSession();
   const [perfil, setPerfil] = useState<EmpresaPerfil | null>(null);
   const [valor, setValor] = useState(valorSugerido);
-  const [data, setData] = useState(() => new Date().toLocaleDateString("pt-BR"));
+  const [data, setData] = useState(hojeISO);
+  const [dataTransferencia, setDataTransferencia] = useState("");
   const [local, setLocal] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("");
   const [refText, setRefText] = useState(referente);
-  const [cpfCnpj, setCpfCnpj] = useState("");
+  const [pagador, setPagador] = useState("");
+  const [documentoRecebedor, setDocumentoRecebedor] = useState("");
   const [gerando, setGerando] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -118,16 +124,20 @@ export function ReciboRepasseModal({ cliente, processo, referente, valorSugerido
   }, [session?.user?.id]);
 
   const gerar = async () => {
-    if (!(valor > 0)) { setErro("Informe o valor repassado."); return; }
+    if (!(valor > 0)) { setErro("Informe o valor recebido."); return; }
+    if (!documentoRecebedor.trim()) { setErro("Informe o CPF/CNPJ do(a) recebedor(a) — necessário para a validade probatória do recibo."); return; }
+    if (!local.trim()) { setErro("Informe a cidade/UF de emissão."); return; }
     setGerando(true); setErro("");
     try {
       const oab = perfil?.oab?.map(o => `OAB/${o.state} ${o.number}`).join(" · ");
       await exportarReciboRepasse({
-        empresa: { nome: perfil?.company?.name, cnpj: perfil?.company?.cnpj, endereco: perfil?.company?.address },
-        advogado: perfil?.name ? { nome: perfil.name, oab } : undefined,
-        cliente, cpfCnpj: cpfCnpj || undefined, valor, referente: refText,
-        processo, formaPagamento: formaPagamento || undefined, local, data,
-      }, `recibo_repasse_${cliente.replace(/\s+/g, "_").toLowerCase()}`);
+        emitente: { nome: perfil?.company?.name, cnpj: perfil?.company?.cnpj, endereco: perfil?.company?.address },
+        representante: perfil?.name ? { nome: perfil.name, oab } : undefined,
+        pagador: pagador || undefined,
+        recebedor: cliente, documentoRecebedor: documentoRecebedor.trim(), valor, referente: refText,
+        processo, formaPagamento: formaPagamento || undefined,
+        dataTransferencia: dataTransferencia || undefined, local, data,
+      }, `recibo_${cliente.replace(/\s+/g, "_").toLowerCase()}`);
       onClose();
     } catch { setErro("Erro ao gerar recibo."); }
     finally { setGerando(false); }
@@ -137,37 +147,45 @@ export function ReciboRepasseModal({ cliente, processo, referente, valorSugerido
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.75)" }} onClick={onClose}>
       <div className="w-full max-w-lg" onClick={e => e.stopPropagation()}>
         <Card>
-          <h2 className="font-semibold text-base mb-1" style={{ color: "var(--text)" }}>🧾 Emitir recibo de repasse</h2>
+          <h2 className="font-semibold text-base mb-1" style={{ color: "var(--text)" }}>🧾 Emitir recibo</h2>
           <p className="text-xs mb-4" style={{ color: "var(--text3)" }}>
-            Gera um PDF com 2 vias idênticas (escritório e cliente) para assinatura na entrega do valor.
+            Gera um PDF com 2 vias idênticas (emitente e recebedor) para assinatura na entrega do valor.
           </p>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Cliente</span>
+              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Recebedor(a)</span>
               <Inp value={cliente} disabled />
             </div>
             <div>
-              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Valor repassado (R$)</span>
+              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>CPF/CNPJ do(a) recebedor(a) *</span>
+              <Inp value={documentoRecebedor} onChange={e => setDocumentoRecebedor(e.target.value)} placeholder="000.000.000-00" />
+            </div>
+            <div>
+              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Valor recebido (R$) *</span>
               <Inp type="number" step="0.01" min="0" value={valor || ""} onChange={e => setValor(parseFloat(e.target.value) || 0)} />
             </div>
             <div>
-              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Data</span>
-              <Inp value={data} onChange={e => setData(e.target.value)} placeholder="DD/MM/AAAA" />
+              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Pagador (opcional)</span>
+              <Inp value={pagador} onChange={e => setPagador(e.target.value)} placeholder="se distinto do emitente" />
             </div>
             <div>
-              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Local</span>
-              <Inp value={local} onChange={e => setLocal(e.target.value)} placeholder="Cidade" />
+              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Data do documento *</span>
+              <Inp type="date" value={data} onChange={e => setData(e.target.value)} />
+            </div>
+            <div>
+              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Data da transferência</span>
+              <Inp type="date" value={dataTransferencia} onChange={e => setDataTransferencia(e.target.value)} />
+            </div>
+            <div>
+              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Cidade/UF *</span>
+              <Inp value={local} onChange={e => setLocal(e.target.value)} placeholder="Cidade/UF" />
             </div>
             <div>
               <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Forma de pagamento</span>
               <Inp value={formaPagamento} onChange={e => setFormaPagamento(e.target.value)} placeholder="PIX, transferência..." />
             </div>
-            <div>
-              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>CPF/CNPJ do cliente</span>
-              <Inp value={cpfCnpj} onChange={e => setCpfCnpj(e.target.value)} placeholder="opcional" />
-            </div>
             <div className="col-span-2">
-              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Referente a</span>
+              <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Referente a *</span>
               <Inp value={refText} onChange={e => setRefText(e.target.value)} />
             </div>
           </div>
