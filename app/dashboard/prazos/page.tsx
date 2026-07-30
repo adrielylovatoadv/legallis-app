@@ -42,9 +42,13 @@ export default function PrazosPage() {
   const [mostrarGestao, setMostrarGestao] = useState(false);
   const [novoFeriado, setNovoFeriado] = useState({ municipio: "", uf: "", data: "", nome: "" });
   const [salvandoFeriado, setSalvandoFeriado] = useState(false);
+  const [erroFeriados, setErroFeriados] = useState("");
 
   const carregarFeriados = useCallback(() => {
-    getFeriadosMunicipais().then(setFeriados).catch(() => {});
+    setErroFeriados("");
+    getFeriadosMunicipais()
+      .then(setFeriados)
+      .catch(e => setErroFeriados(e instanceof Error ? e.message : "Erro ao carregar feriados municipais."));
   }, []);
   useEffect(() => { carregarFeriados(); }, [carregarFeriados]);
 
@@ -216,6 +220,13 @@ export default function PrazosPage() {
           <input type="checkbox" checked={considerarRecesso} onChange={e => setConsiderarRecesso(e.target.checked)} className="accent-[var(--gold)]" />
           <span className="text-sm" style={{ color: "var(--text2)" }}>Considerar recesso forense (20/dez a 20/jan — art. 220, CPC)</span>
         </label>
+
+        {erroFeriados && (
+          <p className="text-xs mt-2" style={{ color: "#f87171" }}>
+            {erroFeriados} —{" "}
+            <button type="button" onClick={carregarFeriados} className="underline">Tentar novamente</button>
+          </p>
+        )}
 
         {uf && municipio.trim() && feriadosAplicaveis.length > 0 && (
           <p className="text-xs mt-2" style={{ color: "var(--text3)" }}>
