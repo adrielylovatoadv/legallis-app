@@ -16,7 +16,7 @@ interface ResultRow {
   debito_corrigido: number; juros_pct: number; juros_valor: number; total: number;
 }
 interface Summary {
-  subtotal_principal: number; subtotal_juros: number; subtotal_base: number;
+  subtotal_principal?: number; subtotal_juros?: number; subtotal_base?: number;
   honorarios_pct?: number; honorarios_valor?: number;
   multa_523?: boolean; multa_valor?: number;
   aplicar_dobro?: boolean; subtotal_material?: number;
@@ -402,7 +402,12 @@ export default function CalculadoraPage() {
         setRevResult(r);
       } else {
         const validos = lancamentos.filter(l => l.data && l.valor);
-        if (!validos.length) { setError("Adicione pelo menos um lançamento."); setLoading(false); return; }
+        const temDanoMoralExecucao = modo === "execucao" && parseBRL(danoMoralExecucao) > 0;
+        if (!validos.length && !temDanoMoralExecucao) {
+          setError("Adicione pelo menos um lançamento ou preencha o valor arbitrado de dano moral.");
+          setLoading(false);
+          return;
+        }
         const r = await fetchAPI("/calculadora/calcular", {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -807,7 +812,7 @@ export default function CalculadoraPage() {
       )}
 
       {/* ── Resultados Execução / Inicial ──────────────────────── */}
-      {rows.length > 0 && summary && (
+      {(rows.length > 0 || (summary && summary.dano_moral_total !== undefined)) && summary && (
         <div className="space-y-5">
           <div className="hidden print:block mb-6 pb-4 border-b border-gray-300">
             <div className="flex items-start justify-between">
@@ -825,39 +830,45 @@ export default function CalculadoraPage() {
               </div>
             </div>
           </div>
-          <Card>
-            <SectionTitle>Demonstrativo de débito</SectionTitle>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                    {["Data", "Valor Original", "Fator", "Débito Corrigido", "Juros %", "Valor Juros", "Total"].map(h => (
-                      <th key={h} className="pb-2 pt-1 text-left font-medium text-xs pr-4" style={{ color: "var(--text3)" }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((r, i) => (
-                    <tr key={i} style={{ borderBottom: "1px solid var(--border)" }}>
-                      <td className="py-2 pr-4 tabular-nums" style={{ color: "var(--text2)" }}>{r.data_cobranca}</td>
-                      <td className="py-2 pr-4 tabular-nums">{fmtBRL(r.valor_original)}</td>
-                      <td className="py-2 pr-4 tabular-nums text-xs">{fmtFator(r.fator_correcao)}</td>
-                      <td className="py-2 pr-4 tabular-nums">{fmtBRL(r.debito_corrigido)}</td>
-                      <td className="py-2 pr-4 tabular-nums text-xs">{fmtPct(r.juros_pct)}</td>
-                      <td className="py-2 pr-4 tabular-nums">{fmtBRL(r.juros_valor)}</td>
-                      <td className="py-2 font-semibold tabular-nums" style={{ color: "var(--gold)" }}>{fmtBRL(r.total)}</td>
+          {rows.length > 0 && (
+            <Card>
+              <SectionTitle>Demonstrativo de débito</SectionTitle>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                      {["Data", "Valor Original", "Fator", "Débito Corrigido", "Juros %", "Valor Juros", "Total"].map(h => (
+                        <th key={h} className="pb-2 pt-1 text-left font-medium text-xs pr-4" style={{ color: "var(--text3)" }}>{h}</th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
+                  </thead>
+                  <tbody>
+                    {rows.map((r, i) => (
+                      <tr key={i} style={{ borderBottom: "1px solid var(--border)" }}>
+                        <td className="py-2 pr-4 tabular-nums" style={{ color: "var(--text2)" }}>{r.data_cobranca}</td>
+                        <td className="py-2 pr-4 tabular-nums">{fmtBRL(r.valor_original)}</td>
+                        <td className="py-2 pr-4 tabular-nums text-xs">{fmtFator(r.fator_correcao)}</td>
+                        <td className="py-2 pr-4 tabular-nums">{fmtBRL(r.debito_corrigido)}</td>
+                        <td className="py-2 pr-4 tabular-nums text-xs">{fmtPct(r.juros_pct)}</td>
+                        <td className="py-2 pr-4 tabular-nums">{fmtBRL(r.juros_valor)}</td>
+                        <td className="py-2 font-semibold tabular-nums" style={{ color: "var(--gold)" }}>{fmtBRL(r.total)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
           <Card>
             <SectionTitle>Resumo</SectionTitle>
             <div className="space-y-1 text-sm max-w-md">
-              <SummaryRow label="Débito corrigido (principal)" value={fmtBRL(summary.subtotal_principal)} />
-              <SummaryRow label="Juros moratórios" value={fmtBRL(summary.subtotal_juros)} />
-              <SummaryRow label="Subtotal" value={fmtBRL(summary.subtotal_base)} />
+              {rows.length > 0 && (
+                <>
+                  <SummaryRow label="Débito corrigido (principal)" value={fmtBRL(summary.subtotal_principal ?? 0)} />
+                  <SummaryRow label="Juros moratórios" value={fmtBRL(summary.subtotal_juros ?? 0)} />
+                  <SummaryRow label="Subtotal" value={fmtBRL(summary.subtotal_base ?? 0)} />
+                </>
+              )}
               {modo === "execucao" && summary.multa_523 && summary.multa_valor !== undefined && (
                 <SummaryRow label="Multa art. 523 §1º CPC (10%)" value={fmtBRL(summary.multa_valor)} />
               )}
@@ -902,9 +913,9 @@ export default function CalculadoraPage() {
               advogado: advogadoInfo,
               processo: processoInfo.numero || undefined,
               secoes: [
-                {
+                ...(rows.length > 0 ? [{
                   nome: "LANÇAMENTOS",
-                  tipo: "tabela",
+                  tipo: "tabela" as const,
                   colunas: ["Data da Cobrança", "Valor Original (R$)", "Fator de Correção", "Débito Corrigido (R$)", "Juros Total %", "Valor dos Juros (R$)", "Débito Total (R$)"],
                   dados: rows.map(r => ({
                     "Data da Cobrança": r.data_cobranca,
@@ -915,14 +926,16 @@ export default function CalculadoraPage() {
                     "Valor dos Juros (R$)": fmtBRL(r.juros_valor),
                     "Débito Total (R$)": fmtBRL(r.total),
                   })),
-                },
+                }] : []),
                 {
                   nome: "RESUMO DO CÁLCULO",
                   tipo: "resumo",
                   linhas: [
-                    { label: "( = ) Subtotal — Débito Corrigido (Principal)", valor: fmtBRL(summary.subtotal_principal) },
-                    { label: "( = ) Subtotal — Juros Moratórios", valor: fmtBRL(summary.subtotal_juros) },
-                    { label: "( = ) Subtotal Material (Corrigido + Juros)", valor: fmtBRL(summary.subtotal_base) },
+                    ...(rows.length > 0 ? [
+                      { label: "( = ) Subtotal — Débito Corrigido (Principal)", valor: fmtBRL(summary.subtotal_principal ?? 0) },
+                      { label: "( = ) Subtotal — Juros Moratórios", valor: fmtBRL(summary.subtotal_juros ?? 0) },
+                      { label: "( = ) Subtotal Material (Corrigido + Juros)", valor: fmtBRL(summary.subtotal_base ?? 0) },
+                    ] : []),
                     ...(modo === "execucao" && summary.multa_523 && summary.multa_valor !== undefined ? [{ label: "( + ) Multa art. 523 §1º CPC (10%)", valor: fmtBRL(summary.multa_valor) }] : []),
                     ...(modo === "execucao" && summary.dano_moral_total ? [
                       { label: "( + ) Dano Moral — valor arbitrado", valor: fmtBRL(summary.dano_moral_original ?? 0) },
@@ -932,7 +945,7 @@ export default function CalculadoraPage() {
                     ] : []),
                     ...(modo === "execucao" && summary.honorarios_valor !== undefined ? [{ label: `( + ) Honorários Advocatícios (${summary.honorarios_pct}%)`, valor: fmtBRL(summary.honorarios_valor) }] : []),
                     ...(modo === "execucao" && summary.data_citacao ? [{ label: "Obs.: Juros a partir da citação (art. 405 CC)", valor: new Date(summary.data_citacao + "T12:00:00").toLocaleDateString("pt-BR") }] : []),
-                    ...(modo === "inicial" && summary.aplicar_dobro && summary.subtotal_material !== undefined ? [{ label: "( × ) Repetição em dobro — CDC art. 42, §único", valor: `${fmtBRL(summary.subtotal_base)} × 2 = ${fmtBRL(summary.subtotal_material)}` }] : []),
+                    ...(modo === "inicial" && summary.aplicar_dobro && summary.subtotal_material !== undefined ? [{ label: "( × ) Repetição em dobro — CDC art. 42, §único", valor: `${fmtBRL(summary.subtotal_base ?? 0)} × 2 = ${fmtBRL(summary.subtotal_material)}` }] : []),
                     ...(modo === "inicial" && summary.dano_moral ? [{ label: "( + ) Dano Moral", valor: fmtBRL(summary.dano_moral) }] : []),
                     { label: modo === "inicial" ? "VALOR DA CAUSA" : "TOTAL GERAL", valor: fmtBRL(summary.total_geral) },
                   ],

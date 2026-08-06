@@ -29,7 +29,9 @@ export async function POST(req: NextRequest) {
       dano_moral_data_mora = "",          // data de início dos juros do dano moral
     } = body;
 
-    if (!lancamentos?.length) {
+    const hasDanoMoralExecucao = modo === "execucao" && (dano_moral_execucao as number) > 0;
+
+    if (!lancamentos?.length && !hasDanoMoralExecucao) {
       return NextResponse.json({ error: "Nenhum lançamento informado." }, { status: 400 });
     }
     if (!data_calculo) {
@@ -50,7 +52,7 @@ export async function POST(req: NextRequest) {
       ? new Date(data_citacao + "T12:00:00")
       : undefined;
 
-    const rows = (lancamentos as { data_cobranca: string; valor: number }[]).map((l) => {
+    const rows = ((lancamentos ?? []) as { data_cobranca: string; valor: number }[]).map((l) => {
       if (!l.data_cobranca || !l.valor) return null;
       const dateCharge = new Date(l.data_cobranca + "T12:00:00");
       if (isNaN(dateCharge.getTime())) return null;
@@ -66,25 +68,26 @@ export async function POST(req: NextRequest) {
       };
     }).filter(Boolean);
 
-    if (!rows.length) {
+    if (!rows.length && !hasDanoMoralExecucao) {
       return NextResponse.json({ error: "Nenhum lançamento válido encontrado." }, { status: 400 });
     }
 
-    const subtotalPrincipal = round2(rows.reduce((s, r) => s + r!.debito_corrigido, 0));
-    const subtotalJuros = round2(rows.reduce((s, r) => s + r!.juros_valor, 0));
-    const subtotalBase = round2(rows.reduce((s, r) => s + r!.total, 0));
+    const summary: Record<string, number | boolean | string | undefined> = {};
+    let totalGeral = 0;
 
-    const summary: Record<string, number | boolean | string | undefined> = {
-      subtotal_principal: subtotalPrincipal,
-      subtotal_juros: subtotalJuros,
-      subtotal_base: subtotalBase,
-    };
-
-    let totalGeral = subtotalBase;
+    if (rows.length > 0) {
+      const subtotalPrincipal = round2(rows.reduce((s, r) => s + r!.debito_corrigido, 0));
+      const subtotalJuros = round2(rows.reduce((s, r) => s + r!.juros_valor, 0));
+      const subtotalBase = round2(rows.reduce((s, r) => s + r!.total, 0));
+      summary.subtotal_principal = subtotalPrincipal;
+      summary.subtotal_juros = subtotalJuros;
+      summary.subtotal_base = subtotalBase;
+      totalGeral = subtotalBase;
+    }
 
     if (modo === "execucao") {
       if (multa_523) {
-        const multaValor = round2(subtotalBase * 0.10);
+        const multaValor = round2(totalGeral * 0.10);
         summary.multa_523 = true;
         summary.multa_valor = multaValor;
         totalGeral = round2(totalGeral + multaValor);
@@ -124,7 +127,7 @@ export async function POST(req: NextRequest) {
       }
     } else if (modo === "inicial") {
       if (aplicar_dobro) {
-        const subtotalMaterial = round2(subtotalBase * 2);
+        const subtotalMaterial = round2(totalGeral * 2);
         summary.aplicar_dobro = true;
         summary.subtotal_material = subtotalMaterial;
         totalGeral = subtotalMaterial;
