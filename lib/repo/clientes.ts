@@ -81,18 +81,34 @@ export async function create(tenantId: string, input: Omit<Cliente, "id" | "cria
   return row;
 }
 
+// Campos sensíveis nunca são devolvidos pela listagem de clientes (GET /api/controle/clientes
+// os omite de propósito). Por isso, um PUT vindo do formulário de edição — que parte dos dados
+// da listagem — chega aqui com esses campos em branco mesmo quando o cliente já tem senha/conta
+// salva. Tratamos "" nesses campos como "não alterado" em vez de "apagar", para nunca perder uma
+// senha já cadastrada por causa de uma edição em outro campo qualquer.
+const SENSITIVE_FIELDS = ["senha_gov", "senha_serasa", "conta", "chave_pix"] as const;
+
+function preserveSensitiveFields(current: Cliente, patch: Partial<Cliente>): Partial<Cliente> {
+  const safePatch = { ...patch };
+  for (const field of SENSITIVE_FIELDS) {
+    if (safePatch[field] === "" && current[field]) delete safePatch[field];
+  }
+  return safePatch;
+}
+
 export async function update(tenantId: string, id: string, patch: Partial<Cliente>): Promise<Cliente | null> {
+  const current = await get(tenantId, id);
+  if (!current) return null;
+  const safePatch = preserveSensitiveFields(current, patch);
   if (!hasDb()) {
     const data = await getDataAsync(tenantId);
     const idx = data.clientes.findIndex(c => c.id === id);
     if (idx === -1) return null;
-    data.clientes[idx] = { ...data.clientes[idx], ...patch };
+    data.clientes[idx] = { ...data.clientes[idx], ...safePatch };
     await saveDataAsync(data, tenantId);
     return data.clientes[idx];
   }
-  const current = await get(tenantId, id);
-  if (!current) return null;
-  const merged = { ...current, ...patch };
+  const merged = { ...current, ...safePatch };
   const sql = getSql()!;
   await sql`
     UPDATE clientes SET nome = ${merged.nome}, telefone = ${merged.telefone}, cpf = ${merged.cpf},

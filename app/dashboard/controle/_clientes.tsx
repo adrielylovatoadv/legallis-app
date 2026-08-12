@@ -490,6 +490,19 @@ export function ClientesTab({ initialBusca }: { initialBusca?: string } = {}) {
   };
   const handleDelete = async (id: string) => { await deleteCliente(id); load(); };
 
+  // A listagem de clientes nunca traz senha_gov/senha_serasa/conta/chave_pix (por segurança),
+  // então o formulário de edição precisa buscar esses valores reais antes de abrir — senão eles
+  // chegam em branco e, ao salvar, apagam a senha/conta já cadastrada do cliente.
+  const handleEdit = async (c: Cliente) => {
+    const [senhas, bancarios] = await Promise.all([
+      fetch(`/api/controle/clientes/${c.id}/senhas`).then(r => r.ok ? r.json() : {}).catch(() => ({})),
+      fetch(`/api/controle/clientes/${c.id}/dados-bancarios`).then(r => r.ok ? r.json() : {}).catch(() => ({})),
+    ]);
+    setEditando({ ...c, ...senhas, ...bancarios });
+    setNovoAberto(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap gap-3 items-center">
@@ -549,7 +562,7 @@ export function ClientesTab({ initialBusca }: { initialBusca?: string } = {}) {
           <div className="space-y-2">
             {clientes.map(c => (
               <ClienteCard key={c.id} c={c} advogados={advogadosInfo}
-                onEdit={c => { setEditando(c); setNovoAberto(false); window.scrollTo({ top: 0, behavior:"smooth" }); }}
+                onEdit={handleEdit}
                 onDelete={handleDelete} />
             ))}
             {clientes.length === 0 && (
