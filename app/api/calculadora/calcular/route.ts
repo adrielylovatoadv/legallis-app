@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
       modo = "execucao",
       aplicar_dobro = false,
       dano_moral = 0,
+      sem_juros = false,   // petição inicial: só correção monetária, sem juros de mora
       // cumprimento de sentença: termo inicial dos juros
       data_citacao = "",           // data da citação (mora contratual) ou do evento (extracontratual)
       tipo_obrigacao = "extracontratual", // "contratual" | "extracontratual"
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
       if (!l.data_cobranca || !l.valor) return null;
       const dateCharge = new Date(l.data_cobranca + "T12:00:00");
       if (isNaN(dateCharge.getTime())) return null;
-      const r = calculateCharge(l.valor, dateCharge, dateCalc, idx, tribunal, dataMoraGlobal);
+      const r = calculateCharge(l.valor, dateCharge, dateCalc, idx, tribunal, dataMoraGlobal, sem_juros as boolean);
       return {
         data_cobranca: l.data_cobranca,
         valor_original: round2(l.valor),
@@ -126,6 +127,7 @@ export async function POST(req: NextRequest) {
         summary.tipo_obrigacao = "contratual";
       }
     } else if (modo === "inicial") {
+      if (sem_juros) summary.sem_juros = true;
       if (aplicar_dobro) {
         const subtotalMaterial = round2(totalGeral * 2);
         summary.aplicar_dobro = true;

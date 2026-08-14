@@ -24,6 +24,7 @@ interface Summary {
   data_citacao?: string; tipo_obrigacao?: string;
   dano_moral_original?: number; dano_moral_corrigido?: number;
   dano_moral_juros?: number; dano_moral_total?: number;
+  sem_juros?: boolean;
 }
 interface HonorarioResult {
   valor_original: number; valor_corrigido: number; corr_factor: number;
@@ -316,6 +317,7 @@ export default function CalculadoraPage() {
   const [multa523, setMulta523] = useState(false);
   const [aplicarDobro, setAplicarDobro] = useState(false);
   const [danoMoral, setDanoMoral] = useState("");
+  const [semJuros, setSemJuros] = useState(false);
   const [lancamentos, setLancamentos] = useState<Lancamento[]>([{ id: _id++, data: "", valor: "" }]);
 
   // ── modo execucao — extras ──
@@ -416,6 +418,7 @@ export default function CalculadoraPage() {
             honorarios_pct: parsePct(honorariosPct, 20),
             multa_523: multa523, modo,
             aplicar_dobro: aplicarDobro, dano_moral: parseBRL(danoMoral),
+            sem_juros: modo === "inicial" && semJuros,
             data_citacao: dataCitacao,
             tipo_obrigacao: tipoObrigacao,
             dano_moral_execucao: parseBRL(danoMoralExecucao),
@@ -431,7 +434,7 @@ export default function CalculadoraPage() {
       setLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modo, lancamentos, dataCalculo, tribunal, honorariosPct, multa523, aplicarDobro, danoMoral,
+  }, [modo, lancamentos, dataCalculo, tribunal, honorariosPct, multa523, aplicarDobro, danoMoral, semJuros,
     dataCitacao, tipoObrigacao, danoMoralExecucao, danoMoralDataArbitramento, danoMoralDataMora,
     honValor, honDataOrigem, honDataCalc, honTribunal, honPct, honProcesso,
     revPV, revPMT, revN, revDataContrat, revDataCalc, revTaxaBacen, isRevisional,
@@ -591,6 +594,11 @@ export default function CalculadoraPage() {
                 )}
                 {modo === "inicial" && (
                   <>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={semJuros} onChange={e => setSemJuros(e.target.checked)}
+                        style={{ accentColor: "var(--gold)" }} />
+                      <span className="text-sm" style={{ color: "var(--text2)" }}>Sem juros de mora (só correção monetária)</span>
+                    </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input type="checkbox" checked={aplicarDobro} onChange={e => setAplicarDobro(e.target.checked)}
                         style={{ accentColor: "var(--gold)" }} />
@@ -888,6 +896,11 @@ export default function CalculadoraPage() {
                   Juros moratórios a partir da citação: <strong>{new Date(summary.data_citacao + "T12:00:00").toLocaleDateString("pt-BR")}</strong> (obrigação contratual — art. 405 CC)
                 </div>
               )}
+              {modo === "inicial" && summary.sem_juros && (
+                <div className="py-1 text-xs" style={{ color: "var(--text3)" }}>
+                  Cálculo sem juros de mora — apenas correção monetária do valor.
+                </div>
+              )}
               {modo === "inicial" && summary.aplicar_dobro && summary.subtotal_material !== undefined && (
                 <SummaryRow label="Repetição em dobro (CDC art. 42)" value={fmtBRL(summary.subtotal_material)} />
               )}
@@ -945,6 +958,7 @@ export default function CalculadoraPage() {
                     ] : []),
                     ...(modo === "execucao" && summary.honorarios_valor !== undefined ? [{ label: `( + ) Honorários Advocatícios (${summary.honorarios_pct}%)`, valor: fmtBRL(summary.honorarios_valor) }] : []),
                     ...(modo === "execucao" && summary.data_citacao ? [{ label: "Obs.: Juros a partir da citação (art. 405 CC)", valor: new Date(summary.data_citacao + "T12:00:00").toLocaleDateString("pt-BR") }] : []),
+                    ...(modo === "inicial" && summary.sem_juros ? [{ label: "Obs.: Cálculo sem juros de mora", valor: "apenas correção monetária" }] : []),
                     ...(modo === "inicial" && summary.aplicar_dobro && summary.subtotal_material !== undefined ? [{ label: "( × ) Repetição em dobro — CDC art. 42, §único", valor: `${fmtBRL(summary.subtotal_base ?? 0)} × 2 = ${fmtBRL(summary.subtotal_material)}` }] : []),
                     ...(modo === "inicial" && summary.dano_moral ? [{ label: "( + ) Dano Moral", valor: fmtBRL(summary.dano_moral) }] : []),
                     { label: modo === "inicial" ? "VALOR DA CAUSA" : "TOTAL GERAL", valor: fmtBRL(summary.total_geral) },

@@ -131,7 +131,8 @@ export function calculateCharge(
   dateCalc: Date,
   idx: Indices,
   tribunal = "TJMG",
-  dataMora?: Date   // termo inicial dos juros (ex: data da citação). Se omitido = dateCharge
+  dataMora?: Date,   // termo inicial dos juros (ex: data da citação). Se omitido = dateCharge
+  semJuros = false   // true = só correção monetária, sem juros de mora
 ): ChargeResult {
   if (dateCharge >= dateCalc) {
     return { corrected: value, correction_factor: 1, interest_pct: 0, interest_value: 0, total: value, months: 0, indice_label: "Sem atualização" };
@@ -150,9 +151,11 @@ export function calculateCharge(
     // Correção: Tabela Prática TJSP (dateCharge → dateCalc)
     [corrected, correctionFactor, months] = calcCorrecaoTJSP(value, dateCharge, dateCalc, idx);
     // Juros: a partir de moraStart
-    for (const [y, m] of iterMonths(moraStart, dateCalc)) {
-      totalInterestPct += getInterestRate(y, m, idx);
-      indicesUsados.push(y < 2024 || (y === 2024 && m <= 8) ? "TJSP-INPC" : "TJSP-14905/Taxa Legal");
+    if (!semJuros) {
+      for (const [y, m] of iterMonths(moraStart, dateCalc)) {
+        totalInterestPct += getInterestRate(y, m, idx);
+        indicesUsados.push(y < 2024 || (y === 2024 && m <= 8) ? "TJSP-INPC" : "TJSP-14905/Taxa Legal");
+      }
     }
   } else {
     // Correção: índice pré-Lei 14.905/2024 do tribunal (INPC ou IPCA-E, ver PRE_LEI14905_INDEX)
@@ -168,10 +171,12 @@ export function calculateCharge(
     }
     corrected = value * correctionFactor;
     // Juros: a partir de moraStart (pode ser data da citação)
-    for (const [y, m] of iterMonths(moraStart, dateCalc)) {
-      totalInterestPct += getInterestRate(y, m, idx);
+    if (!semJuros) {
+      for (const [y, m] of iterMonths(moraStart, dateCalc)) {
+        totalInterestPct += getInterestRate(y, m, idx);
+      }
+      if (moraStart > dateCharge) indicesUsados.push("Selic/1%");
     }
-    if (moraStart > dateCharge) indicesUsados.push("Selic/1%");
   }
 
   const interestValue = corrected * totalInterestPct / 100;
