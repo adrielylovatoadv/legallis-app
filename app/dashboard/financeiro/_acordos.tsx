@@ -18,7 +18,7 @@ export function getPctAcordoPadrao(): number {
   return Number.isFinite(v) ? v : PCT_PADRAO_FALLBACK;
 }
 
-export function AcordosView({ reload, filtroMes }: { reload: () => void; filtroMes?: string }) {
+export function AcordosView({ reload }: { reload: () => void }) {
   const [acordos, setAcordos] = useState<Acordo[]>([]);
   const [novo, setNovo] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -42,9 +42,7 @@ export function AcordosView({ reload, filtroMes }: { reload: () => void; filtroM
   };
   const del = async (id: string) => { await deleteAcordo(id); load(); reload(); };
 
-  const sorted = filtroMes
-    ? sortByMesDesc(acordos.filter(a => a.mes === filtroMes))
-    : sortByMesDesc(acordos);
+  const sorted = sortByMesDesc(acordos);
   const total = acordos.reduce((s, a) => s + a.honorarios, 0);
   const recebido = acordos.filter(a => a.status !== "pendente").reduce((s, a) => s + a.honorarios, 0);
   const pendente = acordos.filter(a => a.status === "pendente").reduce((s, a) => s + a.honorarios, 0);
@@ -69,7 +67,7 @@ export function AcordosView({ reload, filtroMes }: { reload: () => void; filtroM
       </div>
       <div className="flex justify-between items-center">
         <span className="text-sm" style={{ color: "var(--text3)" }}>
-          {sorted.length} acordos{filtroMes ? <span style={{ color: "var(--gold)" }}> · {filtroMes}</span> : ""}
+          {sorted.length} acordos
         </span>
         <button onClick={() => setNovo(true)} className="px-3 py-1.5 rounded-lg text-sm font-semibold"
           style={{ background: "var(--gold)", color: "#000" }}>+ Novo</button>

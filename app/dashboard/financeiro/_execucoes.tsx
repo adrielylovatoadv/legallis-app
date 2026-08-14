@@ -24,7 +24,7 @@ function repasseCliente(e: Execucao): number {
   return Math.round(e.valor_percebido * (1 - pct / 100) * 100) / 100;
 }
 
-export function ExecucoesView({ reload, filtroMes }: { reload: () => void; filtroMes?: string }) {
+export function ExecucoesView({ reload }: { reload: () => void }) {
   const [execucoes, setExecucoes] = useState<Execucao[]>([]);
   const [novo, setNovo] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -48,9 +48,7 @@ export function ExecucoesView({ reload, filtroMes }: { reload: () => void; filtr
   };
   const del = async (id: string) => { await deleteExecucao(id); load(); reload(); };
 
-  const sorted = filtroMes
-    ? sortByMesDesc(execucoes.filter(e => e.mes === filtroMes))
-    : sortByMesDesc(execucoes);
+  const sorted = sortByMesDesc(execucoes);
   const total = execucoes.reduce((s, e) => s + e.honorarios, 0);
   const recebido = execucoes.filter(e => e.status !== "pendente").reduce((s, e) => s + e.honorarios, 0);
   const pendente = execucoes.filter(e => e.status === "pendente").reduce((s, e) => s + e.honorarios, 0);
@@ -73,7 +71,7 @@ export function ExecucoesView({ reload, filtroMes }: { reload: () => void; filtr
       </div>
       <div className="flex justify-between items-center">
         <span className="text-sm" style={{ color:"var(--text3)" }}>
-          {sorted.length} execuções{filtroMes ? <span style={{ color: "var(--gold)" }}> · {filtroMes}</span> : ""}
+          {sorted.length} execuções
         </span>
         <button onClick={() => setNovo(true)} className="px-3 py-1.5 rounded-lg text-sm font-semibold" style={{ background:"var(--gold)", color:"#000" }}>+ Nova</button>
       </div>

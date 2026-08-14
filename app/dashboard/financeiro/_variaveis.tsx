@@ -71,6 +71,7 @@ export function VariaveisView() {
   const [novo, setNovo] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [expandidos, setExpandidos] = useState<Record<string, boolean>>({});
+  const [pagasAbertas, setPagasAbertas] = useState(false);
   const mesAtual = getCurrentCol();
 
   const load = useCallback(async () => { setVariaveis(await getVariaveis()); }, []);
@@ -83,8 +84,14 @@ export function VariaveisView() {
   const del = async (id: string) => { await deleteVariavel(id); load(); };
   const toggleExpand = (id: string) => setExpandidos(e => ({ ...e, [id]: !e[id] }));
 
-  const ativas = variaveis.filter(v => v.status === "pendente");
-  const pagas = variaveis.filter(v => v.status === "pago");
+  // Concluída = todas as parcelas já venceram (progresso completo), independente do
+  // status manual — parcelas em atraso não escondem o item da lista de ativas.
+  const concluida = (v: Variavel) => {
+    const prog = varProgress(v, mesAtual);
+    return v.status === "pago" || prog.pago >= prog.total;
+  };
+  const ativas = variaveis.filter(v => !concluida(v));
+  const pagas = variaveis.filter(concluida);
   const totalAtivas = ativas.reduce((s, v) => s + v.valor, 0);
   const totalMesAtivo = ativas.reduce((s, v) => s + (v.meses[mesAtual] || 0), 0);
 
@@ -257,8 +264,12 @@ export function VariaveisView() {
       {/* Pagas minimizadas */}
       {pagas.length > 0 && (
         <div className="space-y-2 mt-4">
-          <p className="text-xs uppercase tracking-wider font-semibold px-1" style={{ color:"var(--text3)" }}>✓ Pagas ({pagas.length})</p>
-          {pagas.map(renderMini)}
+          <button onClick={() => setPagasAbertas(o => !o)}
+            className="flex items-center gap-1.5 text-xs uppercase tracking-wider font-semibold px-1"
+            style={{ color:"var(--text3)" }}>
+            {pagasAbertas ? "▲" : "▼"} ✓ Pagas ({pagas.length})
+          </button>
+          {pagasAbertas && pagas.map(renderMini)}
         </div>
       )}
 
