@@ -180,11 +180,16 @@ export function FinalizadosTab() {
   };
 
   const handleReabrir = async (id: string) => {
-    await fetch("/api/controle/finalizados/reabrir", {
+    const res = await fetch("/api/controle/finalizados/reabrir", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
     });
+    const body = await res.json().catch(() => null);
+    if (!res.ok || !body?.processoReaberto) {
+      alert("Não foi possível reabrir: o processo não voltou para Ativos. Nada foi apagado — tente de novo ou avise o suporte.");
+      return;
+    }
     load();
   };
 
