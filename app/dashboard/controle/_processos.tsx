@@ -14,14 +14,15 @@ const POR_PAGINA = 50;
 
 type Aba = "ativos" | "audiencias" | "prazos" | "pericia" | "segunda_instancia" | "execucao" | "standby" | "suspenso" | "procedente" | "novo";
 
-function isSegundaInstancia(p: Pick<Processo, "andamento">): boolean {
-  const a = (p.andamento || "").toUpperCase().trim();
-  return a === "APELAÇÃO" || a === "RECURSO 2º GRAU";
+// Flags soltas (não o texto de `andamento`, que muda livremente enquanto o processo
+// está em 2ª instância/execução — ex.: AGUARDANDO DESPACHO) definem a permanência na aba,
+// até alguém desmarcar manualmente.
+function isSegundaInstancia(p: Pick<Processo, "em_segunda_instancia">): boolean {
+  return !!p.em_segunda_instancia;
 }
 
-function isExecucao(p: Pick<Processo, "andamento">): boolean {
-  const a = (p.andamento || "").toUpperCase().trim();
-  return a === "EXECUÇÃO" || a === "CUMPRIMENTO DE SENTENÇA";
+function isExecucao(p: Pick<Processo, "em_execucao">): boolean {
+  return !!p.em_execucao;
 }
 
 function ProcessoForm({ initial, onSave, onCancel, responsaveis = [] }: {
@@ -30,7 +31,7 @@ function ProcessoForm({ initial, onSave, onCancel, responsaveis = [] }: {
   onCancel: () => void;
   responsaveis?: string[];
 }) {
-  const blank = { autor:"",reu:"",objeto:"",numero_processo:"",data:"",hora:"",andamento:"",responsavel:"",observacoes:"",atencao:false,finalizado:false,prazo_fatal:"" };
+  const blank = { autor:"",reu:"",objeto:"",numero_processo:"",data:"",hora:"",andamento:"",responsavel:"",observacoes:"",atencao:false,finalizado:false,prazo_fatal:"",em_segunda_instancia:false,em_execucao:false };
   const [form, setForm] = useState({ ...blank, ...(initial || {}), data: normalizeData(initial?.data || ""), prazo_fatal: normalizeData(initial?.prazo_fatal || "") });
   const [saving, setSaving] = useState(false);
   const [erroAutor, setErroAutor] = useState(false);
@@ -98,6 +99,14 @@ function ProcessoForm({ initial, onSave, onCancel, responsaveis = [] }: {
           <input type="checkbox" checked={!!form.finalizado} onChange={e => set("finalizado",e.target.checked)} />
           <span className="text-sm" style={{ color:"var(--text2)" }}>Finalizado</span>
         </label>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked={!!form.em_segunda_instancia} onChange={e => set("em_segunda_instancia",e.target.checked)} />
+          <span className="text-sm" style={{ color:"var(--text2)" }}>⚖️ Em 2ª Instância</span>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked={!!form.em_execucao} onChange={e => set("em_execucao",e.target.checked)} />
+          <span className="text-sm" style={{ color:"var(--text2)" }}>💰 Em Execução</span>
+        </label>
       </div>
       <div className="flex gap-3">
         <button onClick={submit} disabled={saving}
@@ -122,12 +131,13 @@ function ProcessoForm({ initial, onSave, onCancel, responsaveis = [] }: {
   );
 }
 
-function ProcessoRow({ p, onEdit, onDelete, onOk, onAndamentoClick }: {
+function ProcessoRow({ p, onEdit, onDelete, onOk, onToggleSegInst, onToggleExecucao }: {
   p: Processo;
   onEdit: (p: Processo) => void;
   onDelete: (id: string) => void;
   onOk: (id: string) => void;
-  onAndamentoClick?: (p: Processo) => void;
+  onToggleSegInst: (p: Processo) => void;
+  onToggleExecucao: (p: Processo) => void;
 }) {
   const [confirming, setConfirming] = useState(false);
   const segInst = isSegundaInstancia(p);
@@ -175,9 +185,7 @@ function ProcessoRow({ p, onEdit, onDelete, onOk, onAndamentoClick }: {
       </td>
       <td className="py-2 pr-3">
         {p.andamento && (
-          <span onClick={(segInst || emExecucao) ? () => onAndamentoClick?.(p) : undefined}
-            title={segInst ? "Ver em 2ª Instância" : emExecucao ? "Ver em Execução" : undefined}
-            className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${badgeAndamento(p.andamento)} ${(segInst || emExecucao) ? "cursor-pointer hover:opacity-80" : ""}`}>
+          <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${badgeAndamento(p.andamento)}`}>
             {p.andamento}
           </span>
         )}
@@ -196,6 +204,12 @@ function ProcessoRow({ p, onEdit, onDelete, onOk, onAndamentoClick }: {
           <button onClick={() => onOk(p.id)} title="Marcar OK"
             className="text-xs px-2 py-1 rounded"
             style={{ background:"rgba(34,197,94,0.12)", color:"#4ade80" }}>✅</button>
+          <button onClick={() => onToggleSegInst(p)} title={segInst ? "Desmarcar 2ª Instância" : "Marcar como 2ª Instância"}
+            className="text-xs px-2 py-1 rounded"
+            style={{ background: segInst ? "rgba(168,85,247,0.18)" : "var(--surface2)", color: segInst ? "#c084fc" : "var(--text3)", border:"1px solid var(--border)" }}>⚖️</button>
+          <button onClick={() => onToggleExecucao(p)} title={emExecucao ? "Desmarcar Execução" : "Marcar como Execução"}
+            className="text-xs px-2 py-1 rounded"
+            style={{ background: emExecucao ? "rgba(99,102,241,0.18)" : "var(--surface2)", color: emExecucao ? "#818cf8" : "var(--text3)", border:"1px solid var(--border)" }}>💰</button>
           <button onClick={() => onEdit(p)} className="text-xs px-2 py-1 rounded"
             style={{ background:"var(--surface2)", color:"var(--text2)", border:"1px solid var(--border)" }}>✏️</button>
           {confirming
@@ -210,12 +224,13 @@ function ProcessoRow({ p, onEdit, onDelete, onOk, onAndamentoClick }: {
   );
 }
 
-function ProcessoCardMobile({ p, onEdit, onDelete, onOk, onAndamentoClick }: {
+function ProcessoCardMobile({ p, onEdit, onDelete, onOk, onToggleSegInst, onToggleExecucao }: {
   p: Processo;
   onEdit: (p: Processo) => void;
   onDelete: (id: string) => void;
   onOk: (id: string) => void;
-  onAndamentoClick?: (p: Processo) => void;
+  onToggleSegInst: (p: Processo) => void;
+  onToggleExecucao: (p: Processo) => void;
 }) {
   const [confirming, setConfirming] = useState(false);
   const segInst = isSegundaInstancia(p);
@@ -245,9 +260,7 @@ function ProcessoCardMobile({ p, onEdit, onDelete, onOk, onAndamentoClick }: {
           {p.numero_processo && <p className="text-xs mt-0.5 font-mono" style={{ color:"var(--text3)" }}>{p.numero_processo}</p>}
         </div>
         {p.andamento && (
-          <span onClick={(segInst || emExecucao) ? () => onAndamentoClick?.(p) : undefined}
-            title={segInst ? "Ver em 2ª Instância" : emExecucao ? "Ver em Execução" : undefined}
-            className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${badgeAndamento(p.andamento)} ${(segInst || emExecucao) ? "cursor-pointer hover:opacity-80" : ""}`}>
+          <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${badgeAndamento(p.andamento)}`}>
             {p.andamento}
           </span>
         )}
@@ -281,10 +294,16 @@ function ProcessoCardMobile({ p, onEdit, onDelete, onOk, onAndamentoClick }: {
         </div>
       )}
 
-      <div className="flex items-center gap-1.5 mt-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
+      <div className="flex items-center flex-wrap gap-1.5 mt-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
         <button onClick={() => onOk(p.id)} title="Marcar OK"
           className="text-xs px-2.5 py-1.5 rounded"
           style={{ background:"rgba(34,197,94,0.12)", color:"#4ade80" }}>✅ OK</button>
+        <button onClick={() => onToggleSegInst(p)} title={segInst ? "Desmarcar 2ª Instância" : "Marcar como 2ª Instância"}
+          className="text-xs px-2.5 py-1.5 rounded"
+          style={{ background: segInst ? "rgba(168,85,247,0.18)" : "var(--surface)", color: segInst ? "#c084fc" : "var(--text3)", border:"1px solid var(--border)" }}>⚖️</button>
+        <button onClick={() => onToggleExecucao(p)} title={emExecucao ? "Desmarcar Execução" : "Marcar como Execução"}
+          className="text-xs px-2.5 py-1.5 rounded"
+          style={{ background: emExecucao ? "rgba(99,102,241,0.18)" : "var(--surface)", color: emExecucao ? "#818cf8" : "var(--text3)", border:"1px solid var(--border)" }}>💰</button>
         <button onClick={() => onEdit(p)} className="text-xs px-2.5 py-1.5 rounded"
           style={{ background:"var(--surface)", color:"var(--text2)", border:"1px solid var(--border)" }}>✏️ Editar</button>
         {confirming
@@ -401,9 +420,17 @@ export function ProcessosTab() {
   };
   const handleDelete = async (id: string) => { await deleteProcesso(id); load(); };
   const handleOk = async (id: string) => { await marcarOk(id); load(); };
-  const handleAndamentoClick = (p: Processo) => {
-    if (isSegundaInstancia(p)) setAba("segunda_instancia");
-    else if (isExecucao(p)) setAba("execucao");
+  const handleToggleSegInst = async (p: Processo) => {
+    const novo = !p.em_segunda_instancia;
+    await updateProcesso(p.id, { em_segunda_instancia: novo });
+    await load();
+    if (novo) setAba("segunda_instancia");
+  };
+  const handleToggleExecucao = async (p: Processo) => {
+    const novo = !p.em_execucao;
+    await updateProcesso(p.id, { em_execucao: novo });
+    await load();
+    if (novo) setAba("execucao");
   };
 
   const ABAS: { id: Aba; label: string }[] = [
@@ -464,7 +491,7 @@ export function ProcessosTab() {
                         <ProcessoForm initial={editando} onSave={handleSave} onCancel={() => setEditando(null)} responsaveis={users} />
                       </td></tr>
                     : <ProcessoRow key={p.id} p={p} onEdit={setEditando} onDelete={handleDelete}
-                        onOk={handleOk} onAndamentoClick={handleAndamentoClick} />
+                        onOk={handleOk} onToggleSegInst={handleToggleSegInst} onToggleExecucao={handleToggleExecucao} />
                 )}
               </tbody>
             </table>
@@ -475,7 +502,7 @@ export function ProcessosTab() {
             {paginada.map(p =>
               editando?.id === p.id
                 ? <ProcessoForm key={p.id} initial={editando} onSave={handleSave} onCancel={() => setEditando(null)} responsaveis={users} />
-                : <ProcessoCardMobile key={p.id} p={p} onEdit={setEditando} onDelete={handleDelete} onOk={handleOk} onAndamentoClick={handleAndamentoClick} />
+                : <ProcessoCardMobile key={p.id} p={p} onEdit={setEditando} onDelete={handleDelete} onOk={handleOk} onToggleSegInst={handleToggleSegInst} onToggleExecucao={handleToggleExecucao} />
             )}
           </div>
           {totalPaginas > 1 && (

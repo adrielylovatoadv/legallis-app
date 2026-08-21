@@ -14,6 +14,7 @@ export interface Processo {
   atencao: boolean; finalizado: boolean; criado_em: string;
   dashboard_ok?: boolean; vara?: string; tribunal?: string; prazo_fatal?: string;
   google_event_id_audiencia?: string; google_event_id_prazo?: string;
+  em_segunda_instancia?: boolean; em_execucao?: boolean;
 }
 
 export interface Cliente {

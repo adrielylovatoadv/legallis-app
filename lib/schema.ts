@@ -40,6 +40,11 @@ export async function initSchema(sql: Sql): Promise<void> {
   // E um prazo fatal — são dois compromissos distintos, cada um com seu próprio evento no Google.
   await sql`ALTER TABLE processos ADD COLUMN IF NOT EXISTS google_event_id_audiencia TEXT`;
   await sql`ALTER TABLE processos ADD COLUMN IF NOT EXISTS google_event_id_prazo TEXT`;
+  // Flags soltas (independentes do texto de `andamento`, que continua mudando livremente
+  // enquanto o processo está em 2ª instância/execução — ex.: AGUARDANDO DESPACHO) usadas para
+  // manter o processo na aba correspondente até alguém desmarcar manualmente.
+  await sql`ALTER TABLE processos ADD COLUMN IF NOT EXISTS em_segunda_instancia BOOLEAN NOT NULL DEFAULT FALSE`;
+  await sql`ALTER TABLE processos ADD COLUMN IF NOT EXISTS em_execucao BOOLEAN NOT NULL DEFAULT FALSE`;
   await sql`CREATE INDEX IF NOT EXISTS idx_processos_tenant ON processos (tenant_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_processos_numero ON processos (tenant_id, numero_processo)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_processos_finalizado ON processos (tenant_id, finalizado)`;
