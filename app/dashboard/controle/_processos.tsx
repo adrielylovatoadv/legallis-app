@@ -326,6 +326,10 @@ export function ProcessosTab() {
 
   const isFin = (p: Processo) => {
     if (p.finalizado) return true;
+    // Em 2ª instância/execução, o texto do andamento (ex.: "IMPROCEDENTE" logo após a sentença
+    // de 1º grau, ainda sob recurso) não decide sozinho — o processo segue ativo até alguém
+    // desmarcar a fase ou marcar "Finalizado" manualmente.
+    if (p.em_segunda_instancia || p.em_execucao) return false;
     const a = (p.andamento || "").toUpperCase();
     return a === "ACORDO" || a === "ARQUIVADO" || a === "DESISTÊNCIA" || a === "DESISTENCIA" || a === "IMPROCEDENTE";
   };
@@ -392,6 +396,13 @@ export function ProcessosTab() {
   const pericias = filtrar(processos.filter(p => isPericia(p) && !isFin(p)));
   const segundaInstancias = filtrar(processos.filter(p => isSegundaInstancia(p) && !isFin(p)));
   const execucoes = filtrar(processos.filter(p => isExecucao(p) && !isFin(p)));
+
+  // Divisão por resultado de 1º grau dentro da 2ª instância — independe dos filtros de busca
+  // acima pra sempre mostrar o panorama completo de quem está recorrendo de quê.
+  const segundaInstanciaTodos = processos.filter(p => isSegundaInstancia(p) && !isFin(p));
+  const segInstProcedente = segundaInstanciaTodos.filter(p => (p.andamento || "").toUpperCase().trim() === "PROCEDENTE").length;
+  const segInstImprocedente = segundaInstanciaTodos.filter(p => (p.andamento || "").toUpperCase().trim() === "IMPROCEDENTE").length;
+  const segInstOutro = segundaInstanciaTodos.length - segInstProcedente - segInstImprocedente;
 
   const handleSave = async (form: Omit<Processo,"id"|"criado_em">) => {
     if (editando) { await updateProcesso(editando.id, form); setEditando(null); }
@@ -534,6 +545,28 @@ export function ProcessosTab() {
           </button>
         ))}
       </div>
+
+      {/* Divisão por resultado de 1º grau, só na aba 2ª Instância */}
+      {aba === "segunda_instancia" && segundaInstanciaTodos.length > 0 && (
+        <div className="flex flex-wrap gap-2 text-xs">
+          <button onClick={() => setFiltroAnd(filtroAnd === "PROCEDENTE" ? "Todos" : "PROCEDENTE")}
+            className="px-2.5 py-1 rounded-full font-medium"
+            style={{
+              background: filtroAnd === "PROCEDENTE" ? "rgba(34,197,94,0.28)" : "rgba(34,197,94,0.12)",
+              color: "#4ade80", border: filtroAnd === "PROCEDENTE" ? "1px solid #4ade80" : "1px solid transparent",
+            }}>✅ {segInstProcedente} Procedente</button>
+          <button onClick={() => setFiltroAnd(filtroAnd === "IMPROCEDENTE" ? "Todos" : "IMPROCEDENTE")}
+            className="px-2.5 py-1 rounded-full font-medium"
+            style={{
+              background: filtroAnd === "IMPROCEDENTE" ? "rgba(239,68,68,0.28)" : "rgba(239,68,68,0.12)",
+              color: "#f87171", border: filtroAnd === "IMPROCEDENTE" ? "1px solid #f87171" : "1px solid transparent",
+            }}>❌ {segInstImprocedente} Improcedente</button>
+          {segInstOutro > 0 && (
+            <span className="px-2.5 py-1 rounded-full font-medium"
+              style={{ background:"var(--surface2)", color:"var(--text3)" }}>⏳ {segInstOutro} outro andamento</span>
+          )}
+        </div>
+      )}
 
       {/* Filtros */}
       {aba !== "novo" && (

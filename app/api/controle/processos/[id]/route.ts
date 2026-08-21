@@ -46,8 +46,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const merged = { ...anterior, ...body };
 
   // Se andamento virou finalizado, adiciona em finalizados_sem_honor (se ainda não existir).
+  // Não conta em 2ª instância/execução: lá o andamento (ex.: "IMPROCEDENTE" sob recurso) não
+  // significa que o processo terminou.
   let novoFinalizado: Parameters<typeof finalizadosRepo.create>[1] | null = null;
-  if (ANDAMENTOS_FINAIS.includes(novoAndamento)) {
+  if (ANDAMENTOS_FINAIS.includes(novoAndamento) && !merged.em_segunda_instancia && !merged.em_execucao) {
     const existentes = await finalizadosRepo.list(tid);
     const jaExiste = existentes.some(f => f.processo === merged.numero_processo);
     if (!jaExiste) {

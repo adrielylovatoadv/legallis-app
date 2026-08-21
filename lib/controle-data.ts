@@ -274,6 +274,10 @@ export function newId() {
 
 export function isFinalizado(p: Processo): boolean {
   if (p.finalizado) return true;
+  // Em 2ª instância/execução, o texto do andamento (ex.: "IMPROCEDENTE" logo após a sentença
+  // de 1º grau, ainda sob recurso) não decide sozinho — o processo segue ativo até alguém
+  // desmarcar a fase ou marcar "Finalizado" manualmente.
+  if (p.em_segunda_instancia || p.em_execucao) return false;
   const a = (p.andamento || "").toUpperCase();
   return a === "ACORDO" || a === "ARQUIVADO" || a === "DESISTÊNCIA" || a === "DESISTENCIA" || a === "IMPROCEDENTE";
 }
