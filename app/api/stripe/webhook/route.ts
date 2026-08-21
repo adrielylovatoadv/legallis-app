@@ -198,21 +198,34 @@ export async function POST(req: NextRequest) {
       const sub = event.data.object as {
         customer?: string;
         status?: string;
-        items?: { data?: Array<{ price?: { lookup_key?: string; product?: string } }> };
+        items?: { data?: Array<{ price?: { metadata?: Record<string, string> } }> };
       };
 
       const status = sub.status;
       const subscriptionStatus: SubscriptionStatus =
         status === "active" ? "active" :
+        status === "trialing" ? "trial" :
+        status === "past_due" ? "pending" :
         status === "canceled" ? "cancelled" :
-        status === "past_due" ? "pending" : "active";
+        // unpaid, incomplete, incomplete_expired, paused ou qualquer status futuro do Stripe:
+        // nunca conceder acesso por padrão (fail closed), diferente do "active" anterior
+        "expired";
+
+      // Plano do preço atual: exige metadata.plan configurado no Price no Dashboard do Stripe
+      // (valores aceitos: "basic" | "pro" | "profissional" — as chaves internas do sistema, não
+      // o nome exibido ao cliente, que é invertido para "pro"/"profissional" — ver lib/plans.ts).
+      const VALID_PLANS = ["basic", "pro", "profissional"] as const;
+      const metadataPlan = sub.items?.data?.[0]?.price?.metadata?.plan;
+      const plan = (VALID_PLANS as readonly string[]).includes(metadataPlan ?? "")
+        ? (metadataPlan as Plan)
+        : undefined;
 
       const users = await getUsersAsync();
       const user = users.find(u => u.stripeCustomerId === sub.customer) ?? null;
 
       if (user) {
-        await updateUserAsync(user.id, { subscriptionStatus });
-        console.log(`[Stripe] Assinatura atualizada: ${user.email} → ${subscriptionStatus}`);
+        await updateUserAsync(user.id, { subscriptionStatus, ...(plan ? { plan } : {}) });
+        console.log(`[Stripe] Assinatura atualizada: ${user.email} → ${subscriptionStatus}${plan ? `, plano ${plan}` : " (metadata.plan ausente no Price — plano mantido)"}`);
       }
       break;
     }
