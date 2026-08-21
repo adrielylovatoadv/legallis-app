@@ -14,7 +14,7 @@ export const ANDAMENTOS_PROCESSO = [
   "CONTRARRAZÕES","CUMPRIMENTO DE SENTENÇA","DESISTÊNCIA","EMBARGOS DE DECLARAÇÃO","EMENDAR","EXECUÇÃO",
   "IMPROCEDENTE","INTERESSE DE AGIR","MANIFESTAÇÃO","MEMORIAIS FINAIS",
   "OUTRO","PERÍCIA","PRECLUSÃO DE PROVAS","PROCEDENTE","PROVAS","PROVAS - JUNTAR NOTIFICAÇÃO","QUESITOS DE PERÍCIA",
-  "RECURSO","RÉPLICA","RÉPLICA SEM INTIMAÇÃO","SUSPENSO",
+  "RECURSO","RECURSO 2º GRAU","RÉPLICA","RÉPLICA SEM INTIMAÇÃO","SUSPENSO",
 ];
 
 export function normText(s: string): string {
@@ -148,9 +148,11 @@ export function badgeAndamento(status: string): string {
   const s = (status || "").toUpperCase();
   if (s.includes("AUDIÊNCIA") || s.includes("AIJ")) return "bg-red-500/15 text-red-400";
   if (s.includes("PROVAS")) return "bg-blue-500/15 text-blue-400";
+  if (s === "EXECUÇÃO" || s === "CUMPRIMENTO DE SENTENÇA") return "bg-indigo-500/15 text-indigo-400";
   if (s.includes("SENTENÇA") || s.includes("SENTENCA")) return "bg-green-500/15 text-green-400";
   if (s.includes("EMENDAR") || s.includes("LIMINAR")) return "bg-yellow-500/15 text-yellow-400";
   if (s.includes("ACORDO")) return "bg-emerald-500/15 text-emerald-400";
+  if (s.includes("APELAÇÃO") || s.includes("RECURSO 2")) return "bg-purple-500/15 text-purple-400";
   if (s.includes("ARQUIVADO") || s.includes("DESISTÊNCIA")) return "bg-gray-500/15 text-gray-400";
   return "bg-[var(--surface2)] text-[var(--text2)]";
 }

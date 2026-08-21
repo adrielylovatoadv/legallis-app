@@ -12,7 +12,17 @@ import { FinanceiroPanel } from "./_financeiro-panel";
 
 const POR_PAGINA = 50;
 
-type Aba = "ativos" | "audiencias" | "prazos" | "pericia" | "standby" | "suspenso" | "procedente" | "novo";
+type Aba = "ativos" | "audiencias" | "prazos" | "pericia" | "segunda_instancia" | "execucao" | "standby" | "suspenso" | "procedente" | "novo";
+
+function isSegundaInstancia(p: Pick<Processo, "andamento">): boolean {
+  const a = (p.andamento || "").toUpperCase().trim();
+  return a === "APELAÇÃO" || a === "RECURSO 2º GRAU";
+}
+
+function isExecucao(p: Pick<Processo, "andamento">): boolean {
+  const a = (p.andamento || "").toUpperCase().trim();
+  return a === "EXECUÇÃO" || a === "CUMPRIMENTO DE SENTENÇA";
+}
 
 function ProcessoForm({ initial, onSave, onCancel, responsaveis = [] }: {
   initial?: Partial<Processo>;
@@ -112,13 +122,16 @@ function ProcessoForm({ initial, onSave, onCancel, responsaveis = [] }: {
   );
 }
 
-function ProcessoRow({ p, onEdit, onDelete, onOk }: {
+function ProcessoRow({ p, onEdit, onDelete, onOk, onAndamentoClick }: {
   p: Processo;
   onEdit: (p: Processo) => void;
   onDelete: (id: string) => void;
   onOk: (id: string) => void;
+  onAndamentoClick?: (p: Processo) => void;
 }) {
   const [confirming, setConfirming] = useState(false);
+  const segInst = isSegundaInstancia(p);
+  const emExecucao = isExecucao(p);
   const url = gcalUrl(p);
   const hoje = new Date().toISOString().split("T")[0];
   const d = normalizeData(p.data);
@@ -162,7 +175,9 @@ function ProcessoRow({ p, onEdit, onDelete, onOk }: {
       </td>
       <td className="py-2 pr-3">
         {p.andamento && (
-          <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${badgeAndamento(p.andamento)}`}>
+          <span onClick={(segInst || emExecucao) ? () => onAndamentoClick?.(p) : undefined}
+            title={segInst ? "Ver em 2ª Instância" : emExecucao ? "Ver em Execução" : undefined}
+            className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${badgeAndamento(p.andamento)} ${(segInst || emExecucao) ? "cursor-pointer hover:opacity-80" : ""}`}>
             {p.andamento}
           </span>
         )}
@@ -195,13 +210,16 @@ function ProcessoRow({ p, onEdit, onDelete, onOk }: {
   );
 }
 
-function ProcessoCardMobile({ p, onEdit, onDelete, onOk }: {
+function ProcessoCardMobile({ p, onEdit, onDelete, onOk, onAndamentoClick }: {
   p: Processo;
   onEdit: (p: Processo) => void;
   onDelete: (id: string) => void;
   onOk: (id: string) => void;
+  onAndamentoClick?: (p: Processo) => void;
 }) {
   const [confirming, setConfirming] = useState(false);
+  const segInst = isSegundaInstancia(p);
+  const emExecucao = isExecucao(p);
   const url = gcalUrl(p);
   const hoje = new Date().toISOString().split("T")[0];
   const d = normalizeData(p.data);
@@ -227,7 +245,9 @@ function ProcessoCardMobile({ p, onEdit, onDelete, onOk }: {
           {p.numero_processo && <p className="text-xs mt-0.5 font-mono" style={{ color:"var(--text3)" }}>{p.numero_processo}</p>}
         </div>
         {p.andamento && (
-          <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${badgeAndamento(p.andamento)}`}>
+          <span onClick={(segInst || emExecucao) ? () => onAndamentoClick?.(p) : undefined}
+            title={segInst ? "Ver em 2ª Instância" : emExecucao ? "Ver em Execução" : undefined}
+            className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${badgeAndamento(p.andamento)} ${(segInst || emExecucao) ? "cursor-pointer hover:opacity-80" : ""}`}>
             {p.andamento}
           </span>
         )}
@@ -361,16 +381,18 @@ export function ProcessosTab() {
   const prazos = filtrar(processos.filter(p => {
     const a = (p.andamento || "").toUpperCase();
     const isAud = a.includes("AIJ") || a.startsWith("AC");
-    return !!p.data && !isAud && !isFin(p) && !isProcedente(p) && !isPericia(p);
+    return !!p.data && !isAud && !isFin(p) && !isProcedente(p) && !isPericia(p) && !isSegundaInstancia(p) && !isExecucao(p);
   }));
   const standby = filtrar(processos.filter(p => {
     const a = (p.andamento||"").toUpperCase();
     const isAud = a.includes("AIJ") || a.startsWith("AC");
-    return ((!p.data) || (isAud && normalizeData(p.data) < hoje)) && !isFin(p) && !isSuspenso(p) && !isProcedente(p) && !isPericia(p);
+    return ((!p.data) || (isAud && normalizeData(p.data) < hoje)) && !isFin(p) && !isSuspenso(p) && !isProcedente(p) && !isPericia(p) && !isSegundaInstancia(p) && !isExecucao(p);
   }));
   const suspensos = filtrar(processos.filter(p => isSuspenso(p) && !isFin(p)));
   const procedentes = filtrar(processos.filter(p => isProcedente(p) && !isFin(p)));
   const pericias = filtrar(processos.filter(p => isPericia(p) && !isFin(p)));
+  const segundaInstancias = filtrar(processos.filter(p => isSegundaInstancia(p) && !isFin(p)));
+  const execucoes = filtrar(processos.filter(p => isExecucao(p) && !isFin(p)));
 
   const handleSave = async (form: Omit<Processo,"id"|"criado_em">) => {
     if (editando) { await updateProcesso(editando.id, form); setEditando(null); }
@@ -379,13 +401,19 @@ export function ProcessosTab() {
   };
   const handleDelete = async (id: string) => { await deleteProcesso(id); load(); };
   const handleOk = async (id: string) => { await marcarOk(id); load(); };
+  const handleAndamentoClick = (p: Processo) => {
+    if (isSegundaInstancia(p)) setAba("segunda_instancia");
+    else if (isExecucao(p)) setAba("execucao");
+  };
 
   const ABAS: { id: Aba; label: string }[] = [
     { id:"ativos", label:`📋 Ativos (${processos.filter(p => !isFin(p)).length})` },
     { id:"audiencias", label:`🔴 Audiências (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); return (a.includes("AIJ")||a.startsWith("AC"))&&normalizeData(p.data)>=hoje&&!isFin(p); }).length})` },
-    { id:"prazos", label:`📅 Prazos (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); return !!p.data&&!a.includes("AIJ")&&!a.startsWith("AC")&&!isFin(p)&&a!=="PROCEDENTE"&&!isPericia(p); }).length})` },
+    { id:"prazos", label:`📅 Prazos (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); return !!p.data&&!a.includes("AIJ")&&!a.startsWith("AC")&&!isFin(p)&&a!=="PROCEDENTE"&&!isPericia(p)&&!isSegundaInstancia(p)&&!isExecucao(p); }).length})` },
     { id:"pericia", label:`🔬 Perícia (${processos.filter(p => isPericia(p) && !isFin(p)).length})` },
-    { id:"standby", label:`⏸️ Standby (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); const isAud=a.includes("AIJ")||a.startsWith("AC"); return ((!p.data)||(isAud&&normalizeData(p.data)<hoje))&&!isFin(p)&&a!=="SUSPENSO"&&a!=="PROCEDENTE"&&!isPericia(p); }).length})` },
+    { id:"segunda_instancia", label:`⚖️ 2ª Instância (${processos.filter(p => isSegundaInstancia(p) && !isFin(p)).length})` },
+    { id:"execucao", label:`💰 Execução (${processos.filter(p => isExecucao(p) && !isFin(p)).length})` },
+    { id:"standby", label:`⏸️ Standby (${processos.filter(p => { const a=(p.andamento||"").toUpperCase(); const isAud=a.includes("AIJ")||a.startsWith("AC"); return ((!p.data)||(isAud&&normalizeData(p.data)<hoje))&&!isFin(p)&&a!=="SUSPENSO"&&a!=="PROCEDENTE"&&!isPericia(p)&&!isSegundaInstancia(p)&&!isExecucao(p); }).length})` },
     { id:"suspenso", label:`⏸ Suspenso (${processos.filter(p => (p.andamento||"").toUpperCase()==="SUSPENSO"&&!isFin(p)).length})` },
     { id:"procedente", label:`✅ Procedente (${processos.filter(p => (p.andamento||"").toUpperCase()==="PROCEDENTE"&&!isFin(p)).length})` },
     { id:"novo", label:"➕ Novo" },
@@ -436,7 +464,7 @@ export function ProcessosTab() {
                         <ProcessoForm initial={editando} onSave={handleSave} onCancel={() => setEditando(null)} responsaveis={users} />
                       </td></tr>
                     : <ProcessoRow key={p.id} p={p} onEdit={setEditando} onDelete={handleDelete}
-                        onOk={handleOk} />
+                        onOk={handleOk} onAndamentoClick={handleAndamentoClick} />
                 )}
               </tbody>
             </table>
@@ -447,7 +475,7 @@ export function ProcessosTab() {
             {paginada.map(p =>
               editando?.id === p.id
                 ? <ProcessoForm key={p.id} initial={editando} onSave={handleSave} onCancel={() => setEditando(null)} responsaveis={users} />
-                : <ProcessoCardMobile key={p.id} p={p} onEdit={setEditando} onDelete={handleDelete} onOk={handleOk} />
+                : <ProcessoCardMobile key={p.id} p={p} onEdit={setEditando} onDelete={handleDelete} onOk={handleOk} onAndamentoClick={handleAndamentoClick} />
             )}
           </div>
           {totalPaginas > 1 && (
@@ -493,6 +521,8 @@ export function ProcessosTab() {
     : aba === "audiencias" ? audiencias
     : aba === "prazos" ? prazos
     : aba === "pericia" ? pericias
+    : aba === "segunda_instancia" ? segundaInstancias
+    : aba === "execucao" ? execucoes
     : aba === "suspenso" ? suspensos
     : aba === "procedente" ? procedentes
     : standby;
