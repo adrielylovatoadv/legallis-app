@@ -131,17 +131,13 @@ function ProcessoForm({ initial, onSave, onCancel, responsaveis = [] }: {
   );
 }
 
-function ProcessoRow({ p, onEdit, onDelete, onOk, onToggleSegInst, onToggleExecucao }: {
+function ProcessoRow({ p, onEdit, onDelete, onOk }: {
   p: Processo;
   onEdit: (p: Processo) => void;
   onDelete: (id: string) => void;
   onOk: (id: string) => void;
-  onToggleSegInst: (p: Processo) => void;
-  onToggleExecucao: (p: Processo) => void;
 }) {
   const [confirming, setConfirming] = useState(false);
-  const segInst = isSegundaInstancia(p);
-  const emExecucao = isExecucao(p);
   const url = gcalUrl(p);
   const hoje = new Date().toISOString().split("T")[0];
   const d = normalizeData(p.data);
@@ -204,12 +200,6 @@ function ProcessoRow({ p, onEdit, onDelete, onOk, onToggleSegInst, onToggleExecu
           <button onClick={() => onOk(p.id)} title="Marcar OK"
             className="text-xs px-2 py-1 rounded"
             style={{ background:"rgba(34,197,94,0.12)", color:"#4ade80" }}>✅</button>
-          <button onClick={() => onToggleSegInst(p)} title={segInst ? "Desmarcar 2ª Instância" : "Marcar como 2ª Instância"}
-            className="text-xs px-2 py-1 rounded"
-            style={{ background: segInst ? "rgba(168,85,247,0.18)" : "var(--surface2)", color: segInst ? "#c084fc" : "var(--text3)", border:"1px solid var(--border)" }}>⚖️</button>
-          <button onClick={() => onToggleExecucao(p)} title={emExecucao ? "Desmarcar Execução" : "Marcar como Execução"}
-            className="text-xs px-2 py-1 rounded"
-            style={{ background: emExecucao ? "rgba(99,102,241,0.18)" : "var(--surface2)", color: emExecucao ? "#818cf8" : "var(--text3)", border:"1px solid var(--border)" }}>💰</button>
           <button onClick={() => onEdit(p)} className="text-xs px-2 py-1 rounded"
             style={{ background:"var(--surface2)", color:"var(--text2)", border:"1px solid var(--border)" }}>✏️</button>
           {confirming
@@ -224,17 +214,13 @@ function ProcessoRow({ p, onEdit, onDelete, onOk, onToggleSegInst, onToggleExecu
   );
 }
 
-function ProcessoCardMobile({ p, onEdit, onDelete, onOk, onToggleSegInst, onToggleExecucao }: {
+function ProcessoCardMobile({ p, onEdit, onDelete, onOk }: {
   p: Processo;
   onEdit: (p: Processo) => void;
   onDelete: (id: string) => void;
   onOk: (id: string) => void;
-  onToggleSegInst: (p: Processo) => void;
-  onToggleExecucao: (p: Processo) => void;
 }) {
   const [confirming, setConfirming] = useState(false);
-  const segInst = isSegundaInstancia(p);
-  const emExecucao = isExecucao(p);
   const url = gcalUrl(p);
   const hoje = new Date().toISOString().split("T")[0];
   const d = normalizeData(p.data);
@@ -298,12 +284,6 @@ function ProcessoCardMobile({ p, onEdit, onDelete, onOk, onToggleSegInst, onTogg
         <button onClick={() => onOk(p.id)} title="Marcar OK"
           className="text-xs px-2.5 py-1.5 rounded"
           style={{ background:"rgba(34,197,94,0.12)", color:"#4ade80" }}>✅ OK</button>
-        <button onClick={() => onToggleSegInst(p)} title={segInst ? "Desmarcar 2ª Instância" : "Marcar como 2ª Instância"}
-          className="text-xs px-2.5 py-1.5 rounded"
-          style={{ background: segInst ? "rgba(168,85,247,0.18)" : "var(--surface)", color: segInst ? "#c084fc" : "var(--text3)", border:"1px solid var(--border)" }}>⚖️</button>
-        <button onClick={() => onToggleExecucao(p)} title={emExecucao ? "Desmarcar Execução" : "Marcar como Execução"}
-          className="text-xs px-2.5 py-1.5 rounded"
-          style={{ background: emExecucao ? "rgba(99,102,241,0.18)" : "var(--surface)", color: emExecucao ? "#818cf8" : "var(--text3)", border:"1px solid var(--border)" }}>💰</button>
         <button onClick={() => onEdit(p)} className="text-xs px-2.5 py-1.5 rounded"
           style={{ background:"var(--surface)", color:"var(--text2)", border:"1px solid var(--border)" }}>✏️ Editar</button>
         {confirming
@@ -420,18 +400,6 @@ export function ProcessosTab() {
   };
   const handleDelete = async (id: string) => { await deleteProcesso(id); load(); };
   const handleOk = async (id: string) => { await marcarOk(id); load(); };
-  const handleToggleSegInst = async (p: Processo) => {
-    const novo = !p.em_segunda_instancia;
-    await updateProcesso(p.id, { em_segunda_instancia: novo });
-    await load();
-    if (novo) setAba("segunda_instancia");
-  };
-  const handleToggleExecucao = async (p: Processo) => {
-    const novo = !p.em_execucao;
-    await updateProcesso(p.id, { em_execucao: novo });
-    await load();
-    if (novo) setAba("execucao");
-  };
 
   const ABAS: { id: Aba; label: string }[] = [
     { id:"ativos", label:`📋 Ativos (${processos.filter(p => !isFin(p)).length})` },
@@ -491,7 +459,7 @@ export function ProcessosTab() {
                         <ProcessoForm initial={editando} onSave={handleSave} onCancel={() => setEditando(null)} responsaveis={users} />
                       </td></tr>
                     : <ProcessoRow key={p.id} p={p} onEdit={setEditando} onDelete={handleDelete}
-                        onOk={handleOk} onToggleSegInst={handleToggleSegInst} onToggleExecucao={handleToggleExecucao} />
+                        onOk={handleOk} />
                 )}
               </tbody>
             </table>
@@ -502,7 +470,7 @@ export function ProcessosTab() {
             {paginada.map(p =>
               editando?.id === p.id
                 ? <ProcessoForm key={p.id} initial={editando} onSave={handleSave} onCancel={() => setEditando(null)} responsaveis={users} />
-                : <ProcessoCardMobile key={p.id} p={p} onEdit={setEditando} onDelete={handleDelete} onOk={handleOk} onToggleSegInst={handleToggleSegInst} onToggleExecucao={handleToggleExecucao} />
+                : <ProcessoCardMobile key={p.id} p={p} onEdit={setEditando} onDelete={handleDelete} onOk={handleOk} />
             )}
           </div>
           {totalPaginas > 1 && (
