@@ -31,12 +31,22 @@ function ProcessoForm({ initial, onSave, onCancel, responsaveis = [] }: {
   onCancel: () => void;
   responsaveis?: string[];
 }) {
-  const blank = { autor:"",reu:"",objeto:"",numero_processo:"",data:"",hora:"",andamento:"",responsavel:"",observacoes:"",atencao:false,finalizado:false,prazo_fatal:"",em_segunda_instancia:false,em_execucao:false };
+  const blank = { autor:"",reu:"",objeto:"",numero_processo:"",data:"",hora:"",andamento:"",responsavel:"",observacoes:"",atencao:false,finalizado:false,prazo_fatal:"",em_segunda_instancia:false,em_execucao:false,resultado_1_grau:"" };
   const [form, setForm] = useState({ ...blank, ...(initial || {}), data: normalizeData(initial?.data || ""), prazo_fatal: normalizeData(initial?.prazo_fatal || "") });
   const [saving, setSaving] = useState(false);
   const [erroAutor, setErroAutor] = useState(false);
   const set = (k: string, v: string | boolean) => {
-    setForm(prev => ({ ...prev, [k]: v }));
+    setForm(prev => {
+      const next = { ...prev, [k]: v };
+      // Ao marcar "Em 2ª Instância" pela primeira vez, sugere o resultado a partir do andamento
+      // atual (que costuma estar como PROCEDENTE/IMPROCEDENTE nesse momento) — o andamento vai
+      // seguir mudando depois (APELAÇÃO, CONTRARRAZÕES...), então isso só ajuda a não digitar de novo.
+      if (k === "em_segunda_instancia" && v === true && !prev.resultado_1_grau) {
+        const a = (prev.andamento || "").toUpperCase().trim();
+        if (a === "PROCEDENTE" || a === "IMPROCEDENTE") next.resultado_1_grau = a;
+      }
+      return next;
+    });
     if (k === "autor") setErroAutor(false);
   };
   const submit = async () => {
@@ -108,6 +118,19 @@ function ProcessoForm({ initial, onSave, onCancel, responsaveis = [] }: {
           <span className="text-sm" style={{ color:"var(--text2)" }}>💰 Em Execução</span>
         </label>
       </div>
+      {form.em_segunda_instancia && (
+        <div>
+          <Lbl>Resultado em 1º grau</Lbl>
+          <Sel value={form.resultado_1_grau} onChange={e => set("resultado_1_grau",e.target.value)} style={{ width:"100%", maxWidth:280 }}>
+            <option value="">Selecionar</option>
+            <option value="PROCEDENTE">Procedente (defendendo)</option>
+            <option value="IMPROCEDENTE">Improcedente (atacando)</option>
+          </Sel>
+          <p className="text-xs mt-1" style={{ color:"var(--text3)" }}>
+            Guardado à parte porque o andamento vai continuar mudando (Apelação, Contrarrazões...) enquanto o recurso corre.
+          </p>
+        </div>
+      )}
       <div className="flex gap-3">
         <button onClick={submit} disabled={saving}
           className="px-5 py-2 rounded-lg font-semibold text-sm"
@@ -308,6 +331,7 @@ export function ProcessosTab() {
   const [soAtencao, setSoAtencao] = useState(false);
   const [pagina, setPagina] = useState(0);
   const [users, setUsers] = useState<string[]>([]);
+  const [filtroResultado, setFiltroResultado] = useState<"Todos" | "PROCEDENTE" | "IMPROCEDENTE">("Todos");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -320,7 +344,7 @@ export function ProcessosTab() {
   }, []);
 
   // Reseta paginação ao mudar filtro ou aba
-  useEffect(() => { setPagina(0); }, [busca, filtroAnd, filtroResp, soAtencao, aba]);
+  useEffect(() => { setPagina(0); }, [busca, filtroAnd, filtroResp, soAtencao, aba, filtroResultado]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -394,14 +418,17 @@ export function ProcessosTab() {
   const suspensos = filtrar(processos.filter(p => isSuspenso(p) && !isFin(p)));
   const procedentes = filtrar(processos.filter(p => isProcedente(p) && !isFin(p)));
   const pericias = filtrar(processos.filter(p => isPericia(p) && !isFin(p)));
-  const segundaInstancias = filtrar(processos.filter(p => isSegundaInstancia(p) && !isFin(p)));
+  const segundaInstancias = filtrar(processos.filter(p =>
+    isSegundaInstancia(p) && !isFin(p) &&
+    (filtroResultado === "Todos" || (p.resultado_1_grau || "").toUpperCase().trim() === filtroResultado)
+  ));
   const execucoes = filtrar(processos.filter(p => isExecucao(p) && !isFin(p)));
 
   // Divisão por resultado de 1º grau dentro da 2ª instância — independe dos filtros de busca
   // acima pra sempre mostrar o panorama completo de quem está recorrendo de quê.
   const segundaInstanciaTodos = processos.filter(p => isSegundaInstancia(p) && !isFin(p));
-  const segInstProcedente = segundaInstanciaTodos.filter(p => (p.andamento || "").toUpperCase().trim() === "PROCEDENTE").length;
-  const segInstImprocedente = segundaInstanciaTodos.filter(p => (p.andamento || "").toUpperCase().trim() === "IMPROCEDENTE").length;
+  const segInstProcedente = segundaInstanciaTodos.filter(p => (p.resultado_1_grau || "").toUpperCase().trim() === "PROCEDENTE").length;
+  const segInstImprocedente = segundaInstanciaTodos.filter(p => (p.resultado_1_grau || "").toUpperCase().trim() === "IMPROCEDENTE").length;
   const segInstOutro = segundaInstanciaTodos.length - segInstProcedente - segInstImprocedente;
 
   const handleSave = async (form: Omit<Processo,"id"|"criado_em">) => {
@@ -549,21 +576,22 @@ export function ProcessosTab() {
       {/* Divisão por resultado de 1º grau, só na aba 2ª Instância */}
       {aba === "segunda_instancia" && segundaInstanciaTodos.length > 0 && (
         <div className="flex flex-wrap gap-2 text-xs">
-          <button onClick={() => setFiltroAnd(filtroAnd === "PROCEDENTE" ? "Todos" : "PROCEDENTE")}
+          <button onClick={() => setFiltroResultado(filtroResultado === "PROCEDENTE" ? "Todos" : "PROCEDENTE")}
             className="px-2.5 py-1 rounded-full font-medium"
             style={{
-              background: filtroAnd === "PROCEDENTE" ? "rgba(34,197,94,0.28)" : "rgba(34,197,94,0.12)",
-              color: "#4ade80", border: filtroAnd === "PROCEDENTE" ? "1px solid #4ade80" : "1px solid transparent",
+              background: filtroResultado === "PROCEDENTE" ? "rgba(34,197,94,0.28)" : "rgba(34,197,94,0.12)",
+              color: "#4ade80", border: filtroResultado === "PROCEDENTE" ? "1px solid #4ade80" : "1px solid transparent",
             }}>✅ {segInstProcedente} Procedente</button>
-          <button onClick={() => setFiltroAnd(filtroAnd === "IMPROCEDENTE" ? "Todos" : "IMPROCEDENTE")}
+          <button onClick={() => setFiltroResultado(filtroResultado === "IMPROCEDENTE" ? "Todos" : "IMPROCEDENTE")}
             className="px-2.5 py-1 rounded-full font-medium"
             style={{
-              background: filtroAnd === "IMPROCEDENTE" ? "rgba(239,68,68,0.28)" : "rgba(239,68,68,0.12)",
-              color: "#f87171", border: filtroAnd === "IMPROCEDENTE" ? "1px solid #f87171" : "1px solid transparent",
+              background: filtroResultado === "IMPROCEDENTE" ? "rgba(239,68,68,0.28)" : "rgba(239,68,68,0.12)",
+              color: "#f87171", border: filtroResultado === "IMPROCEDENTE" ? "1px solid #f87171" : "1px solid transparent",
             }}>❌ {segInstImprocedente} Improcedente</button>
           {segInstOutro > 0 && (
             <span className="px-2.5 py-1 rounded-full font-medium"
-              style={{ background:"var(--surface2)", color:"var(--text3)" }}>⏳ {segInstOutro} outro andamento</span>
+              style={{ background:"var(--surface2)", color:"var(--text3)" }}
+              title="Marque o resultado em 1º grau ao editar o processo">⏳ {segInstOutro} sem resultado registrado</span>
           )}
         </div>
       )}

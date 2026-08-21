@@ -17,6 +17,7 @@ export const processoCreateSchema = z.object({
   prazo_fatal: z.string().trim().optional(),
   em_segunda_instancia: z.boolean().default(false),
   em_execucao: z.boolean().default(false),
+  resultado_1_grau: z.string().trim().optional(),
 });
 export const processoUpdateSchema = processoCreateSchema.partial();
 

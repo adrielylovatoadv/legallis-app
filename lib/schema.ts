@@ -45,6 +45,10 @@ export async function initSchema(sql: Sql): Promise<void> {
   // manter o processo na aba correspondente até alguém desmarcar manualmente.
   await sql`ALTER TABLE processos ADD COLUMN IF NOT EXISTS em_segunda_instancia BOOLEAN NOT NULL DEFAULT FALSE`;
   await sql`ALTER TABLE processos ADD COLUMN IF NOT EXISTS em_execucao BOOLEAN NOT NULL DEFAULT FALSE`;
+  // Guarda o resultado do 1º grau (PROCEDENTE/IMPROCEDENTE) separado do `andamento`, que
+  // continua mudando (APELAÇÃO, CONTRARRAZÕES, AGUARDANDO DESPACHO...) depois que o processo
+  // entra em 2ª instância — sem isso não dá pra saber mais quem estava defendendo vs. atacando.
+  await sql`ALTER TABLE processos ADD COLUMN IF NOT EXISTS resultado_1_grau TEXT`;
   await sql`CREATE INDEX IF NOT EXISTS idx_processos_tenant ON processos (tenant_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_processos_numero ON processos (tenant_id, numero_processo)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_processos_finalizado ON processos (tenant_id, finalizado)`;
