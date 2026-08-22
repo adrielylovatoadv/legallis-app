@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { Input } from "@/components/ui";
 
 function LoginForm() {
   const router = useRouter();
@@ -35,13 +36,6 @@ function LoginForm() {
     }
   };
 
-  const inp = "w-full px-4 py-3 rounded-xl text-sm outline-none transition-colors";
-  const inpStyle = {
-    background: "var(--surface2)",
-    border: "1px solid var(--border)",
-    color: "var(--text)",
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center p-4"
       style={{ background: "var(--bg)" }}>
@@ -52,7 +46,7 @@ function LoginForm() {
 
         {trialCreated && (
           <div className="mb-4 px-4 py-3 rounded-xl text-sm"
-            style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", color: "#4ade80" }}>
+            style={{ background: "color-mix(in srgb, var(--success) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--success) 35%, transparent)", color: "var(--success)" }}>
             Conta criada com sucesso! Faça login para iniciar seu teste gratuito de 7 dias.
           </div>
         )}
@@ -73,16 +67,12 @@ function LoginForm() {
             <div>
               <label className="text-xs uppercase tracking-wider mb-1.5 block"
                 style={{ color: "var(--text3)" }}>Usuário</label>
-              <input
+              <Input
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="seu@email.com"
                 required
-                className={inp}
-                style={inpStyle}
-                onFocus={e => (e.target.style.borderColor = "var(--gold)")}
-                onBlur={e => (e.target.style.borderColor = "var(--border)")}
               />
             </div>
 
@@ -91,15 +81,12 @@ function LoginForm() {
               <label className="text-xs uppercase tracking-wider mb-1.5 block"
                 style={{ color: "var(--text3)" }}>Senha</label>
               <div className="relative">
-                <input
+                <Input
                   type={showPass ? "text" : "password"}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
-                  className={inp + " pr-12"}
-                  style={inpStyle}
-                  onFocus={e => (e.target.style.borderColor = "var(--gold)")}
-                  onBlur={e => (e.target.style.borderColor = "var(--border)")}
+                  className="pr-12"
                 />
                 <button
                   type="button"
@@ -146,7 +133,7 @@ function LoginForm() {
 
             {error && (
               <div className="text-sm px-4 py-2.5 rounded-lg"
-                style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
+                style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--danger) 35%, transparent)", color: "var(--danger)" }}>
                 {error}
               </div>
             )}

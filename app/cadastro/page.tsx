@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { Input } from "@/components/ui";
 
 const PLANS = [
   {
@@ -86,9 +87,6 @@ export default function CadastroPage() {
     const url = `${planSelecionado.paymentLink}?prefilled_email=${encodeURIComponent(email)}&client_reference_id=${userId}`;
     window.location.href = url;
   };
-
-  const inp = "w-full px-4 py-3 rounded-xl text-sm outline-none transition-colors";
-  const inpStyle = { background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" };
 
   return (
     <div className="min-h-screen py-12 px-4" style={{ background: "var(--bg)" }}>
@@ -209,41 +207,31 @@ export default function CadastroPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Nome completo *</label>
-                  <input value={nome} onChange={e => setNome(e.target.value)} required
-                    placeholder="Nome completo" className={inp} style={inpStyle}
-                    onFocus={e => (e.target.style.borderColor = "var(--gold)")}
-                    onBlur={e => (e.target.style.borderColor = "var(--border)")} />
+                  <Input value={nome} onChange={e => setNome(e.target.value)} required
+                    placeholder="Nome completo" />
                 </div>
                 <div>
                   <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Nome do escritório *</label>
-                  <input value={nomeEscritorio} onChange={e => setNomeEscritorio(e.target.value)} required
-                    placeholder="Sobrenome & Associados Advocacia" className={inp} style={inpStyle}
-                    onFocus={e => (e.target.style.borderColor = "var(--gold)")}
-                    onBlur={e => (e.target.style.borderColor = "var(--border)")} />
+                  <Input value={nomeEscritorio} onChange={e => setNomeEscritorio(e.target.value)} required
+                    placeholder="Sobrenome & Associados Advocacia" />
                 </div>
                 <div>
                   <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>E-mail *</label>
-                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                    placeholder="nome@escritorio.com" autoComplete="email" className={inp} style={inpStyle}
-                    onFocus={e => (e.target.style.borderColor = "var(--gold)")}
-                    onBlur={e => (e.target.style.borderColor = "var(--border)")} />
+                  <Input type="email" value={email} onChange={e => setEmail(e.target.value)} required
+                    placeholder="nome@escritorio.com" autoComplete="email" />
                 </div>
                 <div>
                   <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Telefone</label>
-                  <input type="tel" value={telefone} onChange={e => setTelefone(e.target.value)}
-                    placeholder="(11) 99999-9999" className={inp} style={inpStyle}
-                    onFocus={e => (e.target.style.borderColor = "var(--gold)")}
-                    onBlur={e => (e.target.style.borderColor = "var(--border)")} />
+                  <Input type="tel" value={telefone} onChange={e => setTelefone(e.target.value)}
+                    placeholder="(11) 99999-9999" />
                 </div>
                 <div>
                   <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Senha *</label>
                   <div className="relative">
-                    <input type={showSenha ? "text" : "password"} value={senha}
+                    <Input type={showSenha ? "text" : "password"} value={senha}
                       onChange={e => setSenha(e.target.value)} required minLength={6}
                       placeholder="Mínimo 6 caracteres" autoComplete="new-password"
-                      className={inp + " pr-12"} style={inpStyle}
-                      onFocus={e => (e.target.style.borderColor = "var(--gold)")}
-                      onBlur={e => (e.target.style.borderColor = "var(--border)")} />
+                      className="pr-12" />
                     <button type="button" onClick={() => setShowSenha(!showSenha)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
                       style={{ color: "var(--text3)" }} tabIndex={-1}>
@@ -259,12 +247,10 @@ export default function CadastroPage() {
                 <div>
                   <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Confirmar senha *</label>
                   <div className="relative">
-                    <input type={showConfirm ? "text" : "password"} value={confirmSenha}
+                    <Input type={showConfirm ? "text" : "password"} value={confirmSenha}
                       onChange={e => setConfirmSenha(e.target.value)} required
                       placeholder="Repita a senha" autoComplete="new-password"
-                      className={inp + " pr-12"} style={inpStyle}
-                      onFocus={e => (e.target.style.borderColor = "var(--gold)")}
-                      onBlur={e => (e.target.style.borderColor = "var(--border)")} />
+                      className="pr-12" />
                     <button type="button" onClick={() => setShowConfirm(!showConfirm)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
                       style={{ color: "var(--text3)" }} tabIndex={-1}>
@@ -297,7 +283,7 @@ export default function CadastroPage() {
 
                 {error && (
                   <div className="text-sm px-4 py-2.5 rounded-lg"
-                    style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
+                    style={{ background: "color-mix(in srgb, var(--danger) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--danger) 35%, transparent)", color: "var(--danger)" }}>
                     {error}
                   </div>
                 )}
