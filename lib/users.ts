@@ -5,9 +5,11 @@ import bcrypt from "bcryptjs";
 export type { Plan, Role } from "./plans";
 export { PLAN_FEATURES, canAccess, canExport } from "./plans";
 import type { Plan, Role } from "./plans";
-import { dbGet, dbSet, dbInit, hasDb } from "./db";
+import { dbGet, dbSet, dbInit, hasDb, getSql } from "./db";
 
-const USERS_DB_KEY = "users_global";
+// Chave legada do blob em kv_store — mantida só para a rota de migração (lib/users.ts não lê
+// mais dela; ver upsertUserRow/getUsersAsync acima, que já usam a tabela relacional `users`).
+export const USERS_DB_KEY = "users_global";
 
 export type SubscriptionStatus = "trial" | "active" | "expired" | "cancelled" | "pending";
 
@@ -131,42 +133,115 @@ export function deleteUser(id: string): boolean {
 }
 
 // ── Async versions (usam Neon em produção, arquivo em dev) ───────────────────
+//
+// Tabela relacional `users` (lib/schema.ts), uma linha por usuário — substitui o antigo blob
+// único `kv_store.users_global`, onde qualquer gravação lia o array inteiro e reescrevia o
+// array inteiro, então duas escritas concorrentes (dois cadastros, ou um webhook do Stripe
+// rodando junto de uma edição de perfil) podiam se apagar mutuamente. Cada função abaixo agora
+// lê/grava só a própria linha por `id`, então updates em usuários diferentes nunca se tocam.
 
-function migrateUser(u: Partial<User> & { id: string }): User {
-  return { subscriptionStatus: "active" as SubscriptionStatus, isActive: true, ...u } as User;
+function jsonbOrNull(v: unknown): string | null {
+  return v === undefined ? null : JSON.stringify(v);
+}
+
+function rowToUser(r: Record<string, unknown>): User {
+  return {
+    id: r.id as string,
+    name: r.name as string,
+    email: r.email as string,
+    password: r.password as string,
+    role: r.role as Role,
+    plan: r.plan as Plan,
+    avatar: r.avatar as string,
+    createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : (r.created_at as string),
+    phone: (r.phone as string | null) ?? undefined,
+    oab: (r.oab as OABEntry[] | null) ?? undefined,
+    company: (r.company as Company | null) ?? undefined,
+    subscriptionStatus: r.subscription_status as SubscriptionStatus,
+    trialEndsAt: r.trial_ends_at instanceof Date ? r.trial_ends_at.toISOString() : (r.trial_ends_at as string | null) ?? undefined,
+    stripeCustomerId: (r.stripe_customer_id as string | null) ?? undefined,
+    stripeSubscriptionId: (r.stripe_subscription_id as string | null) ?? undefined,
+    theme: (r.theme as User["theme"] | null) ?? undefined,
+    permissions: (r.permissions as string[] | null) ?? undefined,
+    isActive: r.is_active as boolean,
+    tenantId: (r.tenant_id as string | null) ?? undefined,
+    sexo: (r.sexo as User["sexo"] | null) ?? undefined,
+    cargo: (r.cargo as User["cargo"] | null) ?? undefined,
+    googleCalendar: (r.google_calendar as User["googleCalendar"] | null) ?? undefined,
+  };
+}
+
+// INSERT ... ON CONFLICT (id) DO UPDATE — serve tanto criar quanto atualizar uma linha inteira,
+// sempre por `id`, nunca tocando nas linhas de outros usuários.
+// Exportado só para a rota de migração (app/api/master/migrate-users) reaproveitar a mesma
+// gravação linha-a-linha usada pelo resto deste arquivo, em vez de duplicar o INSERT.
+export async function upsertUserRow(user: User): Promise<void> {
+  const sql = getSql()!;
+  await sql`
+    INSERT INTO users (id, name, email, password, role, plan, avatar, created_at, phone, oab, company,
+      subscription_status, trial_ends_at, stripe_customer_id, stripe_subscription_id, theme, permissions,
+      is_active, tenant_id, sexo, cargo, google_calendar, raw)
+    VALUES (${user.id}, ${user.name}, ${user.email}, ${user.password}, ${user.role}, ${user.plan}, ${user.avatar},
+      ${user.createdAt}, ${user.phone ?? null}, ${jsonbOrNull(user.oab)}, ${jsonbOrNull(user.company)},
+      ${user.subscriptionStatus}, ${user.trialEndsAt ?? null}, ${user.stripeCustomerId ?? null}, ${user.stripeSubscriptionId ?? null},
+      ${user.theme ?? null}, ${jsonbOrNull(user.permissions)}, ${user.isActive}, ${user.tenantId ?? null},
+      ${user.sexo ?? null}, ${user.cargo ?? null}, ${jsonbOrNull(user.googleCalendar)}, ${jsonbOrNull(user)})
+    ON CONFLICT (id) DO UPDATE SET
+      name = EXCLUDED.name, email = EXCLUDED.email, password = EXCLUDED.password, role = EXCLUDED.role,
+      plan = EXCLUDED.plan, avatar = EXCLUDED.avatar, phone = EXCLUDED.phone, oab = EXCLUDED.oab,
+      company = EXCLUDED.company, subscription_status = EXCLUDED.subscription_status,
+      trial_ends_at = EXCLUDED.trial_ends_at, stripe_customer_id = EXCLUDED.stripe_customer_id,
+      stripe_subscription_id = EXCLUDED.stripe_subscription_id, theme = EXCLUDED.theme,
+      permissions = EXCLUDED.permissions, is_active = EXCLUDED.is_active, tenant_id = EXCLUDED.tenant_id,
+      sexo = EXCLUDED.sexo, cargo = EXCLUDED.cargo, google_calendar = EXCLUDED.google_calendar, raw = EXCLUDED.raw
+  `;
 }
 
 export async function getUsersAsync(): Promise<User[]> {
   if (hasDb()) {
     await dbInit();
-    const d = await dbGet<User[]>(USERS_DB_KEY);
-    if (d) return d.map(migrateUser);
-    // Primeira vez: semeia com os usuários do arquivo (admins criados no setup)
+    const sql = getSql()!;
+    const rows = await sql`SELECT * FROM users` as Record<string, unknown>[];
+    if (rows.length > 0) return rows.map(rowToUser);
+    // Primeira vez (tabela vazia): semeia com os usuários do arquivo local (admins do setup).
+    // Não é o caminho da migração real — isso é feito uma vez, sob demanda, a partir do blob
+    // kv_store.users_global já existente (ver rota de migração).
     const fromFile = getUsers();
-    await dbSet(USERS_DB_KEY, fromFile);
+    for (const u of fromFile) await upsertUserRow(u);
     return fromFile;
   }
   return getUsers();
 }
 
+// Upsert em lote por id — usado hoje só por app/api/admin/setup-escritorio/route.ts (ferramenta
+// de correção em massa). Cada usuário grava só a própria linha; nunca reescreve a tabela inteira.
 export async function saveUsersAsync(users: User[]): Promise<void> {
   if (hasDb()) {
     await dbInit();
-    const ok = await dbSet(USERS_DB_KEY, users);
-    if (!ok) throw new Error("Falha ao salvar usuários no banco de dados");
+    for (const user of users) await upsertUserRow(user);
     return;
   }
   saveUsers(users);
 }
 
 export async function getUserByIdAsync(id: string): Promise<User | null> {
-  const users = await getUsersAsync();
-  return users.find(u => u.id === id) ?? null;
+  if (hasDb()) {
+    await dbInit();
+    const sql = getSql()!;
+    const rows = await sql`SELECT * FROM users WHERE id = ${id}` as Record<string, unknown>[];
+    return rows[0] ? rowToUser(rows[0]) : null;
+  }
+  return getUsers().find(u => u.id === id) ?? null;
 }
 
 export async function getUserByEmailAsync(email: string): Promise<User | null> {
-  const users = await getUsersAsync();
-  return users.find(u => u.email === email) ?? null;
+  if (hasDb()) {
+    await dbInit();
+    const sql = getSql()!;
+    const rows = await sql`SELECT * FROM users WHERE email = ${email}` as Record<string, unknown>[];
+    return rows[0] ? rowToUser(rows[0]) : null;
+  }
+  return getUsers().find(u => u.email === email) ?? null;
 }
 
 // O dono do escritório é o usuário que originou o tenant (tenantId = t_<seu próprio id>,
@@ -185,30 +260,49 @@ export async function getTenantUsersAsync(currentUser: Pick<User, "id" | "tenant
 }
 
 export async function updateUserAsync(id: string, data: Partial<Omit<User, "id">>): Promise<User | null> {
-  const users = await getUsersAsync();
+  const current = await getUserByIdAsync(id);
+  if (!current) return null;
+  const merged: User = { ...current, ...data };
+  if (hasDb()) {
+    await dbInit();
+    await upsertUserRow(merged);
+    return merged;
+  }
+  const users = getUsers();
   const idx = users.findIndex(u => u.id === id);
   if (idx === -1) return null;
-  users[idx] = { ...users[idx], ...data };
-  await saveUsersAsync(users);
-  return users[idx];
+  users[idx] = merged;
+  saveUsers(users);
+  return merged;
 }
 
 export async function createUserAsync(data: Omit<User, "id" | "createdAt">): Promise<User> {
-  const users = await getUsersAsync();
   const hashedPassword = data.password && !data.password.startsWith("$2")
     ? await bcrypt.hash(data.password, 10)
     : data.password;
   const user: User = { ...data, password: hashedPassword, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
+  if (hasDb()) {
+    await dbInit();
+    await upsertUserRow(user);
+    return user;
+  }
+  const users = getUsers();
   users.push(user);
-  await saveUsersAsync(users);
+  saveUsers(users);
   return user;
 }
 
 export async function deleteUserAsync(id: string): Promise<boolean> {
-  const users = await getUsersAsync();
+  if (hasDb()) {
+    await dbInit();
+    const sql = getSql()!;
+    const rows = await sql`DELETE FROM users WHERE id = ${id} RETURNING id` as unknown[];
+    return rows.length > 0;
+  }
+  const users = getUsers();
   const next = users.filter(u => u.id !== id);
   if (next.length === users.length) return false;
-  await saveUsersAsync(next);
+  saveUsers(next);
   return true;
 }
 

@@ -305,4 +305,32 @@ export async function initSchema(sql: Sql): Promise<void> {
   await sql`CREATE INDEX IF NOT EXISTS idx_publicacoes_tenant ON publicacoes (tenant_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_publicacoes_tratada ON publicacoes (tenant_id, tratada)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_publicacoes_oab ON publicacoes (tenant_id, oab_uf, oab_numero)`;
+
+  // ── usuários (auth, plano, Stripe) ────────────────────────────────────────
+  // Substitui o blob único `kv_store.users_global` (lib/users.ts), que serializava TODOS os
+  // usuários de TODOS os tenants sob uma única chave — qualquer duas escritas concorrentes
+  // (dois cadastros, ou um webhook do Stripe rodando junto de uma edição de perfil) liam o
+  // mesmo estado antes de gravar, e a segunda gravação apagava a primeira por inteiro. Aqui
+  // cada usuário é uma linha própria: updates concorrentes em usuários diferentes não se tocam.
+  // `id` não é escopado por tenant_id porque login busca por id/email globalmente (a sessão só
+  // sabe o id do usuário, não o tenant, até carregar esta linha) — mesma chave usada em toda a
+  // base desde sempre (String(Date.now()) ou crypto.randomUUID(), já únicas globalmente).
+  await sql`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL DEFAULT '', email TEXT NOT NULL DEFAULT '', password TEXT NOT NULL DEFAULT '',
+      role TEXT NOT NULL DEFAULT 'user', plan TEXT NOT NULL DEFAULT 'basic', avatar TEXT NOT NULL DEFAULT '',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      phone TEXT, oab JSONB, company JSONB,
+      subscription_status TEXT NOT NULL DEFAULT 'active', trial_ends_at TIMESTAMPTZ,
+      stripe_customer_id TEXT, stripe_subscription_id TEXT,
+      theme TEXT, permissions JSONB,
+      is_active BOOLEAN NOT NULL DEFAULT TRUE, tenant_id TEXT,
+      sexo TEXT, cargo TEXT, google_calendar JSONB,
+      raw JSONB NOT NULL DEFAULT '{}'
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS idx_users_email ON users (email)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_users_tenant ON users (tenant_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_users_stripe_customer ON users (stripe_customer_id)`;
 }
