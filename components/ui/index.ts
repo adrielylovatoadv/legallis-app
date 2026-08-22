@@ -1,4 +1,5 @@
 export { Input } from "./Input";
+export { Badge } from "./Badge";
 export { CurrencyInput } from "./CurrencyInput";
 export { Select } from "./Select";
 export { FieldLabel } from "./FieldLabel";

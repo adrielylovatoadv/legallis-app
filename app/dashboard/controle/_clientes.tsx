@@ -13,7 +13,7 @@ import {
   generateDeclaracaoIsencaoIRDocx, generateDeclaracaoHipossuficienciaDocx,
   type AdvogadoDoc,
 } from "@/lib/document-templates";
-import { Input as Inp, Select as Sel, FieldLabel as Lbl } from "@/components/ui";
+import { Input as Inp, Select as Sel, FieldLabel as Lbl, Badge } from "@/components/ui";
 
 type ClienteComProcs = Cliente & { _ativos?: Processo[]; _finalizados?: Processo[]; _iniciais?: Inicial[]; _atendimentos?: Atendimento[] };
 
@@ -360,7 +360,7 @@ function ClienteCard({ c, advogados, onEdit, onDelete }: {
                       <span className="font-mono" style={{ color:"var(--text3)" }}>{p.numero_processo}</span>
                       {p.objeto && <span style={{ color:"var(--text2)" }}> — {p.objeto.slice(0,60)}</span>}
                       <span className="ml-2">
-                        <span className={`px-1.5 py-0.5 rounded ${badgeAndamento(p.andamento)}`}>{p.andamento}</span>
+                        <Badge size="sm" className={badgeAndamento(p.andamento)}>{p.andamento}</Badge>
                       </span>
                     </div>
                     {p.data && <span className="whitespace-nowrap" style={{ color:"var(--text3)" }}>{fmtData(p.data)}</span>}
@@ -397,7 +397,7 @@ function ClienteCard({ c, advogados, onEdit, onDelete }: {
                     <span>📝</span>
                     <span>{i.reu}</span>
                     {i.objeto && <span style={{ color:"var(--text3)" }}>— {i.objeto.slice(0,40)}</span>}
-                    <span className={`px-1.5 py-0.5 rounded ${badgeAndamento(i.andamento)}`}>{i.andamento}</span>
+                    <Badge size="sm" className={badgeAndamento(i.andamento)}>{i.andamento}</Badge>
                   </div>
                 ))}
               </div>
@@ -419,7 +419,7 @@ function ClienteCard({ c, advogados, onEdit, onDelete }: {
                         {a.observacoes && <span style={{ color:"var(--text2)" }}> — {a.observacoes.slice(0,60)}</span>}
                         {a.responsavel && <span className="ml-2" style={{ color:"var(--text3)" }}>👤 {a.responsavel}</span>}
                       </div>
-                      <span className={`px-1.5 py-0.5 rounded whitespace-nowrap ${badgeStatusAtendimento(a.status)}`}>{a.status}</span>
+                      <Badge size="sm" className={badgeStatusAtendimento(a.status)}>{a.status}</Badge>
                     </div>
                   ))}
               </div>

@@ -10,7 +10,7 @@ import {
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { DateField } from "@/components/ui/DateField";
 import { Dialog } from "@/components/ui/Dialog";
-import { Input, FieldLabel as Label, Select as SelectField } from "@/components/ui";
+import { Input, Badge, FieldLabel as Label, Select as SelectField } from "@/components/ui";
 
 // ── datas (sem biblioteca externa) ─────────────────────────────────────────────
 function isoToDate(iso: string): Date {
@@ -271,7 +271,7 @@ export function AtendimentosTab({ onVerCliente }: { onVerCliente?: (nome: string
           <div className="flex items-center gap-2 flex-wrap">
             {eHoje && <span title="Hoje">⏰</span>}
             <span className="font-medium text-sm truncate" style={{ color: "var(--text)" }}>{a.cliente}</span>
-            <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${badgeStatusAtendimento(a.status)}`}>{a.status}</span>
+            <Badge className={badgeStatusAtendimento(a.status)}>{a.status}</Badge>
           </div>
           <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>
             {a.forma}{a.telefone && ` · ${a.telefone}`}

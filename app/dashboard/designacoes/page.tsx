@@ -8,7 +8,7 @@ import {
   ANDAMENTOS_PROCESSO,
   type Processo, type Inicial,
 } from "@/lib/controle";
-import { Card, MetricCard, Input as Inp, FieldLabel as Lbl } from "@/components/ui";
+import { Card, MetricCard, Input as Inp, FieldLabel as Lbl, Badge } from "@/components/ui";
 
 // ── Modal cadastrar processo a partir de inicial ─────────────────────────────
 function ModalCadastroProcesso({ initialData, onClose, onSaved, responsaveis = [] }: {
@@ -492,7 +492,7 @@ export default function DesignacoesPage() {
                     {[i.reu, i.objeto].filter(Boolean).join(" · ")}
                   </p>
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${badgeAndamento(i.andamento)}`}>{i.andamento}</span>
+                <Badge className={badgeAndamento(i.andamento)}>{i.andamento}</Badge>
                 <div className="flex gap-1 shrink-0">
                   <button onClick={() => handleConcluir("inicial", i.id)}
                     className="text-xs px-2 py-1 rounded font-semibold"
@@ -531,7 +531,7 @@ function ProcessoRow({ p, onOk, onEdit, showDate = false, onConcluir, onRedesign
           </p>
           <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>
             {p.objeto && <span>{p.objeto} · </span>}
-            <span className={`font-medium ${badgeAndamento(p.andamento)}`}>{p.andamento}</span>
+            <Badge size="sm" className={`font-medium ${badgeAndamento(p.andamento)}`}>{p.andamento}</Badge>
             {showDate && p.data && <span className="ml-2" style={{ color: "var(--gold)" }}>{fmtData(p.data)}{p.hora && ` ${p.hora}`}</span>}
           </p>
           {p.numero_processo && (

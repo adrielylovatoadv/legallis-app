@@ -8,7 +8,7 @@ import {
 } from "@/lib/controle";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { DateField } from "@/components/ui/DateField";
-import { Input, FieldLabel as Label, Select as SelectField } from "@/components/ui";
+import { Input, Badge, FieldLabel as Label, Select as SelectField } from "@/components/ui";
 
 function InicialForm({ initial, onSave, onCancel, responsaveis = [] }: {
   initial?: Partial<Inicial>; onSave: (i: Omit<Inicial,"id"|"criado_em">) => Promise<void>; onCancel: () => void; responsaveis?: string[];
@@ -178,7 +178,7 @@ export function IniciaisTab() {
                         {fmtData(i.data)}{i.hora && ` ${i.hora}`}
                       </span>
                     )}
-                    <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${badgeAndamento(i.andamento)}`}>{i.andamento}</span>
+                    <Badge className={badgeAndamento(i.andamento)}>{i.andamento}</Badge>
                     {isInicialPendente(i) && (
                       <button onClick={() => setProtocolando(i)}
                         className="text-xs px-2 py-1 rounded font-semibold"

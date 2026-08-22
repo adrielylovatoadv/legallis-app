@@ -12,7 +12,7 @@ import { IniciaisTab } from "./_iniciais";
 import { ClientesTab } from "./_clientes";
 import { FinalizadosTab } from "./_finalizados";
 import { AtendimentosTab } from "./_atendimentos";
-import { Card, MetricCard as MetricCardBase } from "@/components/ui";
+import { Card, MetricCard as MetricCardBase, Badge } from "@/components/ui";
 import { DateField } from "@/components/ui/DateField";
 import { hasControleRestrito } from "@/lib/acl";
 
@@ -36,9 +36,9 @@ function ProcessoCard({ p, onOk, onEdit }: {
       {/* Andamento em destaque no topo */}
       {p.andamento && (
         <div className="mb-1.5">
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${badgeAndamento(p.andamento)}`}>
+          <Badge className={`font-semibold ${badgeAndamento(p.andamento)}`}>
             {p.andamento}
-          </span>
+          </Badge>
         </div>
       )}
       <div className="flex items-start justify-between gap-2">
@@ -242,7 +242,7 @@ function VisaoGeral() {
                   style={{ background: "var(--surface2)" }}>
                   <span className="text-xs font-medium flex-1 truncate" style={{ color: "var(--text)" }}>{a.cliente}</span>
                   <span className="text-xs whitespace-nowrap" style={{ color: "var(--text3)" }}>{fmtData(a.data)}{a.hora && ` ${a.hora}`}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${badgeStatusAtendimento(a.status)}`}>{a.status}</span>
+                  <Badge className={badgeStatusAtendimento(a.status)}>{a.status}</Badge>
                   {url && (
                     <a href={url} target="_blank" rel="noopener noreferrer"
                       className="text-xs px-2 py-0.5 rounded whitespace-nowrap"

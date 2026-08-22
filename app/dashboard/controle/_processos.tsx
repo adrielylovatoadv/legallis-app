@@ -7,7 +7,7 @@ import {
   type Processo,
 } from "@/lib/controle";
 import { DateField } from "@/components/ui/DateField";
-import { Input as Inp, Select as Sel, FieldLabel as Lbl } from "@/components/ui";
+import { Input as Inp, Select as Sel, FieldLabel as Lbl, Badge } from "@/components/ui";
 import { FinanceiroPanel } from "./_financeiro-panel";
 
 const POR_PAGINA = 50;
@@ -204,9 +204,9 @@ function ProcessoRow({ p, onEdit, onDelete, onOk }: {
       </td>
       <td className="py-2 pr-3">
         {p.andamento && (
-          <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${badgeAndamento(p.andamento)}`}>
+          <Badge className={badgeAndamento(p.andamento)}>
             {p.andamento}
-          </span>
+          </Badge>
         )}
         {url
           ? <a href={url} target="_blank" rel="noopener noreferrer"
@@ -269,9 +269,9 @@ function ProcessoCardMobile({ p, onEdit, onDelete, onOk }: {
           {p.numero_processo && <p className="text-xs mt-0.5 font-mono" style={{ color:"var(--text3)" }}>{p.numero_processo}</p>}
         </div>
         {p.andamento && (
-          <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${badgeAndamento(p.andamento)}`}>
+          <Badge className={`shrink-0 ${badgeAndamento(p.andamento)}`}>
             {p.andamento}
-          </span>
+          </Badge>
         )}
       </div>
 
