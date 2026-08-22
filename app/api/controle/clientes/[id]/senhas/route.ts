@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { hasFinanceiroAccess } from "@/lib/acl";
 import * as clientesRepo from "@/lib/repo/clientes";
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  if (!hasFinanceiroAccess(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para ver senhas do cliente" }, { status: 403 });
   const tid = session.user.tenantId;
   const { id } = await params;
   const cliente = await clientesRepo.get(tid, id);

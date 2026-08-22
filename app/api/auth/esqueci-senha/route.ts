@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserByEmailAsync, createResetToken } from "@/lib/users";
+import { getUserByEmailAsync, createResetTokenAsync } from "@/lib/users";
 import { sendPasswordReset } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   // Always return success to avoid email enumeration
   if (!user) return NextResponse.json({ ok: true });
 
-  const token = createResetToken(email);
+  const token = await createResetTokenAsync(email);
   const resetUrl = `${process.env.NEXTAUTH_URL}/redefinir-senha?token=${token}`;
 
   await sendPasswordReset(email, resetUrl);

@@ -31,7 +31,8 @@ export function decryptField(text: string): string {
     const decipher = createDecipheriv("aes-256-gcm", key, Buffer.from(ivHex, "hex"));
     decipher.setAuthTag(Buffer.from(tagHex, "hex"));
     return decipher.update(Buffer.from(dataHex, "hex")).toString("utf8") + decipher.final("utf8");
-  } catch {
+  } catch (err) {
+    console.error("[crypto] Falha ao decriptar campo (chave rotacionada ou dado corrompido):", err);
     return ""; // falha de integridade — retorna vazio em vez de vazar dado corrompido
   }
 }

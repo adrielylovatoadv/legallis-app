@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { consumeResetToken, getUserByEmailAsync, updateUserAsync } from "@/lib/users";
+import { consumeResetTokenAsync, getUserByEmailAsync, updateUserAsync } from "@/lib/users";
 import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   if (!token || !password || password.length < 6) {
     return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
   }
-  const email = consumeResetToken(token);
+  const email = await consumeResetTokenAsync(token);
   if (!email) {
     return NextResponse.json({ error: "Link inválido ou expirado" }, { status: 400 });
   }

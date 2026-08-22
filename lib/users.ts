@@ -238,20 +238,40 @@ function saveTokens(tokens: ResetToken[]): void {
   fs.writeFileSync(TOKENS_FILE, JSON.stringify(tokens, null, 2));
 }
 
-export function createResetToken(email: string): string {
+const RESET_TOKENS_DB_KEY = "reset_tokens_global";
+
+async function getTokensAsync(): Promise<ResetToken[]> {
+  if (hasDb()) {
+    await dbInit();
+    return (await dbGet<ResetToken[]>(RESET_TOKENS_DB_KEY)) ?? [];
+  }
+  return getTokens();
+}
+
+async function saveTokensAsync(tokens: ResetToken[]): Promise<void> {
+  if (hasDb()) {
+    await dbInit();
+    const ok = await dbSet(RESET_TOKENS_DB_KEY, tokens);
+    if (!ok) throw new Error("Falha ao salvar token de redefinição de senha no banco de dados");
+    return;
+  }
+  saveTokens(tokens);
+}
+
+export async function createResetTokenAsync(email: string): Promise<string> {
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString();
-  const tokens = getTokens().filter(t => t.email !== email);
+  const tokens = (await getTokensAsync()).filter(t => t.email !== email);
   tokens.push({ token, email, expiresAt });
-  saveTokens(tokens);
+  await saveTokensAsync(tokens);
   return token;
 }
 
-export function consumeResetToken(token: string): string | null {
-  const tokens = getTokens();
+export async function consumeResetTokenAsync(token: string): Promise<string | null> {
+  const tokens = await getTokensAsync();
   const t = tokens.find(t => t.token === token);
   if (!t) return null;
   if (new Date(t.expiresAt) < new Date()) return null;
-  saveTokens(tokens.filter(x => x.token !== token));
+  await saveTokensAsync(tokens.filter(x => x.token !== token));
   return t.email;
 }
