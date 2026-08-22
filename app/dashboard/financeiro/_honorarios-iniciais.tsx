@@ -29,8 +29,8 @@ export function HonIniciaisView({ reload }: { reload: () => void }) {
     <div className="space-y-4">
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <MetricCard label="Total" value={recebido + pendente} color="var(--gold)" />
-        <MetricCard label="Recebido" value={recebido} color="#22c55e" />
-        <MetricCard label="Pendente" value={pendente} color="#ef4444" />
+        <MetricCard label="Recebido" value={recebido} color="var(--success)" />
+        <MetricCard label="Pendente" value={pendente} color="var(--danger)" />
       </div>
       <div className="flex justify-between items-center">
         <span className="text-sm" style={{ color:"var(--text3)" }}>{list.length} registros</span>

@@ -6,11 +6,11 @@ export function DashView({ data }: { data: DashFinanceiro }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <MetricCard label="Honorários Recebidos" value={data.total_recebido} color="#22c55e" />
-        <MetricCard label="Pendente de Recebimento" value={data.total_pendente} color="#ef4444" />
-        <MetricCard label="Desp. Fixas" value={data.total_fixas} color="#f97316" />
+        <MetricCard label="Honorários Recebidos" value={data.total_recebido} color="var(--success)" />
+        <MetricCard label="Pendente de Recebimento" value={data.total_pendente} color="var(--danger)" />
+        <MetricCard label="Desp. Fixas" value={data.total_fixas} color="var(--warning)" />
         <MetricCard label="Desp. Variáveis" value={data.total_variaveis} color="#a78bfa" />
-        <MetricCard label="Saldo Líquido" value={data.saldo} color={data.saldo >= 0 ? "#C9A84C" : "#ef4444"} />
+        <MetricCard label="Saldo Líquido" value={data.saldo} color={data.saldo >= 0 ? "var(--gold)" : "var(--danger)"} />
       </div>
 
       {data.resumo_mes.length > 0 && (

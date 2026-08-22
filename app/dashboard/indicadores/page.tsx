@@ -59,10 +59,10 @@ export default function IndicadoresPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard value={data.total_processos_ativos} label="Processos ativos" color="#C9A84C" />
-        <MetricCard value={data.total_clientes} label="Clientes cadastrados" color="#22c55e" />
-        <MetricCard value={data.processos_por_responsavel.length} label="Responsáveis com casos ativos" color="#60a5fa" />
-        <MetricCard value={data.iniciais_por_responsavel.reduce((s, r) => s + r.valor, 0)} label="Iniciais pendentes" color="#f87171" />
+        <MetricCard value={data.total_processos_ativos} label="Processos ativos" color="var(--gold)" />
+        <MetricCard value={data.total_clientes} label="Clientes cadastrados" color="var(--success)" />
+        <MetricCard value={data.processos_por_responsavel.length} label="Responsáveis com casos ativos" color="var(--info)" />
+        <MetricCard value={data.iniciais_por_responsavel.reduce((s, r) => s + r.valor, 0)} label="Iniciais pendentes" color="var(--warning)" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

@@ -61,9 +61,9 @@ export function AcordosView({ reload }: { reload: () => void }) {
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricCard label="Total" value={total} color="var(--gold)" />
-        <MetricCard label="Recebido" value={recebido} color="#22c55e" />
-        <MetricCard label="Pendente" value={pendente} color="#ef4444" />
-        <MetricCard label="A Repassar ao Cliente" value={repasse} color="#f59e0b" />
+        <MetricCard label="Recebido" value={recebido} color="var(--success)" />
+        <MetricCard label="Pendente" value={pendente} color="var(--danger)" />
+        <MetricCard label="A Repassar ao Cliente" value={repasse} color="var(--warning)" />
       </div>
       <div className="flex justify-between items-center">
         <span className="text-sm" style={{ color: "var(--text3)" }}>

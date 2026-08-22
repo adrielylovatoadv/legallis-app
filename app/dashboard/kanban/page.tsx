@@ -11,8 +11,8 @@ import { DateField } from "@/components/ui/DateField";
 
 const COR_COLUNA: Record<StatusTarefa, string> = {
   a_fazer: "var(--text3)",
-  fazendo: "#60a5fa",
-  concluido: "#4ade80",
+  fazendo: "var(--info)",
+  concluido: "var(--success)",
 };
 
 function TarefaForm({ initial, onSave, onCancel, onDelete, responsaveis, processos }: {
@@ -186,7 +186,7 @@ function TarefaCard({ t, onEdit, onMove }: {
   const emAndamentoOuConcluido = t.status === "fazendo" || t.status === "concluido";
   const atrasada = diasAte !== null && diasAte < 0 && !emAndamentoOuConcluido;
   const corPrazo = diasAte !== null
-    ? (atrasada || diasAte === 0 ? "#ef4444" : diasAte > 0 && diasAte <= 3 ? "#f97316" : "var(--text3)")
+    ? (atrasada || diasAte === 0 ? "var(--danger)" : diasAte > 0 && diasAte <= 3 ? "var(--warning)" : "var(--text3)")
     : undefined;
 
   return (

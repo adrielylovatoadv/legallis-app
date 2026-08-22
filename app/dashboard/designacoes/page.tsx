@@ -426,10 +426,10 @@ export default function DesignacoesPage() {
 
       {/* Métricas */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard value={meusProcessos.filter(p => !isFinalizado(p)).length} label="Processos ativos" color="#C9A84C" />
-        <MetricCard value={prazosHoje.length} label="Prazos hoje" color="#ef4444" />
-        <MetricCard value={prazos3d.length} label="Próximos 3 dias" color="#f97316" />
-        <MetricCard value={minhasIniciais.length} label="Iniciais designadas" color="#22c55e" />
+        <MetricCard value={meusProcessos.filter(p => !isFinalizado(p)).length} label="Processos ativos" color="var(--gold)" />
+        <MetricCard value={prazosHoje.length} label="Prazos hoje" color="var(--danger)" />
+        <MetricCard value={prazos3d.length} label="Próximos 3 dias" color="var(--warning)" />
+        <MetricCard value={minhasIniciais.length} label="Iniciais designadas" color="var(--success)" />
       </div>
 
       {/* Prazos hoje */}

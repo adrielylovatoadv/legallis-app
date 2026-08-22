@@ -222,10 +222,10 @@ function VisaoGeral() {
 
       {/* Métricas */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard value={data.prazos_hoje.length} label="Prazos Hoje" color="#f97316" />
-        <MetricCard value={data.prazos_3dias.length} label="Alertas — Próx. 3 dias" color="#ef4444" />
-        <MetricCard value={atendimentosHoje.length} label="Atendimentos Hoje" color="#C9A84C" />
-        <MetricCard value={data.total_clientes} label="Clientes Cadastrados" color="#22c55e" />
+        <MetricCard value={data.prazos_hoje.length} label="Prazos Hoje" color="var(--danger)" />
+        <MetricCard value={data.prazos_3dias.length} label="Alertas — Próx. 3 dias" color="var(--warning)" />
+        <MetricCard value={atendimentosHoje.length} label="Atendimentos Hoje" color="var(--gold)" />
+        <MetricCard value={data.total_clientes} label="Clientes Cadastrados" color="var(--success)" />
       </div>
 
       {/* Atendimentos agendados (resumo) */}

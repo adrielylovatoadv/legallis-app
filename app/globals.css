@@ -13,6 +13,11 @@
   --text3: #666666;
   --sidebar-width: 240px;
   --sidebar-collapsed: 64px;
+  /* Cores semânticas de status — usar em vez de hex/Tailwind soltos (ver auditoria visual) */
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #60a5fa;
 }
 
 html.light {
@@ -25,11 +30,19 @@ html.light {
   --text: #1A1714;
   --text2: #4A4540;
   --text3: #8A857E;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --info: #2563eb;
 }
 
 @theme inline {
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
 }
 
 * { box-sizing: border-box; }
