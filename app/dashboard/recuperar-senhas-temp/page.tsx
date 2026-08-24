@@ -51,12 +51,21 @@ export default function RecuperarSenhasTemp() {
         type="file"
         accept=".xlsm,.xlsx"
         onChange={e => setFile(e.target.files?.[0] ?? null)}
-        style={{ marginBottom: 16, display: "block" }}
+        style={{ marginBottom: 8, display: "block" }}
       />
+      <p style={{ fontSize: 13, color: file ? "var(--success)" : "var(--text3)", marginBottom: 16 }}>
+        {file ? `✓ Arquivo selecionado: ${file.name}` : "Nenhum arquivo selecionado ainda."}
+      </p>
       <button
         onClick={enviar}
         disabled={!file || loading}
-        style={{ background: "var(--gold)", color: "#000", padding: "10px 20px", borderRadius: 8, fontWeight: 600, border: "none", cursor: "pointer" }}
+        style={{
+          background: !file || loading ? "var(--surface2)" : "var(--gold)",
+          color: !file || loading ? "var(--text3)" : "#000",
+          padding: "10px 20px", borderRadius: 8, fontWeight: 600, border: "none",
+          cursor: !file || loading ? "not-allowed" : "pointer",
+          opacity: !file || loading ? 0.6 : 1,
+        }}
       >
         {loading ? "Processando..." : "Importar e recuperar"}
       </button>
