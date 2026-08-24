@@ -35,15 +35,26 @@ export async function POST(req: NextRequest) {
   const wb = XLSX.read(buf, { type: "buffer" });
   const sheetName = wb.SheetNames.find(n => n.toUpperCase() === "CLIENTES") ?? wb.SheetNames[0];
   const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1, defval: "" }) as unknown[][];
+  if (rows.length === 0) return NextResponse.json({ error: "Planilha vazia" }, { status: 400 });
+
+  // Acha as colunas pelo texto do cabeçalho (linha 1), não por posição fixa — a planilha pode
+  // ter colunas reordenadas/removidas entre uma exportação e outra.
+  const header = rows[0].map(h => String(h || "").trim().toUpperCase());
+  const colNome = header.findIndex(h => h === "NOME");
+  const colGov = header.findIndex(h => h.includes("SENHA GOV"));
+  const colSerasa = header.findIndex(h => h.includes("SENHA SERASA") || h.includes("RECLAME AQUI"));
+  if (colNome === -1 || (colGov === -1 && colSerasa === -1)) {
+    return NextResponse.json({ error: `Não achei as colunas esperadas no cabeçalho: ${JSON.stringify(rows[0])}` }, { status: 400 });
+  }
 
   const porNome = new Map<string, { senha_gov: string; senha_serasa: string; duplicado: boolean }>();
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
-    const nome = String(row[0] || "").trim();
+    const nome = String(row[colNome] || "").trim();
     if (!nome) continue;
     const key = normNome(nome);
-    const senha_gov = String(row[5] || "").trim();
-    const senha_serasa = String(row[6] || "").trim();
+    const senha_gov = colGov === -1 ? "" : String(row[colGov] || "").trim();
+    const senha_serasa = colSerasa === -1 ? "" : String(row[colSerasa] || "").trim();
     if (!senha_gov && !senha_serasa) continue;
     if (porNome.has(key)) {
       porNome.get(key)!.duplicado = true;
