@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 type Status = "idle" | "loading" | "success" | "error";
 
 const ABAS_MODELO = [
-  { nome: "Clientes", campos: "Nome *, CPF, Telefone, E-mail, Endereço, Tipo Aposentadoria, Informações" },
+  { nome: "Clientes", campos: "Nome *, CPF, Telefone, E-mail, Endereço, Tipo Aposentadoria, Informações, Senha Gov, Senha Serasa" },
   { nome: "Processos Ativos", campos: "Autor *, Réu, Objeto, Nº Processo, Data, Hora, Andamento, Responsável, Observações, Atenção" },
   { nome: "Iniciais", campos: "Cliente *, Réu, Objeto, Andamento, Responsável, Observações, Data, Hora" },
   { nome: "Finalizados", campos: "Tipo *, Cliente *, Réu, Nº Processo, Objeto, Data Finalização, Motivo — se Execução: também Valor Execução, Honorários, Repasse, Mês, Data Pagamento, Status (alimenta o módulo Financeiro automaticamente)" },

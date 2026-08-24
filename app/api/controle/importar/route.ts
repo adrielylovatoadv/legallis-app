@@ -90,6 +90,11 @@ export async function POST(req: NextRequest) {
     if (!nome) { erros.push(`Clientes linha ${i + 2}: Nome ausente`); continue; }
     const cpf = clean(r["CPF"] ?? "");
     const chave = `${nome.toUpperCase().trim()}|${cpf.replace(/\D/g,"")}`;
+    // Senha gov/Serasa só entram no merge se a célula vier preenchida — célula vazia numa
+    // reimportação nunca apaga uma senha já cadastrada (mesma lógica de preservação usada em
+    // lib/repo/clientes.ts).
+    const senhaGov = clean(r["Senha Gov"] ?? r["Senha Gov *"] ?? "");
+    const senhaSerasa = clean(r["Senha Serasa"] ?? r["Senha Serasa/Reclame Aqui"] ?? "");
     const fields = {
       nome,
       cpf,
@@ -98,6 +103,8 @@ export async function POST(req: NextRequest) {
       endereco:          clean(r["Endereço"] ?? r["Endereco"] ?? ""),
       tipo_aposentadoria: clean(r["Tipo Aposentadoria"] ?? ""),
       informacoes:       clean(r["Informações"] ?? r["Informacoes"] ?? ""),
+      ...(senhaGov ? { senha_gov: senhaGov } : {}),
+      ...(senhaSerasa ? { senha_serasa: senhaSerasa } : {}),
     };
     if (byNomeCpf.has(chave)) {
       Object.assign(byNomeCpf.get(chave)!, fields);

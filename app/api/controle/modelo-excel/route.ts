@@ -10,11 +10,11 @@ export async function GET() {
 
   // ── Clientes ──────────────────────────────────────────────────────────────
   const wsClientes = XLSX.utils.aoa_to_sheet([
-    ["Nome *", "CPF", "Telefone", "E-mail", "Endereço", "Tipo Aposentadoria", "Informações"],
-    ["Maria Silva", "123.456.789-00", "(31) 99999-0001", "maria@email.com", "Rua das Flores, 10 - BH/MG", "Aposentadoria por Invalidez", "Observações relevantes"],
-    ["João Souza", "987.654.321-00", "(31) 98888-0002", "joao@email.com", "", "", ""],
+    ["Nome *", "CPF", "Telefone", "E-mail", "Endereço", "Tipo Aposentadoria", "Informações", "Senha Gov", "Senha Serasa"],
+    ["Maria Silva", "123.456.789-00", "(31) 99999-0001", "maria@email.com", "Rua das Flores, 10 - BH/MG", "Aposentadoria por Invalidez", "Observações relevantes", "", ""],
+    ["João Souza", "987.654.321-00", "(31) 98888-0002", "joao@email.com", "", "", "", "", ""],
   ]);
-  estilizarCabecalho(wsClientes, 7);
+  estilizarCabecalho(wsClientes, 9);
   XLSX.utils.book_append_sheet(wb, wsClientes, "Clientes");
 
   // ── Processos Ativos ─────────────────────────────────────────────────────
