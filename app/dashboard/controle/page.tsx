@@ -12,7 +12,6 @@ import { IniciaisTab } from "./_iniciais";
 import { ClientesTab } from "./_clientes";
 import { FinalizadosTab } from "./_finalizados";
 import { AtendimentosTab } from "./_atendimentos";
-import { ImportarTab } from "./_importar";
 import { Card, MetricCard as MetricCardBase, Badge } from "@/components/ui";
 import { DateField } from "@/components/ui/DateField";
 import { hasControleRestrito } from "@/lib/acl";
@@ -327,7 +326,7 @@ function VisaoGeral() {
 }
 
 // ── Página principal ───────────────────────────────────────────────────────────
-type Tab = "inicio" | "processos" | "iniciais" | "atendimentos" | "clientes" | "finalizados" | "importar";
+type Tab = "inicio" | "processos" | "iniciais" | "atendimentos" | "clientes" | "finalizados";
 
 export default function ControlePage() {
   const { data: session } = useSession();
@@ -344,7 +343,6 @@ export default function ControlePage() {
     { id: "atendimentos", label: "🗓️ Atendimentos" },
     { id: "clientes", label: "👥 Clientes" },
     { id: "finalizados", label: "✅ Finalizados" },
-    { id: "importar", label: "📥 Importar" },
   ] as const;
   const TABS = restrito ? ALL_TABS.filter(t => restritoTabs.includes(t.id)) : ALL_TABS;
 
@@ -382,7 +380,6 @@ export default function ControlePage() {
       )}
       {effectiveTab === "clientes" && <ClientesTab initialBusca={clienteBusca} />}
       {effectiveTab === "finalizados" && <FinalizadosTab />}
-      {effectiveTab === "importar" && <ImportarTab />}
     </div>
   );
 }

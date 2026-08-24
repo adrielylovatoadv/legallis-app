@@ -97,6 +97,10 @@ export const marcarOk = (id: string) =>
 
 export const getClientes = (params?: Record<string, string>) =>
   fetchAPI(`/controle/clientes${q(params)}`) as Promise<(Cliente & { _ativos?: Processo[]; _finalizados?: Processo[]; _iniciais?: Inicial[]; _atendimentos?: Atendimento[] })[]>;
+// Com senha_gov/senha_serasa/conta/chave_pix (a listagem normal nunca inclui) — só para
+// exportação em Excel, exige cargo com acesso financeiro (ver hasFinanceiroAccess).
+export const getClientesCompleto = () =>
+  fetchAPI("/controle/clientes/completo") as Promise<Cliente[]>;
 export const createCliente = (c: Omit<Cliente, "id" | "criado_em">) =>
   fetchAPI("/controle/clientes", { method: "POST", ...J, body: JSON.stringify(c) });
 export const updateCliente = (id: string, c: Partial<Cliente>) =>

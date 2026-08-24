@@ -1,6 +1,6 @@
 import * as XLSX from "xlsx";
 import { getAcordos, getExecucoes, getHonIniciais, getFixas, getVariaveis, COLS, COL_TO_MES } from "./financeiro";
-import { getProcessos, getClientes, getIniciais } from "./controle";
+import { getProcessos, getClientesCompleto, getIniciais } from "./controle";
 
 function fmtNum(v: number) {
   return Number(v.toFixed(2));
@@ -82,7 +82,7 @@ function buildFinanceiroSheets(wb: XLSX.WorkBook, acordos: Awaited<ReturnType<ty
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(varRows), "Desp. Variáveis");
 }
 
-function buildControleSheets(wb: XLSX.WorkBook, processos: Awaited<ReturnType<typeof getProcessos>>, clientes: Awaited<ReturnType<typeof getClientes>>, iniciais: Awaited<ReturnType<typeof getIniciais>>) {
+function buildControleSheets(wb: XLSX.WorkBook, processos: Awaited<ReturnType<typeof getProcessos>>, clientes: Awaited<ReturnType<typeof getClientesCompleto>>, iniciais: Awaited<ReturnType<typeof getIniciais>>) {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processos.map(p => ({
     Autor: p.autor,
     Réu: p.reu,
@@ -108,6 +108,13 @@ function buildControleSheets(wb: XLSX.WorkBook, processos: Awaited<ReturnType<ty
     Endereço: c.endereco,
     "Tipo Aposentadoria": c.tipo_aposentadoria,
     Informações: c.informacoes,
+    "Senha Gov": c.senha_gov || "",
+    "Senha Serasa": c.senha_serasa || "",
+    Banco: c.banco || "",
+    Agência: c.agencia || "",
+    Conta: c.conta || "",
+    "Tipo Conta": c.tipo_conta || "",
+    "Chave PIX": c.chave_pix || "",
     "Criado Em": c.criado_em,
   }))), "Clientes");
 
@@ -127,7 +134,7 @@ function buildControleSheets(wb: XLSX.WorkBook, processos: Awaited<ReturnType<ty
 export async function exportTudo() {
   const [acordos, execucoes, honIniciais, fixas, variaveis, processos, clientes, iniciais] = await Promise.all([
     getAcordos(), getExecucoes(), getHonIniciais(), getFixas(), getVariaveis(),
-    getProcessos({ tipo: "ativos" }), getClientes(), getIniciais(),
+    getProcessos({ tipo: "ativos" }), getClientesCompleto(), getIniciais(),
   ]);
 
   const wb = XLSX.utils.book_new();
@@ -231,7 +238,7 @@ export async function exportFinanceiro() {
 
 export async function exportControle() {
   const [processos, clientes, iniciais] = await Promise.all([
-    getProcessos({ tipo: "ativos" }), getClientes(), getIniciais(),
+    getProcessos({ tipo: "ativos" }), getClientesCompleto(), getIniciais(),
   ]);
 
   const wb = XLSX.utils.book_new();
@@ -264,6 +271,13 @@ export async function exportControle() {
     Endereço: c.endereco,
     "Tipo Aposentadoria": c.tipo_aposentadoria,
     Informações: c.informacoes,
+    "Senha Gov": c.senha_gov || "",
+    "Senha Serasa": c.senha_serasa || "",
+    Banco: c.banco || "",
+    Agência: c.agencia || "",
+    Conta: c.conta || "",
+    "Tipo Conta": c.tipo_conta || "",
+    "Chave PIX": c.chave_pix || "",
     "Criado Em": c.criado_em,
   })));
   XLSX.utils.book_append_sheet(wb, wsClientes, "Clientes");
