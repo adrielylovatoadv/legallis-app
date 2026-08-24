@@ -154,10 +154,6 @@ function parseRaw(d: Partial<ControleData>): ControleData {
         rg: "", profissao: "", estado_civil: "", nacionalidade: "brasileiro(a)",
         banco: "", agencia: "", conta: "", tipo_conta: "corrente" as const, chave_pix: "" },
       ...c,
-      senha_gov: decryptField(c.senha_gov || ""),
-      senha_serasa: decryptField(c.senha_serasa || ""),
-      conta: decryptField(c.conta || ""),
-      chave_pix: decryptField(c.chave_pix || ""),
     })),
     iniciais: (d.iniciais || []).map((i: Inicial) => ({
       ...{ reu: "", objeto: "", responsavel: "", observacoes: "", data: "", hora: "" },
@@ -211,16 +207,9 @@ function readFromFile(tenantId: string): ControleData {
   return parseRaw(JSON.parse(fs.readFileSync(file, "utf-8")));
 }
 
-function encryptClientes(data: ControleData): ControleData {
+function encryptCertificados(data: ControleData): ControleData {
   return {
     ...data,
-    clientes: data.clientes.map(c => ({
-      ...c,
-      senha_gov: encryptField(c.senha_gov || ""),
-      senha_serasa: encryptField(c.senha_serasa || ""),
-      conta: encryptField(c.conta || ""),
-      chave_pix: encryptField(c.chave_pix || ""),
-    })),
     certificados: data.certificados.map(c => ({
       ...c,
       senha: c.senha ? encryptField(c.senha) : c.senha,
@@ -244,7 +233,7 @@ export async function getDataAsync(tenantId = "default"): Promise<ControleData> 
 
 export async function saveDataAsync(data: ControleData, tenantId = "default"): Promise<void> {
   const key = `${DB_KEY_PREFIX}_${tenantId}`;
-  const encrypted = encryptClientes(data);
+  const encrypted = encryptCertificados(data);
   if (hasDb()) {
     const ok = await dbSet(key, encrypted);
     if (!ok) throw new Error(`Falha ao salvar dados de controle no banco: chave=${key}`);
@@ -262,7 +251,7 @@ export function getData(): ControleData {
 }
 
 export function saveData(data: ControleData) {
-  const encrypted = encryptClientes(data);
+  const encrypted = encryptCertificados(data);
   const content = JSON.stringify(encrypted, null, 2);
   try { fs.writeFileSync(DATA_FILE, content, "utf-8"); }
   catch { fs.writeFileSync(TMP_CONTROLE, content, "utf-8"); }

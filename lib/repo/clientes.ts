@@ -1,7 +1,10 @@
 import { hasDb, getSql } from "@/lib/db";
 import { getDataAsync, saveDataAsync, newId, type Cliente } from "@/lib/controle-data";
-import { encryptField, decryptField } from "@/lib/crypto";
 
+// senha_gov/senha_serasa/conta/chave_pix são gravados em texto puro, sem criptografia — a
+// pedido explícito do dono do produto: são dados operacionais do cliente que precisam estar
+// sempre visíveis, não segredos de acesso ao sistema. (Também evita repetir o incidente de
+// 22/08/2026, em que a perda da FIELD_ENCRYPT_KEY tornou dados de ~53 clientes ilegíveis.)
 function rowToCliente(r: Record<string, unknown>): Cliente {
   return {
     id: r.id as string,
@@ -12,8 +15,8 @@ function rowToCliente(r: Record<string, unknown>): Cliente {
     endereco: r.endereco as string,
     tipo_aposentadoria: r.tipo_aposentadoria as string,
     informacoes: r.informacoes as string,
-    senha_gov: decryptField((r.senha_gov as string) || ""),
-    senha_serasa: decryptField((r.senha_serasa as string) || ""),
+    senha_gov: (r.senha_gov as string) || "",
+    senha_serasa: (r.senha_serasa as string) || "",
     criado_em: r.criado_em instanceof Date ? r.criado_em.toISOString() : (r.criado_em as string),
     tipo_pessoa: (r.tipo_pessoa as Cliente["tipo_pessoa"]) ?? undefined,
     cnpj: (r.cnpj as string) ?? undefined,
@@ -27,9 +30,9 @@ function rowToCliente(r: Record<string, unknown>): Cliente {
     nacionalidade: (r.nacionalidade as string) ?? undefined,
     banco: (r.banco as string) ?? undefined,
     agencia: (r.agencia as string) ?? undefined,
-    conta: r.conta ? decryptField(r.conta as string) : undefined,
+    conta: (r.conta as string) ?? undefined,
     tipo_conta: (r.tipo_conta as Cliente["tipo_conta"]) ?? undefined,
-    chave_pix: r.chave_pix ? decryptField(r.chave_pix as string) : undefined,
+    chave_pix: (r.chave_pix as string) ?? undefined,
   };
 }
 
@@ -58,14 +61,14 @@ export function buildCreateStatement(tenantId: string, row: Cliente) {
                            emails_adicionais, rg, profissao, estado_civil, nacionalidade,
                            banco, agencia, conta, tipo_conta, chave_pix, criado_em)
     VALUES (${tenantId}, ${row.id}, ${row.nome}, ${row.telefone}, ${row.cpf}, ${row.email}, ${row.endereco},
-            ${row.tipo_aposentadoria}, ${row.informacoes}, ${encryptField(row.senha_gov || "")},
-            ${encryptField(row.senha_serasa || "")}, ${row.tipo_pessoa ?? "fisica"}, ${row.cnpj ?? null},
+            ${row.tipo_aposentadoria}, ${row.informacoes}, ${row.senha_gov || ""},
+            ${row.senha_serasa || ""}, ${row.tipo_pessoa ?? "fisica"}, ${row.cnpj ?? null},
             ${row.tratamento ?? null}, ${JSON.stringify(row.etiquetas || [])},
             ${JSON.stringify(row.telefones_adicionais || [])}, ${JSON.stringify(row.emails_adicionais || [])},
             ${row.rg ?? null}, ${row.profissao ?? null}, ${row.estado_civil ?? null},
             ${row.nacionalidade ?? "brasileiro(a)"}, ${row.banco ?? null}, ${row.agencia ?? null},
-            ${encryptField(row.conta || "") || null}, ${row.tipo_conta ?? "corrente"},
-            ${encryptField(row.chave_pix || "") || null}, ${row.criado_em})
+            ${row.conta || null}, ${row.tipo_conta ?? "corrente"},
+            ${row.chave_pix || null}, ${row.criado_em})
   `;
 }
 
@@ -113,8 +116,8 @@ export async function update(tenantId: string, id: string, patch: Partial<Client
   await sql`
     UPDATE clientes SET nome = ${merged.nome}, telefone = ${merged.telefone}, cpf = ${merged.cpf},
       email = ${merged.email}, endereco = ${merged.endereco}, tipo_aposentadoria = ${merged.tipo_aposentadoria},
-      informacoes = ${merged.informacoes}, senha_gov = ${encryptField(merged.senha_gov || "")},
-      senha_serasa = ${encryptField(merged.senha_serasa || "")}, tipo_pessoa = ${merged.tipo_pessoa ?? "fisica"},
+      informacoes = ${merged.informacoes}, senha_gov = ${merged.senha_gov || ""},
+      senha_serasa = ${merged.senha_serasa || ""}, tipo_pessoa = ${merged.tipo_pessoa ?? "fisica"},
       cnpj = ${merged.cnpj ?? null}, tratamento = ${merged.tratamento ?? null},
       etiquetas = ${JSON.stringify(merged.etiquetas || [])},
       telefones_adicionais = ${JSON.stringify(merged.telefones_adicionais || [])},
@@ -122,8 +125,8 @@ export async function update(tenantId: string, id: string, patch: Partial<Client
       rg = ${merged.rg ?? null}, profissao = ${merged.profissao ?? null}, estado_civil = ${merged.estado_civil ?? null},
       nacionalidade = ${merged.nacionalidade ?? "brasileiro(a)"},
       banco = ${merged.banco ?? null}, agencia = ${merged.agencia ?? null},
-      conta = ${encryptField(merged.conta || "") || null}, tipo_conta = ${merged.tipo_conta ?? "corrente"},
-      chave_pix = ${encryptField(merged.chave_pix || "") || null}
+      conta = ${merged.conta || null}, tipo_conta = ${merged.tipo_conta ?? "corrente"},
+      chave_pix = ${merged.chave_pix || null}
     WHERE tenant_id = ${tenantId} AND id = ${id}
   `;
   return merged;
@@ -144,9 +147,8 @@ export async function remove(tenantId: string, id: string): Promise<boolean> {
 
 // Constrói (sem executar) os upserts em lote — usado por upsertMany() e por
 // controle/importar/route.ts, que agrupa os statements de todas as entidades importadas
-// numa única transação (Fase 6 da migração). Recebe senha_gov/senha_serasa em texto puro
-// (igual ao que getDataAsync já descriptografa para uso em memória) — encryptField() cuida
-// de criptografar antes de gravar.
+// numa única transação (Fase 6 da migração). senha_gov/senha_serasa/conta/chave_pix são
+// gravados em texto puro (ver nota em rowToCliente acima).
 export function buildUpsertManyStatements(tenantId: string, rows: Cliente[]) {
   const sql = getSql()!;
   return rows.map(row => sql`
@@ -155,14 +157,14 @@ export function buildUpsertManyStatements(tenantId: string, rows: Cliente[]) {
                            emails_adicionais, rg, profissao, estado_civil, nacionalidade,
                            banco, agencia, conta, tipo_conta, chave_pix, criado_em)
     VALUES (${tenantId}, ${row.id}, ${row.nome}, ${row.telefone}, ${row.cpf}, ${row.email}, ${row.endereco},
-            ${row.tipo_aposentadoria}, ${row.informacoes}, ${encryptField(row.senha_gov || "")},
-            ${encryptField(row.senha_serasa || "")}, ${row.tipo_pessoa ?? "fisica"}, ${row.cnpj ?? null},
+            ${row.tipo_aposentadoria}, ${row.informacoes}, ${row.senha_gov || ""},
+            ${row.senha_serasa || ""}, ${row.tipo_pessoa ?? "fisica"}, ${row.cnpj ?? null},
             ${row.tratamento ?? null}, ${JSON.stringify(row.etiquetas || [])},
             ${JSON.stringify(row.telefones_adicionais || [])}, ${JSON.stringify(row.emails_adicionais || [])},
             ${row.rg ?? null}, ${row.profissao ?? null}, ${row.estado_civil ?? null},
             ${row.nacionalidade ?? "brasileiro(a)"}, ${row.banco ?? null}, ${row.agencia ?? null},
-            ${encryptField(row.conta || "") || null}, ${row.tipo_conta ?? "corrente"},
-            ${encryptField(row.chave_pix || "") || null}, ${row.criado_em})
+            ${row.conta || null}, ${row.tipo_conta ?? "corrente"},
+            ${row.chave_pix || null}, ${row.criado_em})
     ON CONFLICT (tenant_id, id) DO UPDATE SET nome = EXCLUDED.nome, telefone = EXCLUDED.telefone, cpf = EXCLUDED.cpf,
       email = EXCLUDED.email, endereco = EXCLUDED.endereco, tipo_aposentadoria = EXCLUDED.tipo_aposentadoria,
       informacoes = EXCLUDED.informacoes, senha_gov = EXCLUDED.senha_gov, senha_serasa = EXCLUDED.senha_serasa,
