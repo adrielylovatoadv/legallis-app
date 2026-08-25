@@ -192,7 +192,6 @@ function ClienteCard({ c, advogados, onEdit, onDelete }: {
   onDelete: (id: string) => void;
 }) {
   const [aberto, setAberto] = useState(false);
-  const [mostraSenhas, setMostraSenhas] = useState(false);
   const [senhas, setSenhas] = useState<{ senha_gov: string; senha_serasa: string } | null>(null);
   const [loadingSenhas, setLoadingSenhas] = useState(false);
   const [mostraBancarios, setMostraBancarios] = useState(false);
@@ -200,17 +199,14 @@ function ClienteCard({ c, advogados, onEdit, onDelete }: {
   const [loadingBancarios, setLoadingBancarios] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  async function toggleSenhas() {
-    if (mostraSenhas) { setMostraSenhas(false); return; }
-    if (!senhas) {
-      setLoadingSenhas(true);
-      try {
-        const res = await fetch(`/api/controle/clientes/${c.id}/senhas`);
-        if (res.ok) setSenhas(await res.json());
-      } finally { setLoadingSenhas(false); }
-    }
-    setMostraSenhas(true);
-  }
+  useEffect(() => {
+    if (!aberto || senhas) return;
+    setLoadingSenhas(true);
+    fetch(`/api/controle/clientes/${c.id}/senhas`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => { if (data) setSenhas(data); })
+      .finally(() => setLoadingSenhas(false));
+  }, [aberto, senhas, c.id]);
 
   async function toggleBancarios() {
     if (mostraBancarios) { setMostraBancarios(false); return; }
@@ -301,17 +297,11 @@ function ClienteCard({ c, advogados, onEdit, onDelete }: {
             )}
             <div>
               <span style={{ color:"var(--text3)" }}>Senha Gov.br: </span>
-              {mostraSenhas ? (senhas?.senha_gov || "—") : "••••••••"}
+              {loadingSenhas ? "Carregando..." : (senhas?.senha_gov || "—")}
             </div>
             <div>
               <span style={{ color:"var(--text3)" }}>Senha Serasa: </span>
-              {mostraSenhas ? (senhas?.senha_serasa || "—") : "••••••••"}
-            </div>
-            <div>
-              <button onClick={toggleSenhas} disabled={loadingSenhas} className="text-xs underline"
-                style={{ color:"var(--gold)" }}>
-                {loadingSenhas ? "Carregando..." : mostraSenhas ? "Ocultar senhas" : "👁️ Mostrar senhas"}
-              </button>
+              {loadingSenhas ? "Carregando..." : (senhas?.senha_serasa || "—")}
             </div>
           </div>
 
