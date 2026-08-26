@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { saveIndicesOverrides } from "@/lib/indices-store";
+import { loadIndicesAsync, saveIndicesOverrides } from "@/lib/indices-store";
+import { fetchTjspTabelaPratica, mergeTjspForward } from "@/lib/tjsp-scraper";
+
+export const runtime = "nodejs";
 
 type BcbEntry = { data: string; valor: string };
 
@@ -28,8 +31,22 @@ async function runUpdate() {
     fetchBcb(4390),
   ]);
 
+  // Tabela Prática do TJSP (Lei 14.905/2024) não vem do BCB — é lida do PDF oficial do tribunal.
+  // Só estende a série para meses novos (mergeTjspForward); se o parse falhar ou divergir do que
+  // já está salvo, mantém o valor atual e reporta o erro sem interromper a atualização dos demais.
+  let tjsp_14905: Record<string, number> | undefined;
+  let tjspErro: string | null = null;
+  try {
+    const atual = await loadIndicesAsync();
+    const parsed = await fetchTjspTabelaPratica();
+    tjsp_14905 = mergeTjspForward(atual.tjsp_14905, parsed);
+  } catch (e) {
+    tjspErro = e instanceof Error ? e.message : String(e);
+    console.error("[indices/atualizar] TJSP:", e);
+  }
+
   const hoje = new Date().toLocaleDateString("pt-BR");
-  await saveIndicesOverrides({ inpc, ipcae, ipca, selic, ultima_atualizacao: hoje });
+  await saveIndicesOverrides({ inpc, ipcae, ipca, selic, tjsp_14905, ultima_atualizacao: hoje });
 
   const last = (r: Record<string, number>) => Object.keys(r).sort().at(-1) ?? "-";
   return {
@@ -40,6 +57,7 @@ async function runUpdate() {
       ipcae: last(ipcae),
       ipca:  last(ipca),
       selic: last(selic),
+      tjsp:  tjsp_14905 ? last(tjsp_14905) : `erro: ${tjspErro}`,
     },
   };
 }
