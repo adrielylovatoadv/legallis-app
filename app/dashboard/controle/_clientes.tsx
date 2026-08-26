@@ -59,6 +59,7 @@ function ClienteForm({ initial, onSave, onCancel }: {
     etiquetas:[] as string[], telefones_adicionais:[] as string[], emails_adicionais:[] as string[],
     rg:"", profissao:"", estado_civil:"", nacionalidade:"brasileiro(a)",
     banco:"", agencia:"", conta:"", tipo_conta:"corrente" as "corrente"|"poupanca", chave_pix:"",
+    status:"ativo" as "ativo"|"inativo",
   };
   const [form, setForm] = useState({ ...blank, ...(initial||{}) });
   const [etiquetasTexto, setEtiquetasTexto] = useState((initial?.etiquetas || []).join(", "));
@@ -81,6 +82,12 @@ function ClienteForm({ initial, onSave, onCancel }: {
         <label className="flex items-center gap-2 text-sm cursor-pointer" style={{ color:"var(--text2)" }}>
           <input type="radio" checked={form.tipo_pessoa==="juridica"} onChange={() => set("tipo_pessoa","juridica")} /> Pessoa Jurídica
         </label>
+        <div className="ml-auto">
+          <Sel value={form.status} onChange={e => set("status", e.target.value)}>
+            <option value="ativo">Ativo</option>
+            <option value="inativo">Inativo</option>
+          </Sel>
+        </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div><Lbl>Nome *</Lbl><Inp value={form.nome} onChange={e => set("nome",e.target.value)} /></div>
@@ -254,6 +261,9 @@ function ClienteCard({ c, advogados, onEdit, onDelete }: {
             <span className="text-xs px-1.5 py-0.5 rounded" style={{ background:"var(--surface2)", color:"var(--text3)" }}>
               {c.tipo_pessoa === "juridica" ? "PJ" : "PF"}
             </span>
+            {(c.status ?? "ativo") === "inativo"
+              ? <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background:"var(--surface2)", color:"var(--text3)" }}>Inativo</span>
+              : <span className="text-xs px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400">Ativo</span>}
             {ativos.some(p => p.atencao) && <span className="text-xs px-1.5 py-0.5 rounded bg-red-500/15 text-red-400">🚨 Atenção</span>}
             {(c.etiquetas || []).map(tag => (
               <span key={tag} className="text-xs px-1.5 py-0.5 rounded-full" style={{ background:"rgba(201,168,76,0.12)", color:"var(--gold)" }}>{tag}</span>
@@ -426,6 +436,7 @@ export function ClientesTab({ initialBusca }: { initialBusca?: string } = {}) {
   const [clientes, setClientes] = useState<ClienteComProcs[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState(initialBusca ?? "");
+  const [filtroStatus, setFiltroStatus] = useState<"todos"|"ativo"|"inativo">("ativo");
   const [editando, setEditando] = useState<Cliente | null>(null);
   const [novoAberto, setNovoAberto] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -467,9 +478,10 @@ export function ClientesTab({ initialBusca }: { initialBusca?: string } = {}) {
     try {
       const p: Record<string,string> = { com_processos: "1" };
       if (busca) p.busca = busca;
+      if (filtroStatus !== "todos") p.status = filtroStatus;
       setClientes(await getClientes(p) as ClienteComProcs[]);
     } finally { setLoading(false); }
-  }, [busca]);
+  }, [busca, filtroStatus]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -505,6 +517,20 @@ export function ClientesTab({ initialBusca }: { initialBusca?: string } = {}) {
           style={{ background:"var(--gold)", color:"#000" }}>
           + Novo cliente
         </button>
+      </div>
+
+      <div className="flex gap-2">
+        {([["ativo","Ativos"],["inativo","Inativos"],["todos","Todos"]] as const).map(([v,label]) => (
+          <button key={v} onClick={() => setFiltroStatus(v)}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+            style={{
+              background: filtroStatus === v ? "rgba(201,168,76,0.15)" : "var(--surface2)",
+              color: filtroStatus === v ? "var(--gold)" : "var(--text3)",
+              border: `1px solid ${filtroStatus === v ? "var(--gold)" : "var(--border)"}`,
+            }}>
+            {label}
+          </button>
+        ))}
       </div>
 
       {colegas.length > 1 && (

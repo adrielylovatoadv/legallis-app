@@ -100,8 +100,10 @@ export async function initSchema(sql: Sql): Promise<void> {
   await sql`ALTER TABLE clientes ADD COLUMN IF NOT EXISTS conta TEXT`;
   await sql`ALTER TABLE clientes ADD COLUMN IF NOT EXISTS tipo_conta TEXT`;
   await sql`ALTER TABLE clientes ADD COLUMN IF NOT EXISTS chave_pix TEXT`;
+  await sql`ALTER TABLE clientes ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'ativo'`;
   await sql`CREATE INDEX IF NOT EXISTS idx_clientes_tenant ON clientes (tenant_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_clientes_nome_cpf ON clientes (tenant_id, nome, cpf)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_clientes_status ON clientes (tenant_id, status)`;
 
   await sql`
     CREATE TABLE IF NOT EXISTS iniciais (

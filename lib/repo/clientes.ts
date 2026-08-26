@@ -33,6 +33,7 @@ function rowToCliente(r: Record<string, unknown>): Cliente {
     conta: (r.conta as string) ?? undefined,
     tipo_conta: (r.tipo_conta as Cliente["tipo_conta"]) ?? undefined,
     chave_pix: (r.chave_pix as string) ?? undefined,
+    status: (r.status as Cliente["status"]) ?? "ativo",
   };
 }
 
@@ -59,7 +60,7 @@ export function buildCreateStatement(tenantId: string, row: Cliente) {
     INSERT INTO clientes (tenant_id, id, nome, telefone, cpf, email, endereco, tipo_aposentadoria, informacoes,
                            senha_gov, senha_serasa, tipo_pessoa, cnpj, tratamento, etiquetas, telefones_adicionais,
                            emails_adicionais, rg, profissao, estado_civil, nacionalidade,
-                           banco, agencia, conta, tipo_conta, chave_pix, criado_em)
+                           banco, agencia, conta, tipo_conta, chave_pix, status, criado_em)
     VALUES (${tenantId}, ${row.id}, ${row.nome}, ${row.telefone}, ${row.cpf}, ${row.email}, ${row.endereco},
             ${row.tipo_aposentadoria}, ${row.informacoes}, ${row.senha_gov || ""},
             ${row.senha_serasa || ""}, ${row.tipo_pessoa ?? "fisica"}, ${row.cnpj ?? null},
@@ -68,7 +69,7 @@ export function buildCreateStatement(tenantId: string, row: Cliente) {
             ${row.rg ?? null}, ${row.profissao ?? null}, ${row.estado_civil ?? null},
             ${row.nacionalidade ?? "brasileiro(a)"}, ${row.banco ?? null}, ${row.agencia ?? null},
             ${row.conta || null}, ${row.tipo_conta ?? "corrente"},
-            ${row.chave_pix || null}, ${row.criado_em})
+            ${row.chave_pix || null}, ${row.status ?? "ativo"}, ${row.criado_em})
   `;
 }
 
@@ -126,7 +127,7 @@ export async function update(tenantId: string, id: string, patch: Partial<Client
       nacionalidade = ${merged.nacionalidade ?? "brasileiro(a)"},
       banco = ${merged.banco ?? null}, agencia = ${merged.agencia ?? null},
       conta = ${merged.conta || null}, tipo_conta = ${merged.tipo_conta ?? "corrente"},
-      chave_pix = ${merged.chave_pix || null}
+      chave_pix = ${merged.chave_pix || null}, status = ${merged.status ?? "ativo"}
     WHERE tenant_id = ${tenantId} AND id = ${id}
   `;
   return merged;
@@ -155,7 +156,7 @@ export function buildUpsertManyStatements(tenantId: string, rows: Cliente[]) {
     INSERT INTO clientes (tenant_id, id, nome, telefone, cpf, email, endereco, tipo_aposentadoria, informacoes,
                            senha_gov, senha_serasa, tipo_pessoa, cnpj, tratamento, etiquetas, telefones_adicionais,
                            emails_adicionais, rg, profissao, estado_civil, nacionalidade,
-                           banco, agencia, conta, tipo_conta, chave_pix, criado_em)
+                           banco, agencia, conta, tipo_conta, chave_pix, status, criado_em)
     VALUES (${tenantId}, ${row.id}, ${row.nome}, ${row.telefone}, ${row.cpf}, ${row.email}, ${row.endereco},
             ${row.tipo_aposentadoria}, ${row.informacoes}, ${row.senha_gov || ""},
             ${row.senha_serasa || ""}, ${row.tipo_pessoa ?? "fisica"}, ${row.cnpj ?? null},
@@ -164,7 +165,7 @@ export function buildUpsertManyStatements(tenantId: string, rows: Cliente[]) {
             ${row.rg ?? null}, ${row.profissao ?? null}, ${row.estado_civil ?? null},
             ${row.nacionalidade ?? "brasileiro(a)"}, ${row.banco ?? null}, ${row.agencia ?? null},
             ${row.conta || null}, ${row.tipo_conta ?? "corrente"},
-            ${row.chave_pix || null}, ${row.criado_em})
+            ${row.chave_pix || null}, ${row.status ?? "ativo"}, ${row.criado_em})
     ON CONFLICT (tenant_id, id) DO UPDATE SET nome = EXCLUDED.nome, telefone = EXCLUDED.telefone, cpf = EXCLUDED.cpf,
       email = EXCLUDED.email, endereco = EXCLUDED.endereco, tipo_aposentadoria = EXCLUDED.tipo_aposentadoria,
       informacoes = EXCLUDED.informacoes, senha_gov = EXCLUDED.senha_gov, senha_serasa = EXCLUDED.senha_serasa,
@@ -173,7 +174,7 @@ export function buildUpsertManyStatements(tenantId: string, rows: Cliente[]) {
       emails_adicionais = EXCLUDED.emails_adicionais, rg = EXCLUDED.rg, profissao = EXCLUDED.profissao,
       estado_civil = EXCLUDED.estado_civil, nacionalidade = EXCLUDED.nacionalidade,
       banco = EXCLUDED.banco, agencia = EXCLUDED.agencia, conta = EXCLUDED.conta,
-      tipo_conta = EXCLUDED.tipo_conta, chave_pix = EXCLUDED.chave_pix
+      tipo_conta = EXCLUDED.tipo_conta, chave_pix = EXCLUDED.chave_pix, status = EXCLUDED.status
   `);
 }
 

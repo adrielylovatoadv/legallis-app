@@ -46,6 +46,7 @@ export const clienteCreateSchema = z.object({
   conta: z.string().trim().default(""),
   tipo_conta: z.enum(["corrente", "poupanca"]).default("corrente"),
   chave_pix: z.string().trim().default(""),
+  status: z.enum(["ativo", "inativo"]).default("ativo"),
 });
 export const clienteUpdateSchema = clienteCreateSchema.partial();
 

@@ -16,8 +16,13 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const busca = searchParams.get("busca") || "";
   const comProcessos = searchParams.get("com_processos") === "1";
+  const status = searchParams.get("status") || "";
 
   let lista = (await clientesRepo.list(tid)).sort((a, b) => a.nome.localeCompare(b.nome));
+
+  if (status === "ativo" || status === "inativo") {
+    lista = lista.filter(c => (c.status ?? "ativo") === status);
+  }
 
   if (busca) {
     const b = normText(busca);
