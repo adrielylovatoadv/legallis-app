@@ -437,6 +437,7 @@ export function ClientesTab({ initialBusca }: { initialBusca?: string } = {}) {
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState(initialBusca ?? "");
   const [filtroStatus, setFiltroStatus] = useState<"todos"|"ativo"|"inativo">("ativo");
+  const [contagens, setContagens] = useState<{ ativo: number; inativo: number } | null>(null);
   const [editando, setEditando] = useState<Cliente | null>(null);
   const [novoAberto, setNovoAberto] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -485,12 +486,21 @@ export function ClientesTab({ initialBusca }: { initialBusca?: string } = {}) {
 
   useEffect(() => { load(); }, [load]);
 
+  const loadContagens = useCallback(async () => {
+    const todos = await getClientes({}) as Cliente[];
+    const ativo = todos.filter(c => (c.status ?? "ativo") === "ativo").length;
+    setContagens({ ativo, inativo: todos.length - ativo });
+  }, []);
+
+  useEffect(() => { loadContagens(); }, [loadContagens]);
+
   const handleSave = async (form: Omit<Cliente,"id"|"criado_em">) => {
     if (editando) { await updateCliente(editando.id, form); setEditando(null); }
     else { await createCliente(form); setNovoAberto(false); }
     load();
+    loadContagens();
   };
-  const handleDelete = async (id: string) => { await deleteCliente(id); load(); };
+  const handleDelete = async (id: string) => { await deleteCliente(id); load(); loadContagens(); };
 
   // A listagem de clientes nunca traz senha_gov/senha_serasa/conta/chave_pix (por segurança),
   // então o formulário de edição precisa buscar esses valores reais antes de abrir — senão eles
@@ -520,17 +530,20 @@ export function ClientesTab({ initialBusca }: { initialBusca?: string } = {}) {
       </div>
 
       <div className="flex gap-2">
-        {([["ativo","Ativos"],["inativo","Inativos"],["todos","Todos"]] as const).map(([v,label]) => (
-          <button key={v} onClick={() => setFiltroStatus(v)}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
-            style={{
-              background: filtroStatus === v ? "rgba(201,168,76,0.15)" : "var(--surface2)",
-              color: filtroStatus === v ? "var(--gold)" : "var(--text3)",
-              border: `1px solid ${filtroStatus === v ? "var(--gold)" : "var(--border)"}`,
-            }}>
-            {label}
-          </button>
-        ))}
+        {([["ativo","Ativos"],["inativo","Inativos"],["todos","Todos"]] as const).map(([v,label]) => {
+          const n = !contagens ? null : v === "ativo" ? contagens.ativo : v === "inativo" ? contagens.inativo : contagens.ativo + contagens.inativo;
+          return (
+            <button key={v} onClick={() => setFiltroStatus(v)}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+              style={{
+                background: filtroStatus === v ? "rgba(201,168,76,0.15)" : "var(--surface2)",
+                color: filtroStatus === v ? "var(--gold)" : "var(--text3)",
+                border: `1px solid ${filtroStatus === v ? "var(--gold)" : "var(--border)"}`,
+              }}>
+              {label}{n !== null && ` (${n})`}
+            </button>
+          );
+        })}
       </div>
 
       {colegas.length > 1 && (
