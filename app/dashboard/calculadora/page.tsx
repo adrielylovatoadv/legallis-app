@@ -45,6 +45,10 @@ interface RevisionalResult {
   taxa_estimada?: boolean;
 }
 
+function fmtDataBR(iso: string): string {
+  return iso ? new Date(iso + "T12:00:00").toLocaleDateString("pt-BR") : "";
+}
+
 // ── componentes base ───────────────────────────────────────────
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
@@ -883,8 +887,14 @@ export default function CalculadoraPage() {
               {modo === "execucao" && summary.dano_moral_total !== undefined && summary.dano_moral_total > 0 && (
                 <>
                   <SummaryRow label="Dano moral (original)" value={fmtBRL(summary.dano_moral_original ?? 0)} />
-                  <SummaryRow label="Dano moral (corrigido)" value={fmtBRL(summary.dano_moral_corrigido ?? 0)} />
-                  <SummaryRow label="Dano moral (juros)" value={fmtBRL(summary.dano_moral_juros ?? 0)} />
+                  <SummaryRow
+                    label={`Dano moral (corrigido) — a partir do arbitramento${danoMoralDataArbitramento ? ", " + fmtDataBR(danoMoralDataArbitramento) : ""}`}
+                    value={fmtBRL(summary.dano_moral_corrigido ?? 0)}
+                  />
+                  <SummaryRow
+                    label={`Dano moral (juros)${(danoMoralDataMora || danoMoralDataArbitramento) ? " — a partir de " + fmtDataBR(danoMoralDataMora || danoMoralDataArbitramento) : ""}`}
+                    value={fmtBRL(summary.dano_moral_juros ?? 0)}
+                  />
                   <SummaryRow label="Dano moral (total)" value={fmtBRL(summary.dano_moral_total)} highlight />
                 </>
               )}
@@ -952,8 +962,14 @@ export default function CalculadoraPage() {
                     ...(modo === "execucao" && summary.multa_523 && summary.multa_valor !== undefined ? [{ label: "( + ) Multa art. 523 §1º CPC (10%)", valor: fmtBRL(summary.multa_valor) }] : []),
                     ...(modo === "execucao" && summary.dano_moral_total ? [
                       { label: "( + ) Dano Moral — valor arbitrado", valor: fmtBRL(summary.dano_moral_original ?? 0) },
-                      { label: "( + ) Dano Moral — correção desde o arbitramento (Súm. 362 STJ)", valor: fmtBRL(summary.dano_moral_corrigido ?? 0) },
-                      { label: "( + ) Dano Moral — juros moratórios", valor: fmtBRL(summary.dano_moral_juros ?? 0) },
+                      {
+                        label: `( + ) Dano Moral — correção desde o arbitramento (Súm. 362 STJ)${danoMoralDataArbitramento ? ", a partir de " + fmtDataBR(danoMoralDataArbitramento) : ""}`,
+                        valor: fmtBRL(summary.dano_moral_corrigido ?? 0),
+                      },
+                      {
+                        label: `( + ) Dano Moral — juros moratórios${(danoMoralDataMora || danoMoralDataArbitramento) ? ", a partir de " + fmtDataBR(danoMoralDataMora || danoMoralDataArbitramento) : ""}`,
+                        valor: fmtBRL(summary.dano_moral_juros ?? 0),
+                      },
                       { label: "( = ) Dano Moral — total atualizado", valor: fmtBRL(summary.dano_moral_total) },
                     ] : []),
                     ...(modo === "execucao" && summary.honorarios_valor !== undefined ? [{ label: `( + ) Honorários Advocatícios (${summary.honorarios_pct}%)`, valor: fmtBRL(summary.honorarios_valor) }] : []),
@@ -964,6 +980,12 @@ export default function CalculadoraPage() {
                     { label: modo === "inicial" ? "VALOR DA CAUSA" : "TOTAL GERAL", valor: fmtBRL(summary.total_geral) },
                   ],
                 },
+              ],
+              criterios: [
+                ...(modo === "execucao" && summary.dano_moral_total && danoMoralDataArbitramento ? [
+                  `Dano moral: correção monetária a partir do arbitramento, ${fmtDataBR(danoMoralDataArbitramento)} (Súmula 362 STJ).`,
+                  `Dano moral: juros de mora a partir de ${fmtDataBR(danoMoralDataMora || danoMoralDataArbitramento)}${danoMoralDataMora ? "" : " (mesma data do arbitramento — nenhum termo diferente informado)"}.`,
+                ] : []),
               ],
             }} />
           </Card>
