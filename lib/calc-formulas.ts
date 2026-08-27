@@ -2,18 +2,20 @@
 //
 // Regra nacional (Lei 14.905/2024, art. 389 e 406 CC, vigente desde 30/08/2024):
 // - Correção monetária: IPCA puro (não IPCA-E) quando não há índice convencionado.
-// - Juros de mora ("taxa legal"): Selic do mês MENOS o IPCA do mesmo mês (Res. CMN 5.171/2024),
-//   uma taxa real — não a Selic cheia. Fonte primária: documento oficial da Contadoria Judicial
-//   do TJSC ("Adequação do módulo de cálculos judiciais às novas regras de atualização
-//   monetária no Código Civil"), que cita os artigos e confirma a metodologia na prática.
+// - Juros de mora ("taxa legal"): série SGS 29543 do Banco Central — o próprio BCB já publica a
+//   taxa legal mensal pronta (Selic deduzida do IPCA, art. 406 §1º CC, Res. CMN 5.171/2024), então
+//   usamos essa série diretamente em vez de recalcular Selic-menos-IPCA a partir de duas séries
+//   separadas (a subtração manual não reproduzia o valor oficial — divergia várias centenas de
+//   pontos-base por mês, o suficiente para subestimar o total em mais da metade em alguns casos).
 // Antes de 30/08/2024, cada tribunal seguia seu próprio índice — ver PRE_LEI14905_INDEX abaixo.
 // TJSP é o único com tabela própria (fatores acumulados, não decorre de INPC/IPCA-E puro).
 
 export interface Indices {
   inpc: Record<string, number>;
   ipcae: Record<string, number>;
-  ipca: Record<string, number>;   // IPCA mensal IBGE — usado para calcular Selic real (Lei 14.905/2024)
+  ipca: Record<string, number>;   // IPCA mensal IBGE — usado para a correção pós-Lei 14.905/2024
   selic: Record<string, number>;
+  taxa_legal: Record<string, number>; // SGS 29543/BCB — taxa legal mensal pronta (art. 406 §1º CC)
   tjsp_inpc: Record<string, number>;
   tjsp_14905: Record<string, number>;
   ultima_atualizacao?: string;
@@ -34,6 +36,21 @@ function* iterMonths(start: Date, end: Date): Generator<[number, number]> {
     yield [cy, cm];
     [cy, cm] = nextMonth(cy, cm);
   }
+}
+
+// Igual a iterMonths, mas inclui o mês final — usado só para rotular os índices utilizados
+// (o acúmulo de juros em si é feito por sumJurosPct, com rateio por dias).
+function* iterMonthsInclusive(start: Date, end: Date): Generator<[number, number]> {
+  let cy = start.getFullYear(), cm = start.getMonth() + 1;
+  const ey = end.getFullYear(), em = end.getMonth() + 1;
+  while (cy < ey || (cy === ey && cm <= em)) {
+    yield [cy, cm];
+    [cy, cm] = nextMonth(cy, cm);
+  }
+}
+
+function daysInMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate();
 }
 
 // Índice usado por cada tribunal ANTES do corte de 30/08/2024 (Lei 14.905/2024). Tribunais não
@@ -96,13 +113,38 @@ function calcCorrecaoTJSP(
 function getInterestRate(year: number, month: number, idx: Indices): number {
   if (year <= 2002) return 0.5;
   if (year < 2024 || (year === 2024 && month <= 8)) return 1.0;
-  // Lei 14.905/2024, art. 406 §1º CC: "taxa legal" = Selic do mês MENOS o IPCA do mesmo mês
-  // (Res. CMN 5.171/2024) — taxa real, não a Selic cheia (que já é aplicada, em separado,
-  // como correção monetária via getCorrectionIndex/idx.ipca).
-  const key = monthKey(year, month);
-  const selic = idx.selic[key] ?? 0;
-  const ipca = idx.ipca[key] ?? 0;
-  return selic - ipca;
+  // Lei 14.905/2024, art. 406 §1º CC: "taxa legal" — lida pronta da série SGS 29543/BCB
+  // (ver nota no topo do arquivo sobre por que não recalculamos Selic-menos-IPCA aqui).
+  return idx.taxa_legal[monthKey(year, month)] ?? 0;
+}
+
+// Soma os juros de mora (%) entre `start` e `end`, ambos inclusive, em regime simples. Nos meses
+// de início e fim — quando não coincidem com o primeiro/último dia do mês — a taxa daquele mês é
+// rateada pelos dias corridos dentro dele (dias contados ÷ dias do mês), conforme a metodologia
+// documentada para a calculadora.
+function sumJurosPct(start: Date, end: Date, idx: Indices): number {
+  const y0 = start.getFullYear(), m0 = start.getMonth() + 1, d0 = start.getDate();
+  const y1 = end.getFullYear(), m1 = end.getMonth() + 1, d1 = end.getDate();
+
+  if (y0 === y1 && m0 === m1) {
+    const dim = daysInMonth(y0, m0);
+    return (getInterestRate(y0, m0, idx) * (d1 - d0 + 1)) / dim;
+  }
+
+  const dimStart = daysInMonth(y0, m0);
+  let total = (getInterestRate(y0, m0, idx) * (dimStart - d0 + 1)) / dimStart;
+
+  let cy = y0, cm = m0 + 1;
+  if (cm > 12) { cy++; cm = 1; }
+  while (cy < y1 || (cy === y1 && cm < m1)) {
+    total += getInterestRate(cy, cm, idx);
+    [cy, cm] = nextMonth(cy, cm);
+  }
+
+  const dimEnd = daysInMonth(y1, m1);
+  total += (getInterestRate(y1, m1, idx) * d1) / dimEnd;
+
+  return total;
 }
 
 function round2(v: number): number {
@@ -139,9 +181,10 @@ export function calculateCharge(
   }
 
   const isTJSP = tribunal.includes("TJSP");
-  // Mora começa em dataMora (se posterior ao débito e anterior ao cálculo), senão no débito
-  const moraStart = (dataMora && dataMora > dateCharge && dataMora < dateCalc)
-    ? dataMora : dateCharge;
+  // Mora começa em dataMora quando informada (e anterior ao cálculo), senão no débito. Não exige
+  // dataMora > dateCharge: no dano moral, a citação (marco dos juros) via de regra é ANTERIOR ao
+  // arbitramento/sentença (marco da correção, Súmula 362 STJ) — os dois prazos correm soltos.
+  const moraStart = (dataMora && dataMora < dateCalc) ? dataMora : dateCharge;
 
   let corrected: number, correctionFactor: number, months: number;
   let totalInterestPct = 0;
@@ -150,10 +193,10 @@ export function calculateCharge(
   if (isTJSP) {
     // Correção: Tabela Prática TJSP (dateCharge → dateCalc)
     [corrected, correctionFactor, months] = calcCorrecaoTJSP(value, dateCharge, dateCalc, idx);
-    // Juros: a partir de moraStart
+    // Juros: a partir de moraStart, rateados por dia nos meses de início/fim (sumJurosPct)
     if (!semJuros) {
-      for (const [y, m] of iterMonths(moraStart, dateCalc)) {
-        totalInterestPct += getInterestRate(y, m, idx);
+      totalInterestPct = sumJurosPct(moraStart, dateCalc, idx);
+      for (const [y, m] of iterMonthsInclusive(moraStart, dateCalc)) {
         indicesUsados.push(y < 2024 || (y === 2024 && m <= 8) ? "TJSP-INPC" : "TJSP-14905/Taxa Legal");
       }
     }
@@ -170,11 +213,9 @@ export function calculateCharge(
       indicesUsados.push(y < 2024 || (y === 2024 && m <= 8) ? preLabel : "IPCA/Taxa Legal");
     }
     corrected = value * correctionFactor;
-    // Juros: a partir de moraStart (pode ser data da citação)
+    // Juros: a partir de moraStart (pode ser data da citação), rateados por dia nas pontas
     if (!semJuros) {
-      for (const [y, m] of iterMonths(moraStart, dateCalc)) {
-        totalInterestPct += getInterestRate(y, m, idx);
-      }
+      totalInterestPct = sumJurosPct(moraStart, dateCalc, idx);
       if (moraStart > dateCharge) indicesUsados.push("Selic/1%");
     }
   }
@@ -233,11 +274,10 @@ export function calcCorrigirExcesso(
 ): number {
   if (dataVenc >= dataCalc || excesso <= 0) return excesso;
   let fatorCorr = 1.0;
-  let totalMoraPct = 0;
   for (const [y, m] of iterMonths(dataVenc, dataCalc)) {
     fatorCorr *= 1 + getCorrectionIndex(y, m, idx, tribunal) / 100;
-    totalMoraPct += getInterestRate(y, m, idx); // taxa legal (Selic − IPCA) pós-set/2024 (Lei 14.905/2024)
   }
+  const totalMoraPct = sumJurosPct(dataVenc, dataCalc, idx); // taxa legal (SGS 29543/BCB) pós-set/2024
   const corrigido = excesso * fatorCorr;
   return round2(corrigido + corrigido * totalMoraPct / 100);
 }

@@ -19,7 +19,9 @@ describe("Petição Inicial — TJMG", () => {
     // 4,5 anos ≈ 54 meses × 1% = 54% de juros + correção INPC ~30%
     expect(res.corrected).toBeGreaterThan(1200); // correção INPC 2020→2024
     expect(res.corrected).toBeLessThan(2000);    // sanidade
-    expect(res.interest_pct).toBe(53);           // jan/2020 → jun/2024 = 53 meses × 1%
+    // 53 meses cheios × 1% + rateio por dia nas pontas (dia 15 em ambas, meses de tamanhos
+    // diferentes não cancelam exatamente) = 53,0484%
+    expect(res.interest_pct).toBe(53.0484);
     // total pode divergir 1 centavo do somatório pós-arredondamento individual
     expect(res.total).toBeCloseTo(res.corrected + res.interest_value, 1);
   });

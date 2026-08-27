@@ -23,12 +23,14 @@ async function fetchBcb(serie: number, n = 12): Promise<Record<string, number>> 
 }
 
 async function runUpdate() {
-  // BCB SGS: 188=INPC, 10764=IPCA-E, 433=IPCA, 4390=Selic efetiva mensal
-  const [inpc, ipcae, ipca, selic] = await Promise.all([
+  // BCB SGS: 188=INPC, 10764=IPCA-E, 433=IPCA, 4390=Selic efetiva mensal,
+  // 29543=Taxa Legal mensal pronta (art. 406 §1º CC, Lei 14.905/2024 — ver nota em calc-formulas.ts)
+  const [inpc, ipcae, ipca, selic, taxa_legal] = await Promise.all([
     fetchBcb(188),
     fetchBcb(10764),
     fetchBcb(433),
     fetchBcb(4390),
+    fetchBcb(29543),
   ]);
 
   // Tabela Prática do TJSP (Lei 14.905/2024) não vem do BCB — é lida do PDF oficial do tribunal.
@@ -46,18 +48,19 @@ async function runUpdate() {
   }
 
   const hoje = new Date().toLocaleDateString("pt-BR");
-  await saveIndicesOverrides({ inpc, ipcae, ipca, selic, tjsp_14905, ultima_atualizacao: hoje });
+  await saveIndicesOverrides({ inpc, ipcae, ipca, selic, taxa_legal, tjsp_14905, ultima_atualizacao: hoje });
 
   const last = (r: Record<string, number>) => Object.keys(r).sort().at(-1) ?? "-";
   return {
     ok: true,
     ultima_atualizacao: hoje,
     cobertura: {
-      inpc:  last(inpc),
-      ipcae: last(ipcae),
-      ipca:  last(ipca),
-      selic: last(selic),
-      tjsp:  tjsp_14905 ? last(tjsp_14905) : `erro: ${tjspErro}`,
+      inpc:       last(inpc),
+      ipcae:      last(ipcae),
+      ipca:       last(ipca),
+      selic:      last(selic),
+      taxa_legal: last(taxa_legal),
+      tjsp:       tjsp_14905 ? last(tjsp_14905) : `erro: ${tjspErro}`,
     },
   };
 }

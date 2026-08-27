@@ -33,11 +33,11 @@ describe("calculateCharge — TJMG (INPC/IPCA-E)", () => {
     expect(res.months).toBe(0);
   });
 
-  test("cobrança 1 mês antes — retorna juros de 1%", () => {
-    // Jan/2024 → Fev/2024 = 1 mês de juros a 1%
+  test("cobrança 1 mês antes — retorna juros de ~1%", () => {
+    // Jan/2024 → Fev/2024 = 1 mês cheio de juros a 1% + rateio por dia no mês final (dia 1/31)
     const res = calculateCharge(1000, d("2024-01-01"), d("2024-02-01"), INDICES, "TJMG");
     expect(res.months).toBe(1);
-    expect(res.interest_pct).toBe(1); // 1% a.m. simples
+    expect(res.interest_pct).toBe(1.0345);
     // juros sobre valor corrigido
     expect(res.interest_value).toBeGreaterThan(0);
     expect(res.total).toBeGreaterThan(res.corrected);
@@ -58,12 +58,12 @@ describe("calculateCharge — TJMG (INPC/IPCA-E)", () => {
 
   test("juros simples acumulam corretamente ao longo de 12 meses", () => {
     const res = calculateCharge(1000, d("2023-01-01"), d("2024-01-01"), INDICES, "TJMG");
-    // 12 meses × 1% = 12% (antes da Lei 14.905)
-    expect(res.interest_pct).toBe(12);
+    // 12 meses × 1% (antes da Lei 14.905) + rateio por dia no mês final (dia 1/31) = 12,0323%
+    expect(res.interest_pct).toBe(12.0323);
     expect(res.months).toBe(12);
     expect(res.interest_value).toBeGreaterThan(0);
-    // total = corrigido + 12% do corrigido
-    const esperado = r2(res.corrected + res.corrected * 0.12);
+    // total = corrigido + interest_pct% do corrigido
+    const esperado = r2(res.corrected + (res.corrected * res.interest_pct) / 100);
     expect(res.total).toBe(esperado);
   });
 
@@ -236,14 +236,14 @@ describe("Valores exatos — casos jurídicos de referência", () => {
   // Caso 1: TJMG clássico (pré-transição)
   // R$1.000 em jan/2022, cálculo jan/2023
   // Correção: INPC jan–dez/2022 = fator 1.059324
-  // Juros: 12 meses × 1%/mês (simples) = 12%
-  // Corrigido: R$1.059,32 | Juros: R$127,12 | Total: R$1.186,44
+  // Juros: 12 meses × 1%/mês (simples) + rateio por dia no mês final (01/01/2023, dia 1/31) = 12,0323%
+  // Corrigido: R$1.059,32 | Juros: R$127,46 | Total: R$1.186,78
   test("TJMG clássico jan/2022→jan/2023: INPC + 1%/mês simples (valores exatos)", () => {
     const res = calculateCharge(1000, d("2022-01-01"), d("2023-01-01"), INDICES, "TJMG");
     expect(res.corrected).toBe(1059.32);
-    expect(res.interest_pct).toBe(12);
-    expect(res.interest_value).toBe(127.12);
-    expect(res.total).toBe(1186.44);
+    expect(res.interest_pct).toBe(12.0323);
+    expect(res.interest_value).toBe(127.46);
+    expect(res.total).toBe(1186.78);
     expect(res.months).toBe(12);
     expect(res.indice_label).toBe("INPC");
   });
@@ -251,15 +251,15 @@ describe("Valores exatos — casos jurídicos de referência", () => {
   // Caso 2: TJMG pós-Lei 14.905/2024
   // R$1.000 em set/2024, cálculo jan/2025
   // Correção: IPCA (puro, não IPCA-E) set+out+nov+dez/2024 = fator 1.019236
-  // Juros ("taxa legal" = Selic − IPCA do mesmo mês, art. 406 §1º CC):
-  //   set(0.84−0.44)+out(0.93−0.56)+nov(0.79−0.39)+dez(0.93−0.52) = 1,58% simples
-  // Corrigido: R$1.019,24 | Juros: R$16,10 | Total: R$1.035,34
+  // Juros ("taxa legal" pronta, SGS 29543/BCB): set+out+nov+dez/2024 (4 meses cheios)
+  //   + rateio por dia no mês final (01/01/2025, dia 1/31) = 1,9573% simples
+  // Corrigido: R$1.019,24 | Juros: R$19,95 | Total: R$1.039,19
   test("TJMG pós-14905 set/2024→jan/2025: IPCA + Taxa Legal simples (valores exatos)", () => {
     const res = calculateCharge(1000, d("2024-09-01"), d("2025-01-01"), INDICES, "TJMG");
     expect(res.corrected).toBe(1019.24);
-    expect(res.interest_pct).toBeCloseTo(1.58, 2);
-    expect(res.interest_value).toBe(16.10);
-    expect(res.total).toBe(1035.34);
+    expect(res.interest_pct).toBeCloseTo(1.9573, 4);
+    expect(res.interest_value).toBe(19.95);
+    expect(res.total).toBe(1039.19);
     expect(res.months).toBe(4);
     expect(res.indice_label).toBe("IPCA/Taxa Legal");
   });
@@ -268,10 +268,10 @@ describe("Valores exatos — casos jurídicos de referência", () => {
   // Verificar que juros = corrigido × (soma das taxas) / 100 — NÃO capitalizado mês a mês
   test("juros são simples (não compostos) — art. 406 CC e súmula 121 STF", () => {
     const res = calculateCharge(1000, d("2023-01-01"), d("2023-07-01"), INDICES, "TJMG");
-    // 6 meses × 1% = 6% simples
-    expect(res.interest_pct).toBe(6);
+    // 6 meses × 1% + rateio por dia no mês final (dia 1/31) = 6,0323% simples
+    expect(res.interest_pct).toBe(6.0323);
     // juros = sobre o valor JÁ corrigido, não capitalizado mês a mês
-    const jurosEsperado = Math.round(res.corrected * 0.06 * 100) / 100;
+    const jurosEsperado = Math.round(res.corrected * (res.interest_pct / 100) * 100) / 100;
     expect(res.interest_value).toBe(jurosEsperado);
     // total NÃO é (1 + 0.01)^6 × base, é base × 1.06 (linear)
     const jurosCompostoHipotetico = Math.round(res.corrected * (Math.pow(1.01, 6) - 1) * 100) / 100;
@@ -284,10 +284,10 @@ describe("Valores exatos — casos jurídicos de referência", () => {
     const posTransicao = calculateCharge(1000, d("2024-09-01"), d("2024-10-01"), INDICES, "TJMG");
 
     expect(preTransicao.indice_label).toBe("INPC");
-    expect(preTransicao.interest_pct).toBe(1); // 1% fixo
+    expect(preTransicao.interest_pct).toBe(1.0225); // 1% fixo + rateio por dia no mês final (dia 1/30)
 
     expect(posTransicao.indice_label).toBe("IPCA/Taxa Legal");
-    expect(posTransicao.interest_pct).toBeCloseTo(0.40, 2); // Selic(0,84) − IPCA(0,44) de set/2024
+    expect(posTransicao.interest_pct).toBeCloseTo(0.6989, 4); // taxa legal set/2024 (SGS 29543) + rateio no mês final
   });
 
   // Caso 5: TJSP não confunde correção e juros — são calculados separadamente
@@ -299,5 +299,26 @@ describe("Valores exatos — casos jurídicos de referência", () => {
     // Correção e juros são valores independentes
     expect(res.total).toBeCloseTo(res.corrected + res.interest_value, 2);
     expect(res.indice_label).toBe("Tabela Prática TJSP");
+  });
+
+  // Caso 6: dano moral em cumprimento de sentença — correção e juros com marcos DIFERENTES
+  // e a citação (marco dos juros) ANTERIOR ao arbitramento (marco da correção).
+  // Processo 1021620-17.2025.8.26.0506: R$5.000 arbitrados no acórdão de 04/01/2026 (Súmula 362
+  // STJ), juros desde a citação em 02/06/2025, cálculo em 27/08/2026. Conferido contra a série
+  // oficial SGS 29543/BCB (Taxa Legal) e a Nova Tabela Prática do TJSP: correção R$175,44,
+  // juros R$607,08 (11,73% simples, com rateio de dias em jun/2025 e ago/2026).
+  test("dano moral TJSP: juros desde a citação, anterior ao arbitramento (valores exatos)", () => {
+    const res = calculateCharge(
+      5000,
+      d("2026-01-04"), // arbitramento (acórdão) — marco da correção
+      d("2026-08-27"), // data do cálculo
+      INDICES,
+      "TJSP",
+      d("2025-06-02")  // citação — marco dos juros, ANTERIOR ao arbitramento
+    );
+    expect(res.corrected).toBe(5175.44);
+    expect(res.interest_pct).toBeCloseTo(11.73, 2);
+    expect(res.interest_value).toBe(607.08);
+    expect(res.total).toBe(5782.52);
   });
 });

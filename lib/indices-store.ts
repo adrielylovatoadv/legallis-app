@@ -35,12 +35,13 @@ export async function loadIndicesAsync(): Promise<Indices> {
   }
 
   const merged: Indices = {
-    inpc:      { ...base.inpc,      ...(overrides.inpc      ?? {}) },
-    ipcae:     { ...base.ipcae,     ...(overrides.ipcae     ?? {}) },
-    ipca:      { ...base.ipca,      ...(overrides.ipca      ?? {}) },
-    selic:     { ...base.selic,     ...(overrides.selic     ?? {}) },
-    tjsp_inpc: { ...base.tjsp_inpc, ...(overrides.tjsp_inpc ?? {}) },
-    tjsp_14905:{ ...base.tjsp_14905,...(overrides.tjsp_14905?? {}) },
+    inpc:       { ...base.inpc,       ...(overrides.inpc       ?? {}) },
+    ipcae:      { ...base.ipcae,      ...(overrides.ipcae      ?? {}) },
+    ipca:       { ...base.ipca,       ...(overrides.ipca       ?? {}) },
+    selic:      { ...base.selic,      ...(overrides.selic      ?? {}) },
+    taxa_legal: { ...base.taxa_legal, ...(overrides.taxa_legal ?? {}) },
+    tjsp_inpc:  { ...base.tjsp_inpc,  ...(overrides.tjsp_inpc  ?? {}) },
+    tjsp_14905: { ...base.tjsp_14905, ...(overrides.tjsp_14905 ?? {}) },
     ultima_atualizacao: overrides.ultima_atualizacao ?? base.ultima_atualizacao,
   };
 
@@ -59,6 +60,7 @@ export async function saveIndicesOverrides(partial: Partial<Indices>): Promise<v
     ipcae:      { ...(existing.ipcae      ?? {}), ...(partial.ipcae      ?? {}) },
     ipca:       { ...(existing.ipca       ?? {}), ...(partial.ipca       ?? {}) },
     selic:      { ...(existing.selic      ?? {}), ...(partial.selic      ?? {}) },
+    taxa_legal: { ...(existing.taxa_legal ?? {}), ...(partial.taxa_legal ?? {}) },
     tjsp_inpc:  { ...(existing.tjsp_inpc  ?? {}), ...(partial.tjsp_inpc  ?? {}) },
     tjsp_14905: { ...(existing.tjsp_14905 ?? {}), ...(partial.tjsp_14905 ?? {}) },
     ultima_atualizacao: partial.ultima_atualizacao ?? existing.ultima_atualizacao,
