@@ -215,7 +215,7 @@ export default function DesignacoesPage() {
   const meusProcessos = processos.filter(p => {
     if (!p.responsavel) return false;
     const match = responsavelFiltro
-      ? p.responsavel.toLowerCase().includes(responsavelFiltro.toLowerCase())
+      ? p.responsavel.trim().toLowerCase() === responsavelFiltro.trim().toLowerCase()
       : true;
     if (!match) return false;
     if (filtroStatus === "ativos") return !isFinalizado(p);
@@ -232,7 +232,7 @@ export default function DesignacoesPage() {
     if (!i.responsavel) return false;
     if (CONCLUIDOS_INICIAL.includes((i.andamento || "").toUpperCase().trim())) return false;
     return responsavelFiltro
-      ? i.responsavel.toLowerCase().includes(responsavelFiltro.toLowerCase())
+      ? i.responsavel.trim().toLowerCase() === responsavelFiltro.trim().toLowerCase()
       : true;
   });
 
