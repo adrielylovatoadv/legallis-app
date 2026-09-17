@@ -29,7 +29,7 @@ function LancamentoForm({ alvo, onSaved, onCancel }: {
   const [tipo, setTipo] = useState<TipoLancamento>("honorario_inicial");
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    valor: "", valor_percebido: "", sucumbencia: "", minutos: "",
+    valor: "", valor_percebido: "", pct_sucumbencia: "", minutos: "",
     data_pagamento: "", data: "", mes: "", descricao: "", observacao: "",
     responsavel: alvo.responsavel || "", status: "pendente", faturavel: true,
   });
@@ -44,7 +44,7 @@ function LancamentoForm({ alvo, onSaved, onCancel }: {
       } else if (tipo === "acordo") {
         await createAcordo({ ...base, reu: alvo.reu || "", objeto: alvo.objeto || "", valor_acordo: Number(form.valor) || 0, data_pagamento: form.data_pagamento, mes: form.mes, status: form.status as "pago"|"pendente"|"repasse" });
       } else if (tipo === "execucao") {
-        await createExecucao({ ...base, reu: alvo.reu || "", valor_percebido: Number(form.valor_percebido) || 0, sucumbencia: Number(form.sucumbencia) || 0, data_pagamento: form.data_pagamento, mes: form.mes, status: form.status as "pago"|"pendente"|"repasse" });
+        await createExecucao({ ...base, reu: alvo.reu || "", valor_percebido: Number(form.valor_percebido) || 0, pct_sucumbencia: Number(form.pct_sucumbencia) || 0, sucumbencia: 0, data_pagamento: form.data_pagamento, mes: form.mes, status: form.status as "pago"|"pendente"|"repasse" });
       } else {
         await createTimesheet({ ...base, data: form.data, minutos: Number(form.minutos) || 0, descricao: form.descricao, responsavel: form.responsavel, faturavel: !!form.faturavel, status: form.status as "pago"|"pendente"|"repasse" });
       }
@@ -67,7 +67,7 @@ function LancamentoForm({ alvo, onSaved, onCancel }: {
         {tipo === "execucao" ? (
           <>
             <input placeholder="Valor percebido" type="number" value={form.valor_percebido} onChange={e => set("valor_percebido", e.target.value)} className={inpS} style={inpStyle} />
-            <input placeholder="Sucumbência" type="number" value={form.sucumbencia} onChange={e => set("sucumbencia", e.target.value)} className={inpS} style={inpStyle} />
+            <input placeholder="% Sucumbência" type="number" step="0.5" min="0" max="100" value={form.pct_sucumbencia} onChange={e => set("pct_sucumbencia", e.target.value)} className={inpS} style={inpStyle} />
           </>
         ) : tipo === "timesheet" ? (
           <>

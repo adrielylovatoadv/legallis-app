@@ -12,6 +12,7 @@ function rowToExecucao(r: Record<string, unknown>): Execucao {
     tipo_execucao: (r.tipo_execucao as Execucao["tipo_execucao"]) ?? undefined,
     valor_percebido: Number(r.valor_percebido),
     pct_honorarios: r.pct_honorarios != null ? Number(r.pct_honorarios) : undefined,
+    pct_sucumbencia: r.pct_sucumbencia != null ? Number(r.pct_sucumbencia) : undefined,
     sucumbencia: Number(r.sucumbencia),
     honorarios: Number(r.honorarios),
     repasse_cliente: r.repasse_cliente != null ? Number(r.repasse_cliente) : undefined,
@@ -45,11 +46,11 @@ export async function create(tenantId: string, input: Omit<Execucao, "id">): Pro
   const sql = getSql()!;
   await sql`
     INSERT INTO execucoes (tenant_id, id, mes, data_pagamento, cliente, reu, processo, processo_id,
-                            tipo_execucao, valor_percebido, pct_honorarios, sucumbencia, honorarios,
+                            tipo_execucao, valor_percebido, pct_honorarios, pct_sucumbencia, sucumbencia, honorarios,
                             repasse_cliente, status)
     VALUES (${tenantId}, ${row.id}, ${row.mes}, ${row.data_pagamento}, ${row.cliente}, ${row.reu}, ${row.processo},
             ${row.processoId ?? null}, ${row.tipo_execucao ?? null}, ${row.valor_percebido},
-            ${row.pct_honorarios ?? null}, ${row.sucumbencia}, ${row.honorarios}, ${row.repasse_cliente ?? null},
+            ${row.pct_honorarios ?? null}, ${row.pct_sucumbencia ?? null}, ${row.sucumbencia}, ${row.honorarios}, ${row.repasse_cliente ?? null},
             ${row.status})
   `;
   return row;
@@ -72,7 +73,8 @@ export async function update(tenantId: string, id: string, patch: Partial<Execuc
     UPDATE execucoes SET mes = ${merged.mes}, data_pagamento = ${merged.data_pagamento}, cliente = ${merged.cliente},
       reu = ${merged.reu}, processo = ${merged.processo}, processo_id = ${merged.processoId ?? null},
       tipo_execucao = ${merged.tipo_execucao ?? null}, valor_percebido = ${merged.valor_percebido},
-      pct_honorarios = ${merged.pct_honorarios ?? null}, sucumbencia = ${merged.sucumbencia},
+      pct_honorarios = ${merged.pct_honorarios ?? null}, pct_sucumbencia = ${merged.pct_sucumbencia ?? null},
+      sucumbencia = ${merged.sucumbencia},
       honorarios = ${merged.honorarios}, repasse_cliente = ${merged.repasse_cliente ?? null}, status = ${merged.status}
     WHERE tenant_id = ${tenantId} AND id = ${id}
   `;
@@ -97,16 +99,17 @@ export function buildUpsertManyStatements(tenantId: string, rows: Execucao[]) {
   const sql = getSql()!;
   return rows.map(row => sql`
     INSERT INTO execucoes (tenant_id, id, mes, data_pagamento, cliente, reu, processo, processo_id,
-                            tipo_execucao, valor_percebido, pct_honorarios, sucumbencia, honorarios,
+                            tipo_execucao, valor_percebido, pct_honorarios, pct_sucumbencia, sucumbencia, honorarios,
                             repasse_cliente, status)
     VALUES (${tenantId}, ${row.id}, ${row.mes}, ${row.data_pagamento}, ${row.cliente}, ${row.reu}, ${row.processo},
             ${row.processoId ?? null}, ${row.tipo_execucao ?? null}, ${row.valor_percebido},
-            ${row.pct_honorarios ?? null}, ${row.sucumbencia}, ${row.honorarios}, ${row.repasse_cliente ?? null},
+            ${row.pct_honorarios ?? null}, ${row.pct_sucumbencia ?? null}, ${row.sucumbencia}, ${row.honorarios}, ${row.repasse_cliente ?? null},
             ${row.status})
     ON CONFLICT (tenant_id, id) DO UPDATE SET mes = EXCLUDED.mes, data_pagamento = EXCLUDED.data_pagamento,
       cliente = EXCLUDED.cliente, reu = EXCLUDED.reu, processo = EXCLUDED.processo,
       processo_id = EXCLUDED.processo_id, tipo_execucao = EXCLUDED.tipo_execucao,
       valor_percebido = EXCLUDED.valor_percebido, pct_honorarios = EXCLUDED.pct_honorarios,
+      pct_sucumbencia = EXCLUDED.pct_sucumbencia,
       sucumbencia = EXCLUDED.sucumbencia, honorarios = EXCLUDED.honorarios,
       repasse_cliente = EXCLUDED.repasse_cliente, status = EXCLUDED.status
   `);

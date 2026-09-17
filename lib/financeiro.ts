@@ -42,7 +42,7 @@ export interface Execucao {
   id: string; mes: string; data_pagamento: string;
   cliente: string; reu: string; processo: string;
   tipo_execucao?: TipoExecucao;
-  valor_percebido: number; pct_honorarios?: number; sucumbencia: number;
+  valor_percebido: number; pct_honorarios?: number; pct_sucumbencia?: number; sucumbencia: number;
   honorarios: number; repasse_cliente?: number; status: Status;
   processoId?: string;
 }

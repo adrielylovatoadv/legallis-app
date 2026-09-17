@@ -41,7 +41,7 @@ export interface Execucao {
   id: string; mes: string; data_pagamento: string;
   cliente: string; reu: string; processo: string;
   tipo_execucao?: TipoExecucao;
-  valor_percebido: number; pct_honorarios?: number; sucumbencia: number;
+  valor_percebido: number; pct_honorarios?: number; pct_sucumbencia?: number; sucumbencia: number;
   honorarios: number; repasse_cliente?: number; status: Status;
   processoId?: string;
 }
@@ -160,6 +160,11 @@ export function calcAcordo(valor: number, pct?: number): number {
   return Math.round(valor * ((pct ?? PCT_ACORDO_PADRAO) / 100) * 100) / 100;
 }
 
+// Sucumbência é arbitrada pelo juiz em % — calculada sobre o valor total percebido na execução.
+export function calcSucumbencia(percebido: number, pctSucumbencia?: number): number {
+  return Math.round(percebido * ((pctSucumbencia ?? 0) / 100) * 100) / 100;
+}
+
 export function calcExecucao(
   percebido: number,
   sucumbencia: number,
@@ -170,7 +175,15 @@ export function calcExecucao(
     // percebido já é o honorário bruto
     return Math.round((percebido + sucumbencia) * 100) / 100;
   }
-  // processo_completo (padrão): pct% do percebido + sucumbência
+  // processo_completo (padrão): contratual = pct% sobre (percebido - sucumbência) + sucumbência
   const pctUsado = (pct ?? 35) / 100;
-  return Math.round((percebido * pctUsado + sucumbencia) * 100) / 100;
+  const baseContratual = Math.max(percebido - sucumbencia, 0);
+  return Math.round((baseContratual * pctUsado + sucumbencia) * 100) / 100;
+}
+
+// Repasse ao cliente = o que sobra do valor percebido após honorário contratual + sucumbência (que ficam com o escritório).
+export function calcRepasseExecucao(percebido: number, sucumbencia: number, pct?: number): number {
+  const pctUsado = (pct ?? 35) / 100;
+  const baseContratual = Math.max(percebido - sucumbencia, 0);
+  return Math.round(baseContratual * (1 - pctUsado) * 100) / 100;
 }

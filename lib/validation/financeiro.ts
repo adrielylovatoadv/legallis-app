@@ -26,6 +26,7 @@ export const execucaoCreateSchema = z.object({
   tipo_execucao: tipoExecucaoSchema.default("processo_completo"),
   valor_percebido: z.number().min(0).default(0),
   pct_honorarios: z.number().min(0).max(100).default(35),
+  pct_sucumbencia: z.number().min(0).max(100).default(0),
   sucumbencia: z.number().min(0).default(0),
   status: statusSchema.default("pago"),
   processoId: z.string().optional(),

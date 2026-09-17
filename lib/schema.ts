@@ -202,6 +202,7 @@ export async function initSchema(sql: Sql): Promise<void> {
       objeto TEXT, -- existe em FinalizadoExecucao (controle-data.ts), ausente no tipo Execucao original
       processo_id TEXT, tipo_execucao TEXT,
       valor_percebido NUMERIC(14,2) NOT NULL DEFAULT 0, pct_honorarios NUMERIC(6,3),
+      pct_sucumbencia NUMERIC(6,3),
       sucumbencia NUMERIC(14,2) NOT NULL DEFAULT 0, honorarios NUMERIC(14,2) NOT NULL DEFAULT 0,
       repasse_cliente NUMERIC(14,2), status TEXT NOT NULL DEFAULT 'pago', observacoes TEXT,
       raw JSONB NOT NULL DEFAULT '{}',
@@ -210,6 +211,7 @@ export async function initSchema(sql: Sql): Promise<void> {
   `;
   await sql`ALTER TABLE execucoes ADD COLUMN IF NOT EXISTS objeto TEXT`;
   await sql`ALTER TABLE execucoes ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'`;
+  await sql`ALTER TABLE execucoes ADD COLUMN IF NOT EXISTS pct_sucumbencia NUMERIC(6,3)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_execucoes_tenant_mes ON execucoes (tenant_id, mes)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_execucoes_processo ON execucoes (tenant_id, processo_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_execucoes_processo_num ON execucoes (tenant_id, processo)`;

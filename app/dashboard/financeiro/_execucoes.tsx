@@ -21,7 +21,8 @@ export function getPctExecucaoPadrao(): number {
 function repasseCliente(e: Execucao): number {
   if (e.tipo_execucao === "honorarios_somente") return 0;
   const pct = e.pct_honorarios ?? PCT_PADRAO_FALLBACK;
-  return Math.round(e.valor_percebido * (1 - pct / 100) * 100) / 100;
+  const baseContratual = Math.max(e.valor_percebido - e.sucumbencia, 0);
+  return Math.round(baseContratual * (1 - pct / 100) * 100) / 100;
 }
 
 export function ExecucoesView({ reload }: { reload: () => void }) {
@@ -105,7 +106,12 @@ export function ExecucoesView({ reload }: { reload: () => void }) {
                       <td className="py-2 pr-3 tabular-nums text-xs" style={{ color:"var(--text3)" }}>
                         {e.tipo_execucao === "honorarios_somente" ? "—" : `${(e.pct_honorarios ?? PCT_PADRAO_FALLBACK).toLocaleString("pt-BR")}%`}
                       </td>
-                      <td className="py-2 pr-3 tabular-nums text-xs" style={{ color:"var(--text2)" }}>{fmtBRL(e.sucumbencia)}</td>
+                      <td className="py-2 pr-3 tabular-nums text-xs" style={{ color:"var(--text2)" }}>
+                        {fmtBRL(e.sucumbencia)}
+                        {e.tipo_execucao !== "honorarios_somente" && !!e.pct_sucumbencia && (
+                          <span style={{ color:"var(--text3)" }}> ({e.pct_sucumbencia.toLocaleString("pt-BR")}%)</span>
+                        )}
+                      </td>
                       <td className="py-2 pr-3 tabular-nums font-semibold text-xs" style={{ color:"#22c55e" }}>{fmtBRL(e.honorarios)}</td>
                       <td className="py-2 pr-3"><StatusBtn status={e.status} onClick={() => toggleStatus(e)} /></td>
                       <td className="py-2">
@@ -147,18 +153,27 @@ function ExecucaoForm({ initial, onSave, onCancel }: {
   const blank = {
     mes: getCurrentMes(), data_pagamento: "", cliente: "", reu: "", processo: "",
     tipo_execucao: "processo_completo" as TipoExecucao,
-    valor_percebido: 0, pct_honorarios: 35, sucumbencia: 0, status: "pago" as Status,
+    valor_percebido: 0, pct_honorarios: 35, pct_sucumbencia: 0, sucumbencia: 0, status: "pago" as Status,
   };
-  const [form, setForm] = useState({ ...blank, ...(initial || {}) });
+  const merged = { ...blank, ...(initial || {}) };
+  // Compatibilidade com execuções antigas: se já havia sucumbência em R$ lançada sem % salvo, deriva o % aproximado para exibição.
+  if (merged.pct_sucumbencia === undefined && merged.sucumbencia > 0 && merged.valor_percebido > 0
+    && merged.tipo_execucao !== "honorarios_somente") {
+    merged.pct_sucumbencia = Math.round((merged.sucumbencia / merged.valor_percebido) * 100 * 100) / 100;
+  }
+  const [form, setForm] = useState(merged);
   const [saving, setSaving] = useState(false);
   const set = (k: string, v: string | number) => setForm(p => ({ ...p, [k]: v }));
 
   const isSomente = form.tipo_execucao === "honorarios_somente";
   const pct = form.pct_honorarios ?? 35;
+  const pctSuc = form.pct_sucumbencia ?? 0;
+  const sucumbenciaCalc = isSomente ? form.sucumbencia : Math.round(form.valor_percebido * (pctSuc / 100) * 100) / 100;
+  const baseContratual = isSomente ? 0 : Math.max(form.valor_percebido - sucumbenciaCalc, 0);
   const honorariosCalc = isSomente
     ? form.valor_percebido + form.sucumbencia
-    : form.valor_percebido * (pct / 100) + form.sucumbencia;
-  const repasseCalc = isSomente ? 0 : form.valor_percebido * (1 - pct / 100);
+    : baseContratual * (pct / 100) + sucumbenciaCalc;
+  const repasseCalc = isSomente ? 0 : baseContratual * (1 - pct / 100);
 
   return (
     <Card>
@@ -229,10 +244,21 @@ function ExecucaoForm({ initial, onSave, onCancel }: {
           </>
         )}
 
-        <div>
-          <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Sucumbência (R$)</span>
-          <Inp type="number" step="0.01" min="0" value={form.sucumbencia||""} onChange={e => set("sucumbencia", parseFloat(e.target.value)||0)} />
-        </div>
+        {isSomente ? (
+          <div>
+            <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Sucumbência (R$)</span>
+            <Inp type="number" step="0.01" min="0" value={form.sucumbencia||""} onChange={e => set("sucumbencia", parseFloat(e.target.value)||0)} />
+          </div>
+        ) : (
+          <div>
+            <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>% de sucumbência (arbitrada pelo juiz)</span>
+            <Inp type="number" step="0.5" min="0" max="100" value={form.pct_sucumbencia ?? ""}
+              onChange={e => { const v = parseFloat(e.target.value); set("pct_sucumbencia", Number.isNaN(v) ? 0 : v); }} />
+            {sucumbenciaCalc > 0 && (
+              <p className="text-xs mt-1" style={{ color:"var(--text3)" }}>= {fmtBRL(sucumbenciaCalc)}</p>
+            )}
+          </div>
+        )}
 
         <div>
           <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Status</span>
@@ -258,10 +284,10 @@ function ExecucaoForm({ initial, onSave, onCancel }: {
               <p className="font-bold tabular-nums" style={{ color:"#f59e0b" }}>{fmtBRL(Math.round(repasseCalc * 100) / 100)}</p>
             </div>
           )}
-          {form.sucumbencia > 0 && (
+          {sucumbenciaCalc > 0 && (
             <div>
-              <p style={{ color:"var(--text3)" }}>Sucumbência</p>
-              <p className="font-bold tabular-nums" style={{ color:"#a78bfa" }}>{fmtBRL(form.sucumbencia)}</p>
+              <p style={{ color:"var(--text3)" }}>Sucumbência{!isSomente && ` (${pctSuc}%)`}</p>
+              <p className="font-bold tabular-nums" style={{ color:"#a78bfa" }}>{fmtBRL(sucumbenciaCalc)}</p>
             </div>
           )}
         </div>
