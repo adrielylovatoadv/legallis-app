@@ -1,5 +1,5 @@
 import { hasDb, getSql } from "@/lib/db";
-import { getDataAsync, saveDataAsync, COLS } from "@/lib/financeiro-data";
+import { getDataAsync, saveDataAsync, COLS, getCurrentColIndex } from "@/lib/financeiro-data";
 
 export interface Fixa {
   categoria: string; quem: string;
@@ -7,8 +7,15 @@ export interface Fixa {
   valor_fixo: number; total: number;
 }
 
+// valor_fixo é recorrente: só conta até o mês corrente (não projeta meses futuros ainda não
+// incorridos). Um valor lançado explicitamente por mês conta sempre, independente do mês.
 function buildTotal(valores: Record<string, number>, valorFixo: number): number {
-  return valorFixo > 0 ? COLS.length * valorFixo : COLS.reduce((s, c) => s + (valores[c] || 0), 0);
+  if (valorFixo > 0) {
+    const idxAtual = getCurrentColIndex();
+    const mesesAteHoje = COLS.reduce((n, _c, i) => n + (i <= idxAtual ? 1 : 0), 0);
+    return valorFixo * mesesAteHoje;
+  }
+  return COLS.reduce((s, c) => s + (valores[c] || 0), 0);
 }
 
 export async function list(tenantId: string): Promise<Fixa[]> {

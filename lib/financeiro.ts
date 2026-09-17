@@ -11,22 +11,47 @@ async function fetchAPI(path: string, options?: RequestInit) {
 export const fmtBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export const MESES = [
-  "Out/2025","Nov/2025","Dez/2025",
-  "Jan/2026","Fev/2026","Mar/2026","Abr/2026","Mai/2026","Jun/2026",
-  "Jul/2026","Ago/2026","Set/2026","Out/2026","Nov/2026","Dez/2026",
-  "Jan/2027","Fev/2027","Mar/2027","Abr/2027","Mai/2027","Jun/2027",
-  "Jul/2027","Ago/2027","Set/2027","Out/2027","Nov/2027","Dez/2027",
-];
+// Calendário do módulo financeiro, gerado a partir de hoje — nunca mais precisa de extensão
+// manual. Época fixa: Out/2025 (mês 0, quando o escritório começou a usar o sistema). Horizonte:
+// sempre até dezembro de (ano atual + 2), recalculado a cada carregamento do módulo (cada deploy/
+// cold start já garante ~2 anos de folga à frente da data real). Ver mesma lógica em financeiro-data.ts.
+const MES_ABREV = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+const EPOCH_ABS = 2025 * 12 + 9; // Out/2025
 
-export const COL_TO_MES: Record<string, string> = {
-  "Out":"Out/2025","Nov":"Nov/2025","Dez":"Dez/2025",
-  "Jan":"Jan/2026","Fev":"Fev/2026","Mar":"Mar/2026","Abr":"Abr/2026",
-  "Mai":"Mai/2026","Jun":"Jun/2026","Jul":"Jul/2026","Ago":"Ago/2026",
-  "Set":"Set/2026","Out2":"Out/2026","Nov2":"Nov/2026","Dez2":"Dez/2026",
-};
+function horizonteAbsMax(): number {
+  const now = new Date();
+  return (now.getFullYear() + 2) * 12 + 11; // Dez do ano atual + 2
+}
 
-export const COLS = ["Out","Nov","Dez","Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out2","Nov2","Dez2"];
+function gerarMeses(): string[] {
+  const out: string[] = [];
+  for (let abs = EPOCH_ABS; abs <= horizonteAbsMax(); abs++) {
+    out.push(`${MES_ABREV[abs % 12]}/${Math.floor(abs / 12)}`);
+  }
+  return out;
+}
+
+// COLS usa o esquema legado de tokens curtos (Out,Nov,Dez,...,Set, depois Out2,Nov2,Dez2,...,Set2,
+// Out3,...) para não invalidar dados já gravados com esses nomes. O sufixo é o número do ciclo
+// Out→Set desde a época — cresce sozinho, nunca fica sem token daqui pra frente.
+function gerarColsEMapa(): { cols: string[]; colToMes: Record<string, string> } {
+  const cols: string[] = [];
+  const colToMes: Record<string, string> = {};
+  const max = horizonteAbsMax();
+  for (let abs = EPOCH_ABS; abs <= max; abs++) {
+    const ciclo = Math.floor((abs - EPOCH_ABS) / 12);
+    const sufixo = ciclo === 0 ? "" : String(ciclo + 1);
+    const col = `${MES_ABREV[abs % 12]}${sufixo}`;
+    cols.push(col);
+    colToMes[col] = `${MES_ABREV[abs % 12]}/${Math.floor(abs / 12)}`;
+  }
+  return { cols, colToMes };
+}
+
+export const MESES = gerarMeses();
+const _colsGerados = gerarColsEMapa();
+export const COL_TO_MES: Record<string, string> = _colsGerados.colToMes;
+export const COLS = _colsGerados.cols;
 
 export type Status = "pago" | "pendente" | "repasse";
 

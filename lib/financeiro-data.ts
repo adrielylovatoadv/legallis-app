@@ -17,15 +17,52 @@ function fileForTenant(tenantId: string): { main: string; tmp: string } {
   };
 }
 
-export const MESES = [
-  "Out/2025","Nov/2025","Dez/2025",
-  "Jan/2026","Fev/2026","Mar/2026","Abr/2026","Mai/2026","Jun/2026",
-  "Jul/2026","Ago/2026","Set/2026","Out/2026","Nov/2026","Dez/2026",
-  "Jan/2027","Fev/2027","Mar/2027","Abr/2027","Mai/2027","Jun/2027",
-  "Jul/2027","Ago/2027","Set/2027","Out/2027","Nov/2027","Dez/2027",
-];
+// Calendário do módulo financeiro, gerado a partir de hoje — nunca mais precisa de extensão
+// manual. Época fixa: Out/2025 (mês 0, quando o escritório começou a usar o sistema). Horizonte:
+// sempre até dezembro de (ano atual + 2), recalculado a cada carregamento do módulo (cada deploy/
+// cold start já garante ~2 anos de folga à frente da data real). Mesma lógica duplicada em
+// lib/financeiro.ts (versão client-side) — ver comentário lá para detalhes do esquema de tokens.
+const MES_ABREV = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+const EPOCH_ABS = 2025 * 12 + 9; // Out/2025
 
-export const COLS = ["Out","Nov","Dez","Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out2","Nov2","Dez2"];
+function horizonteAbsMax(): number {
+  const now = new Date();
+  return (now.getFullYear() + 2) * 12 + 11; // Dez do ano atual + 2
+}
+
+function gerarMeses(): string[] {
+  const out: string[] = [];
+  for (let abs = EPOCH_ABS; abs <= horizonteAbsMax(); abs++) {
+    out.push(`${MES_ABREV[abs % 12]}/${Math.floor(abs / 12)}`);
+  }
+  return out;
+}
+
+function gerarColsEMapa(): { cols: string[]; colToMes: Record<string, string> } {
+  const cols: string[] = [];
+  const colToMes: Record<string, string> = {};
+  const max = horizonteAbsMax();
+  for (let abs = EPOCH_ABS; abs <= max; abs++) {
+    const ciclo = Math.floor((abs - EPOCH_ABS) / 12);
+    const sufixo = ciclo === 0 ? "" : String(ciclo + 1);
+    const col = `${MES_ABREV[abs % 12]}${sufixo}`;
+    cols.push(col);
+    colToMes[col] = `${MES_ABREV[abs % 12]}/${Math.floor(abs / 12)}`;
+  }
+  return { cols, colToMes };
+}
+
+export const MESES = gerarMeses();
+const _colsGerados = gerarColsEMapa();
+export const COL_TO_MES: Record<string, string> = _colsGerados.colToMes;
+export const COLS = _colsGerados.cols;
+
+// Índice (em COLS) do mês corrente — mesma fórmula de getColIndex() em app/dashboard/financeiro/_shared.tsx
+// (client-only), usado aqui para limitar totais "até hoje" e não somar meses futuros ainda não incorridos.
+export function getCurrentColIndex(): number {
+  const now = new Date();
+  return now.getFullYear() * 12 + now.getMonth() - EPOCH_ABS;
+}
 
 export type Status = "pago" | "pendente" | "repasse";
 

@@ -1,19 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hasFinanceiroAccess } from "@/lib/acl";
-import { COLS, MESES, calcAcordo } from "@/lib/financeiro-data";
+import { COLS, COL_TO_MES, MESES, calcAcordo, getCurrentColIndex } from "@/lib/financeiro-data";
 import * as acordosRepo from "@/lib/repo/acordos";
 import * as execucoesRepo from "@/lib/repo/execucoes";
 import * as honorariosRepo from "@/lib/repo/honorarios-iniciais";
 import * as variaveisRepo from "@/lib/repo/variaveis";
 import * as fixasRepo from "@/lib/repo/fixas";
-
-const COL_TO_MES: Record<string, string> = {
-  "Out":"Out/2025","Nov":"Nov/2025","Dez":"Dez/2025",
-  "Jan":"Jan/2026","Fev":"Fev/2026","Mar":"Mar/2026","Abr":"Abr/2026",
-  "Mai":"Mai/2026","Jun":"Jun/2026","Jul":"Jul/2026","Ago":"Ago/2026",
-  "Set":"Set/2026","Out2":"Out/2026","Nov2":"Nov/2026","Dez2":"Dez/2026",
-};
 
 function r2(v: number) { return Math.round(v * 100) / 100; }
 
@@ -46,11 +39,15 @@ export async function GET() {
   const total_recebido = r2(receitasPagas.reduce((s, r) => s + r.valor, 0));
   const total_pendente = r2(receitasPendentes.reduce((s, r) => s + r.valor, 0));
 
+  // COLS agora se estende bem à frente (nunca mais fica sem coluna), mas uma despesa fixa
+  // *recorrente* (valor_fixo) não deve projetar meses futuros ainda não incorridos — só conta até
+  // o mês corrente. Um valor lançado explicitamente para um mês específico (mesmo futuro) sempre conta.
+  const idxAtual = getCurrentColIndex();
+  const mesesAteHoje = COLS.reduce((n, _c, i) => n + (i <= idxAtual ? 1 : 0), 0);
   let total_fixas = 0;
   for (const f of fixas) {
-    for (const col of COLS) {
-      total_fixas += f.valor_fixo > 0 ? f.valor_fixo : (f.valores[col] || 0);
-    }
+    if (f.valor_fixo > 0) total_fixas += f.valor_fixo * mesesAteHoje;
+    else for (const col of COLS) total_fixas += f.valores[col] || 0;
   }
   total_fixas = r2(total_fixas);
 
@@ -85,11 +82,18 @@ export async function GET() {
   }
 
   for (const f of fixas) {
-    for (const col of COLS) {
-      const val = f.valor_fixo > 0 ? f.valor_fixo : (f.valores[col] || 0);
-      if (val > 0) {
-        const mes = COL_TO_MES[col];
-        if (mes) { ensureMes(mes); mesMap[mes].fixas += val; }
+    if (f.valor_fixo > 0) {
+      for (let i = 0; i <= idxAtual && i < COLS.length; i++) {
+        const mes = COL_TO_MES[COLS[i]];
+        if (mes) { ensureMes(mes); mesMap[mes].fixas += f.valor_fixo; }
+      }
+    } else {
+      for (const col of COLS) {
+        const val = f.valores[col] || 0;
+        if (val > 0) {
+          const mes = COL_TO_MES[col];
+          if (mes) { ensureMes(mes); mesMap[mes].fixas += val; }
+        }
       }
     }
   }

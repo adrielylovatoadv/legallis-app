@@ -83,11 +83,18 @@ export function ReceitasSociosView() {
     return COLS;
   }
 
-  // Despesas fixas no período
+  // Despesas fixas no período. Para "todos os períodos", valor_fixo (recorrente) só conta até o
+  // mês corrente — não projeta meses futuros ainda não incorridos; um valor lançado explicitamente
+  // por mês conta sempre. Nos demais períodos, cols já vem limitado pela data real.
   function calcDespFixas(): number {
     const cols = colsDoPeriodo();
+    const idxAtual = getColIndex();
     return fixas.reduce((total, f) => {
-      return total + cols.reduce((s, c) => s + (f.valor_fixo > 0 ? f.valor_fixo : (f.valores[c] || 0)), 0);
+      if (f.valor_fixo > 0) {
+        const n = periodo === "todos" ? cols.filter(c => COLS.indexOf(c) <= idxAtual).length : cols.length;
+        return total + f.valor_fixo * n;
+      }
+      return total + cols.reduce((s, c) => s + (f.valores[c] || 0), 0);
     }, 0);
   }
 

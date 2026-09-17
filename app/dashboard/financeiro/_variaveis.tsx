@@ -306,7 +306,7 @@ function VariavelForm({ initial, onSave, onCancel }: {
           <Inp value={form.parcelas} onChange={e => set("parcelas",e.target.value)} placeholder="ex: 3x" />
           {parcelasForaDoPeriodo > 0 && (
             <p className="text-xs mt-1" style={{ color:"#f97316" }}>
-              ⚠ {parcelasForaDoPeriodo} parcela{parcelasForaDoPeriodo > 1?"s":""} ultrapassam Dez/2027 e não serão registradas.
+              ⚠ {parcelasForaDoPeriodo} parcela{parcelasForaDoPeriodo > 1?"s":""} ultrapassam {COL_TO_MES[COLS[COLS.length - 1]] || "o período disponível"} e não serão registradas.
             </p>
           )}
         </div>
