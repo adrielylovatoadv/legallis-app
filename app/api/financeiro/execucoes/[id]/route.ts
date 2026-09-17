@@ -29,7 +29,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     patch.sucumbencia = s;
     patch.honorarios = calcExecucao(p, s, tipo, pct);
     if (tipo !== "honorarios_somente" && p > 0) {
-      patch.repasse_cliente = calcRepasseExecucao(p, s, pct);
+      patch.repasse_cliente = calcRepasseExecucao(p, pct);
     }
   }
   const exec = await execucoesRepo.update(tid, id, patch);

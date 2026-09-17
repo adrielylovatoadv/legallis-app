@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     sucumbencia,
     honorarios: calcExecucao(body.valor_percebido, sucumbencia, body.tipo_execucao, body.pct_honorarios),
     repasse_cliente: body.tipo_execucao !== "honorarios_somente" && body.valor_percebido > 0
-      ? calcRepasseExecucao(body.valor_percebido, sucumbencia, body.pct_honorarios)
+      ? calcRepasseExecucao(body.valor_percebido, body.pct_honorarios)
       : 0,
   });
   return NextResponse.json(exec, { status: 201 });

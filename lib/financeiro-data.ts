@@ -175,15 +175,14 @@ export function calcExecucao(
     // percebido já é o honorário bruto
     return Math.round((percebido + sucumbencia) * 100) / 100;
   }
-  // processo_completo (padrão): contratual = pct% sobre (percebido - sucumbência) + sucumbência
+  // processo_completo (padrão): pct% do percebido (valor cheio) + sucumbência por cima
   const pctUsado = (pct ?? 35) / 100;
-  const baseContratual = Math.max(percebido - sucumbencia, 0);
-  return Math.round((baseContratual * pctUsado + sucumbencia) * 100) / 100;
+  return Math.round((percebido * pctUsado + sucumbencia) * 100) / 100;
 }
 
-// Repasse ao cliente = o que sobra do valor percebido após honorário contratual + sucumbência (que ficam com o escritório).
-export function calcRepasseExecucao(percebido: number, sucumbencia: number, pct?: number): number {
+// Repasse ao cliente = a parte do valor percebido que não é honorário contratual.
+// A sucumbência não entra aqui: é paga pela parte perdedora além do valor percebido, não sai da cota do cliente.
+export function calcRepasseExecucao(percebido: number, pct?: number): number {
   const pctUsado = (pct ?? 35) / 100;
-  const baseContratual = Math.max(percebido - sucumbencia, 0);
-  return Math.round(baseContratual * (1 - pctUsado) * 100) / 100;
+  return Math.round(percebido * (1 - pctUsado) * 100) / 100;
 }

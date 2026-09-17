@@ -21,8 +21,7 @@ export function getPctExecucaoPadrao(): number {
 function repasseCliente(e: Execucao): number {
   if (e.tipo_execucao === "honorarios_somente") return 0;
   const pct = e.pct_honorarios ?? PCT_PADRAO_FALLBACK;
-  const baseContratual = Math.max(e.valor_percebido - e.sucumbencia, 0);
-  return Math.round(baseContratual * (1 - pct / 100) * 100) / 100;
+  return Math.round(e.valor_percebido * (1 - pct / 100) * 100) / 100;
 }
 
 export function ExecucoesView({ reload }: { reload: () => void }) {
@@ -169,11 +168,10 @@ function ExecucaoForm({ initial, onSave, onCancel }: {
   const pct = form.pct_honorarios ?? 35;
   const pctSuc = form.pct_sucumbencia ?? 0;
   const sucumbenciaCalc = isSomente ? form.sucumbencia : Math.round(form.valor_percebido * (pctSuc / 100) * 100) / 100;
-  const baseContratual = isSomente ? 0 : Math.max(form.valor_percebido - sucumbenciaCalc, 0);
   const honorariosCalc = isSomente
     ? form.valor_percebido + form.sucumbencia
-    : baseContratual * (pct / 100) + sucumbenciaCalc;
-  const repasseCalc = isSomente ? 0 : baseContratual * (1 - pct / 100);
+    : form.valor_percebido * (pct / 100) + sucumbenciaCalc;
+  const repasseCalc = isSomente ? 0 : form.valor_percebido * (1 - pct / 100);
 
   return (
     <Card>
