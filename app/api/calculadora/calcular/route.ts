@@ -16,6 +16,11 @@ export async function POST(req: NextRequest) {
       data_calculo,
       tribunal = "TJMG",
       honorarios_pct = 20,
+      // honorários: "percentual" (sobre o total) ou "valor" (quantia fixada na sentença, ex.: equidade — art. 85 §8º CPC)
+      honorarios_tipo = "percentual",
+      honorarios_valor_fixo = 0,
+      honorarios_data_base = "",   // data da fixação — se informada, atualiza monetariamente o valor fixo
+      honorarios_data_juros = "",  // início dos juros sobre o valor fixo — se vazio, não incide juros
       multa_523 = false,
       modo = "execucao",
       aplicar_dobro = false,
@@ -117,10 +122,32 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      const honorariosValor = round2(totalGeral * ((honorarios_pct as number) / 100));
-      summary.honorarios_pct = honorarios_pct as number;
-      summary.honorarios_valor = honorariosValor;
-      totalGeral = round2(totalGeral + honorariosValor);
+      if (honorarios_tipo === "valor") {
+        const fixo = Number(honorarios_valor_fixo) || 0;
+        if (fixo < 0) {
+          return NextResponse.json({ error: "Valor dos honorários inválido." }, { status: 400 });
+        }
+        let honorariosValor = round2(fixo);
+        summary.honorarios_tipo = "valor";
+        summary.honorarios_original = round2(fixo);
+
+        const dateBase = honorarios_data_base ? new Date((honorarios_data_base as string) + "T12:00:00") : null;
+        if (dateBase && !isNaN(dateBase.getTime()) && dateBase < dateCalc && fixo > 0) {
+          const dataJuros = honorarios_data_juros ? new Date((honorarios_data_juros as string) + "T12:00:00") : undefined;
+          const hon = calculateCharge(fixo, dateBase, dateCalc, idx, tribunal, dataJuros, !dataJuros);
+          summary.honorarios_corrigido = hon.corrected;
+          summary.honorarios_juros = hon.interest_value;
+          honorariosValor = hon.total;
+        }
+        summary.honorarios_valor = honorariosValor;
+        totalGeral = round2(totalGeral + honorariosValor);
+      } else {
+        const honorariosValor = round2(totalGeral * ((honorarios_pct as number) / 100));
+        summary.honorarios_tipo = "percentual";
+        summary.honorarios_pct = honorarios_pct as number;
+        summary.honorarios_valor = honorariosValor;
+        totalGeral = round2(totalGeral + honorariosValor);
+      }
 
       if (tipo_obrigacao === "contratual" && data_citacao) {
         summary.data_citacao = data_citacao as string;

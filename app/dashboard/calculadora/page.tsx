@@ -18,6 +18,8 @@ interface ResultRow {
 interface Summary {
   subtotal_principal?: number; subtotal_juros?: number; subtotal_base?: number;
   honorarios_pct?: number; honorarios_valor?: number;
+  honorarios_tipo?: "percentual" | "valor";
+  honorarios_original?: number; honorarios_corrigido?: number; honorarios_juros?: number;
   multa_523?: boolean; multa_valor?: number;
   aplicar_dobro?: boolean; subtotal_material?: number;
   dano_moral?: number; total_geral: number;
@@ -318,6 +320,10 @@ export default function CalculadoraPage() {
   const [modo, setModo] = useState("inicial");
   const [dataCalculo, setDataCalculo] = useState(today);
   const [honorariosPct, setHonorariosPct] = useState("20");
+  const [honorariosTipo, setHonorariosTipo] = useState<"percentual" | "valor">("percentual");
+  const [honorariosValorFixo, setHonorariosValorFixo] = useState("");
+  const [honorariosDataBase, setHonorariosDataBase] = useState("");
+  const [honorariosDataJuros, setHonorariosDataJuros] = useState("");
   const [multa523, setMulta523] = useState(false);
   const [aplicarDobro, setAplicarDobro] = useState(false);
   const [danoMoral, setDanoMoral] = useState("");
@@ -375,6 +381,14 @@ export default function CalculadoraPage() {
     setLancamentos(novos.map(n => ({ id: _id++, ...n })));
   };
 
+  const honorariosLabel = (sm: Summary, extenso = false) => {
+    const base = extenso ? "Honorários Advocatícios" : "Honorários";
+    if (sm.honorarios_tipo === "valor") {
+      return `${base} (valor fixado na sentença${sm.honorarios_corrigido !== undefined ? ", atualizado" : ""})`;
+    }
+    return `${base} (${sm.honorarios_pct}%)`;
+  };
+
   const isRevisional = modo === "revisional_veiculo" || modo === "revisional_emprestimo";
 
   const calcular = useCallback(async () => {
@@ -420,6 +434,10 @@ export default function CalculadoraPage() {
             lancamentos: validos.map(l => ({ data_cobranca: l.data, valor: parseBRL(l.valor) })),
             data_calculo: dataCalculo, tribunal,
             honorarios_pct: parsePct(honorariosPct, 20),
+            honorarios_tipo: honorariosTipo,
+            honorarios_valor_fixo: parseBRL(honorariosValorFixo),
+            honorarios_data_base: honorariosDataBase,
+            honorarios_data_juros: honorariosDataJuros,
             multa_523: multa523, modo,
             aplicar_dobro: aplicarDobro, dano_moral: parseBRL(danoMoral),
             sem_juros: modo === "inicial" && semJuros,
@@ -438,7 +456,7 @@ export default function CalculadoraPage() {
       setLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modo, lancamentos, dataCalculo, tribunal, honorariosPct, multa523, aplicarDobro, danoMoral, semJuros,
+  }, [modo, lancamentos, dataCalculo, tribunal, honorariosPct, honorariosTipo, honorariosValorFixo, honorariosDataBase, honorariosDataJuros, multa523, aplicarDobro, danoMoral, semJuros,
     dataCitacao, tipoObrigacao, danoMoralExecucao, danoMoralDataArbitramento, danoMoralDataMora,
     honValor, honDataOrigem, honDataCalc, honTribunal, honPct, honProcesso,
     revPV, revPMT, revN, revDataContrat, revDataCalc, revTaxaBacen, isRevisional,
@@ -559,10 +577,37 @@ export default function CalculadoraPage() {
                       </div>
                     )}
                     <div>
-                      <Label>Honorários advocatícios (%)</Label>
-                      <Input type="number" value={honorariosPct} onChange={e => setHonorariosPct(e.target.value)}
-                        min="0" max="100" step="0.5" className="mt-1" />
+                      <Label>Honorários advocatícios</Label>
+                      <Select value={honorariosTipo} onChange={e => setHonorariosTipo(e.target.value as "percentual" | "valor")} className="mt-1">
+                        <option value="percentual">Percentual sobre o total (%)</option>
+                        <option value="valor">Valor fixo (R$) — equidade, art. 85 §8º CPC</option>
+                      </Select>
                     </div>
+                    {honorariosTipo === "percentual" ? (
+                      <div>
+                        <Label>Honorários (%)</Label>
+                        <Input type="number" value={honorariosPct} onChange={e => setHonorariosPct(e.target.value)}
+                          min="0" max="100" step="0.5" className="mt-1" />
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div>
+                          <Label>Valor fixado (R$)</Label>
+                          <Input type="text" value={honorariosValorFixo} onChange={e => setHonorariosValorFixo(e.target.value)}
+                            placeholder="0,00" className="mt-1" />
+                        </div>
+                        <div>
+                          <Label>Data da fixação (opcional — atualiza monetariamente)</Label>
+                          <Input type="date" value={honorariosDataBase} onChange={e => setHonorariosDataBase(e.target.value)} className="mt-1" />
+                        </div>
+                        {honorariosDataBase && (
+                          <div>
+                            <Label>Início dos juros (opcional — vazio = sem juros)</Label>
+                            <Input type="date" value={honorariosDataJuros} onChange={e => setHonorariosDataJuros(e.target.value)} className="mt-1" />
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input type="checkbox" checked={multa523} onChange={e => setMulta523(e.target.checked)}
                         style={{ accentColor: "var(--gold)" }} />
@@ -899,7 +944,7 @@ export default function CalculadoraPage() {
                 </>
               )}
               {modo === "execucao" && summary.honorarios_valor !== undefined && (
-                <SummaryRow label={`Honorários (${summary.honorarios_pct}%)`} value={fmtBRL(summary.honorarios_valor)} />
+                <SummaryRow label={honorariosLabel(summary)} value={fmtBRL(summary.honorarios_valor)} />
               )}
               {modo === "execucao" && summary.data_citacao && (
                 <div className="py-1 text-xs" style={{ color: "var(--text3)" }}>
@@ -972,7 +1017,7 @@ export default function CalculadoraPage() {
                       },
                       { label: "( = ) Dano Moral — total atualizado", valor: fmtBRL(summary.dano_moral_total) },
                     ] : []),
-                    ...(modo === "execucao" && summary.honorarios_valor !== undefined ? [{ label: `( + ) Honorários Advocatícios (${summary.honorarios_pct}%)`, valor: fmtBRL(summary.honorarios_valor) }] : []),
+                    ...(modo === "execucao" && summary.honorarios_valor !== undefined ? [{ label: `( + ) ${honorariosLabel(summary, true)}`, valor: fmtBRL(summary.honorarios_valor) }] : []),
                     ...(modo === "execucao" && summary.data_citacao ? [{ label: "Obs.: Juros a partir da citação (art. 405 CC)", valor: new Date(summary.data_citacao + "T12:00:00").toLocaleDateString("pt-BR") }] : []),
                     ...(modo === "inicial" && summary.sem_juros ? [{ label: "Obs.: Cálculo sem juros de mora", valor: "apenas correção monetária" }] : []),
                     ...(modo === "inicial" && summary.aplicar_dobro && summary.subtotal_material !== undefined ? [{ label: "( × ) Repetição em dobro — CDC art. 42, §único", valor: `${fmtBRL(summary.subtotal_base ?? 0)} × 2 = ${fmtBRL(summary.subtotal_material)}` }] : []),
@@ -982,6 +1027,11 @@ export default function CalculadoraPage() {
                 },
               ],
               criterios: [
+                ...(modo === "execucao" && summary.honorarios_tipo === "valor" ? [
+                  summary.honorarios_corrigido !== undefined
+                    ? `Honorários advocatícios: valor fixado na sentença (${fmtBRL(summary.honorarios_original ?? 0)}), atualizado monetariamente desde ${fmtDataBR(honorariosDataBase)}${honorariosDataJuros ? `, com juros de mora a partir de ${fmtDataBR(honorariosDataJuros)}` : ", sem incidência de juros"}.`
+                    : `Honorários advocatícios: valor fixado na sentença (${fmtBRL(summary.honorarios_original ?? 0)}), sem atualização.`,
+                ] : []),
                 ...(modo === "execucao" && summary.dano_moral_total && danoMoralDataArbitramento ? [
                   `Dano moral: correção monetária a partir do arbitramento, ${fmtDataBR(danoMoralDataArbitramento)} (Súmula 362 STJ).`,
                   `Dano moral: juros de mora a partir de ${fmtDataBR(danoMoralDataMora || danoMoralDataArbitramento)}${danoMoralDataMora ? "" : " (mesma data do arbitramento — nenhum termo diferente informado)"}.`,
