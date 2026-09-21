@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hasFinanceiroAccess } from "@/lib/acl";
-import { calcExecucao, calcSucumbencia, calcRepasseExecucao } from "@/lib/financeiro-data";
+import { calcExecucao, resolveSucumbencia, calcRepasseExecucao } from "@/lib/financeiro-data";
 import * as execucoesRepo from "@/lib/repo/execucoes";
 import { execucaoCreateSchema } from "@/lib/validation/financeiro";
 import { parseBody } from "@/lib/validation/helpers";
@@ -22,11 +22,9 @@ export async function POST(req: NextRequest) {
   const tid = session.user.tenantId;
   const { data: body, error } = parseBody(execucaoCreateSchema, await req.json());
   if (error) return error;
-  // Na execução de processo completo, a sucumbência é arbitrada em % pelo juiz e incide sobre o valor
-  // percebido; o honorário contratual incide sobre o restante (percebido - sucumbência).
-  const sucumbencia = body.tipo_execucao === "honorarios_somente"
-    ? body.sucumbencia
-    : calcSucumbencia(body.valor_percebido, body.pct_sucumbencia);
+  // Sucumbência: em % arbitrado pelo juiz (incide sobre o valor percebido) ou em R$ fixado por equidade.
+  // O honorário contratual incide sobre o valor percebido e a sucumbência entra por cima.
+  const sucumbencia = resolveSucumbencia(body.tipo_execucao, body.valor_percebido, body.pct_sucumbencia, body.sucumbencia);
   const exec = await execucoesRepo.create(tid, {
     ...body,
     sucumbencia,

@@ -202,6 +202,20 @@ export function calcSucumbencia(percebido: number, pctSucumbencia?: number): num
   return Math.round(percebido * ((pctSucumbencia ?? 0) / 100) * 100) / 100;
 }
 
+// Sucumbência efetiva do lançamento. Em "honorarios_somente" ou quando não há % arbitrado, vale o valor
+// em R$ informado (fixado por equidade, art. 85 §8º CPC); havendo %, ele é calculado sobre o valor percebido.
+export function resolveSucumbencia(
+  tipo: TipoExecucao | undefined,
+  percebido: number,
+  pctSucumbencia: number | undefined,
+  sucumbenciaValor: number | undefined
+): number {
+  if (tipo === "honorarios_somente" || !pctSucumbencia) {
+    return Math.round((sucumbenciaValor ?? 0) * 100) / 100;
+  }
+  return calcSucumbencia(percebido, pctSucumbencia);
+}
+
 export function calcExecucao(
   percebido: number,
   sucumbencia: number,

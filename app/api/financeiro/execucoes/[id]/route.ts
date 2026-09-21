@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hasFinanceiroAccess } from "@/lib/acl";
-import { calcExecucao, calcSucumbencia, calcRepasseExecucao } from "@/lib/financeiro-data";
+import { calcExecucao, resolveSucumbencia, calcRepasseExecucao } from "@/lib/financeiro-data";
 import * as execucoesRepo from "@/lib/repo/execucoes";
 import { execucaoUpdateSchema } from "@/lib/validation/financeiro";
 import { parseBody } from "@/lib/validation/helpers";
@@ -23,9 +23,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const tipo = patch.tipo_execucao ?? current.tipo_execucao;
     const pct = patch.pct_honorarios ?? current.pct_honorarios;
     const pctSuc = patch.pct_sucumbencia ?? current.pct_sucumbencia;
-    const s = tipo === "honorarios_somente"
-      ? (patch.sucumbencia ?? current.sucumbencia)
-      : calcSucumbencia(p, pctSuc);
+    const s = resolveSucumbencia(tipo, p, pctSuc, patch.sucumbencia ?? current.sucumbencia);
     patch.sucumbencia = s;
     patch.honorarios = calcExecucao(p, s, tipo, pct);
     if (tipo !== "honorarios_somente" && p > 0) {

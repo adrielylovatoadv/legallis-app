@@ -110,6 +110,9 @@ export function ExecucoesView({ reload }: { reload: () => void }) {
                         {e.tipo_execucao !== "honorarios_somente" && !!e.pct_sucumbencia && (
                           <span style={{ color:"var(--text3)" }}> ({e.pct_sucumbencia.toLocaleString("pt-BR")}%)</span>
                         )}
+                        {e.tipo_execucao !== "honorarios_somente" && !e.pct_sucumbencia && e.sucumbencia > 0 && (
+                          <span style={{ color:"var(--text3)" }}> (equidade)</span>
+                        )}
                       </td>
                       <td className="py-2 pr-3 tabular-nums font-semibold text-xs" style={{ color:"#22c55e" }}>{fmtBRL(e.honorarios)}</td>
                       <td className="py-2 pr-3"><StatusBtn status={e.status} onClick={() => toggleStatus(e)} /></td>
@@ -155,11 +158,10 @@ function ExecucaoForm({ initial, onSave, onCancel }: {
     valor_percebido: 0, pct_honorarios: 35, pct_sucumbencia: 0, sucumbencia: 0, status: "pago" as Status,
   };
   const merged = { ...blank, ...(initial || {}) };
-  // Compatibilidade com execuções antigas: se já havia sucumbência em R$ lançada sem % salvo, deriva o % aproximado para exibição.
-  if (merged.pct_sucumbencia === undefined && merged.sucumbencia > 0 && merged.valor_percebido > 0
-    && merged.tipo_execucao !== "honorarios_somente") {
-    merged.pct_sucumbencia = Math.round((merged.sucumbencia / merged.valor_percebido) * 100 * 100) / 100;
-  }
+  // Sucumbência: % arbitrado pelo juiz ou valor fixo em R$ (equidade). Sem % salvo e com R$ lançado = equidade.
+  const [sucModo, setSucModo] = useState<"pct" | "valor">(
+    !merged.pct_sucumbencia && merged.sucumbencia > 0 ? "valor" : "pct"
+  );
   const [form, setForm] = useState(merged);
   const [saving, setSaving] = useState(false);
   const set = (k: string, v: string | number) => setForm(p => ({ ...p, [k]: v }));
@@ -167,7 +169,8 @@ function ExecucaoForm({ initial, onSave, onCancel }: {
   const isSomente = form.tipo_execucao === "honorarios_somente";
   const pct = form.pct_honorarios ?? 35;
   const pctSuc = form.pct_sucumbencia ?? 0;
-  const sucumbenciaCalc = isSomente ? form.sucumbencia : Math.round(form.valor_percebido * (pctSuc / 100) * 100) / 100;
+  const sucPorValor = isSomente || sucModo === "valor";
+  const sucumbenciaCalc = sucPorValor ? form.sucumbencia : Math.round(form.valor_percebido * (pctSuc / 100) * 100) / 100;
   const honorariosCalc = isSomente
     ? form.valor_percebido + form.sucumbencia
     : form.valor_percebido * (pct / 100) + sucumbenciaCalc;
@@ -242,10 +245,26 @@ function ExecucaoForm({ initial, onSave, onCancel }: {
           </>
         )}
 
-        {isSomente ? (
+        {!isSomente && (
+          <div>
+            <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Sucumbência fixada</span>
+            <Sel value={sucModo} onChange={e => {
+              const m = e.target.value as "pct" | "valor";
+              setSucModo(m);
+              setForm(p => m === "valor" ? { ...p, pct_sucumbencia: 0 } : { ...p, sucumbencia: 0 });
+            }}>
+              <option value="pct">Em percentual (%)</option>
+              <option value="valor">Em valor (R$) — equidade</option>
+            </Sel>
+          </div>
+        )}
+        {sucPorValor ? (
           <div>
             <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Sucumbência (R$)</span>
             <Inp type="number" step="0.01" min="0" value={form.sucumbencia||""} onChange={e => set("sucumbencia", parseFloat(e.target.value)||0)} />
+            {!isSomente && (
+              <p className="text-xs mt-1" style={{ color:"var(--text3)" }}>Valor fixado na sentença (equidade), somado ao honorário contratual</p>
+            )}
           </div>
         ) : (
           <div>
@@ -284,7 +303,7 @@ function ExecucaoForm({ initial, onSave, onCancel }: {
           )}
           {sucumbenciaCalc > 0 && (
             <div>
-              <p style={{ color:"var(--text3)" }}>Sucumbência{!isSomente && ` (${pctSuc}%)`}</p>
+              <p style={{ color:"var(--text3)" }}>Sucumbência{!sucPorValor && ` (${pctSuc}%)`}{!isSomente && sucPorValor && " (equidade)"}</p>
               <p className="font-bold tabular-nums" style={{ color:"#a78bfa" }}>{fmtBRL(sucumbenciaCalc)}</p>
             </div>
           )}
