@@ -40,4 +40,5 @@ test("descrição (Google Agenda) inclui o nº do cumprimento", () => {
 test("siglas", () => {
   expect(siglaVinculo("Cumprimento de sentença")).toBe("Cumpr.");
   expect(siglaVinculo("Agravo de instrumento")).toBe("AI");
+  expect(siglaVinculo("Processo apensado")).toBe("Apens.");
 });

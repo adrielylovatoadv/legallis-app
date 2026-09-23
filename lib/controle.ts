@@ -50,7 +50,7 @@ export interface Processo {
 export interface NumeroVinculado { tipo: string; numero: string }
 
 export const TIPOS_NUMERO_VINCULADO = [
-  "Cumprimento de sentença", "Agravo de instrumento", "Embargos", "Recurso", "Outro",
+  "Cumprimento de sentença", "Processo apensado", "Agravo de instrumento", "Embargos", "Recurso", "Outro",
 ];
 export const TIPO_CUMPRIMENTO = TIPOS_NUMERO_VINCULADO[0];
 
@@ -58,6 +58,7 @@ export const TIPO_CUMPRIMENTO = TIPOS_NUMERO_VINCULADO[0];
 export function siglaVinculo(tipo: string): string {
   const t = normText(tipo);
   if (t.startsWith("cumprimento")) return "Cumpr.";
+  if (t.includes("apensado")) return "Apens.";
   if (t.startsWith("agravo")) return "AI";
   if (t.startsWith("embargos")) return "Emb.";
   if (t.startsWith("recurso")) return "Rec.";
