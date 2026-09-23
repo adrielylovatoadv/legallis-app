@@ -42,6 +42,40 @@ export interface Processo {
   vara?: string; tribunal?: string; prazo_fatal?: string;
   google_event_id_audiencia?: string; google_event_id_prazo?: string;
   em_segunda_instancia?: boolean; em_execucao?: boolean; resultado_1_grau?: string;
+  numeros_vinculados?: NumeroVinculado[];
+}
+
+// Números de incidentes que tramitam separados do processo principal — ex.: no eproc/TJSP o
+// cumprimento de sentença (e o agravo de instrumento) ganham número CNJ próprio.
+export interface NumeroVinculado { tipo: string; numero: string }
+
+export const TIPOS_NUMERO_VINCULADO = [
+  "Cumprimento de sentença", "Agravo de instrumento", "Embargos", "Recurso", "Outro",
+];
+export const TIPO_CUMPRIMENTO = TIPOS_NUMERO_VINCULADO[0];
+
+// Rótulo curto pra exibir ao lado do número nas listagens.
+export function siglaVinculo(tipo: string): string {
+  const t = normText(tipo);
+  if (t.startsWith("cumprimento")) return "Cumpr.";
+  if (t.startsWith("agravo")) return "AI";
+  if (t.startsWith("embargos")) return "Emb.";
+  if (t.startsWith("recurso")) return "Rec.";
+  return tipo || "Vinc.";
+}
+
+export function vinculadosPreenchidos(p: Pick<Processo, "numeros_vinculados">): NumeroVinculado[] {
+  return (p.numeros_vinculados || []).filter(v => (v.numero || "").trim());
+}
+
+// Todos os números do processo (principal + vinculados), pra busca/casamento.
+export function todosNumeros(p: Pick<Processo, "numero_processo" | "numeros_vinculados">): string[] {
+  return [p.numero_processo, ...vinculadosPreenchidos(p).map(v => v.numero)].filter(Boolean);
+}
+
+// Texto "Processo: X | Cumprimento de sentença: Y" usado em descrições (Google Agenda etc.).
+export function descricaoNumeros(p: Pick<Processo, "numero_processo" | "numeros_vinculados">): string {
+  return [`Processo: ${p.numero_processo}`, ...vinculadosPreenchidos(p).map(v => `${v.tipo}: ${v.numero}`)].join(" | ");
 }
 
 export interface Cliente {
@@ -211,7 +245,7 @@ export function gcalUrl(p: Processo): string | null {
   if (!p.data) return null;
   const tipo = s.includes("AIJ") ? "AIJ" : s.startsWith("AC") ? "AC" : "PERÍCIA";
   const titulo = `${tipo} ${p.autor} ${p.numero_processo}`.trim();
-  const detalhe = `Processo: ${p.numero_processo} | ${p.autor} × ${p.reu} | ${p.objeto}`;
+  const detalhe = `${descricaoNumeros(p)} | ${p.autor} × ${p.reu} | ${p.objeto}`;
   return buildGcalUrl(titulo, detalhe, p.data, p.hora);
 }
 

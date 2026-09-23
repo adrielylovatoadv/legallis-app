@@ -3,12 +3,13 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   getProcessos, createProcesso, updateProcesso, deleteProcesso, marcarOk,
-  ANDAMENTOS_PROCESSO, fmtData, badgeAndamento, gcalUrl, normText, normalizeData,
-  type Processo,
+  ANDAMENTOS_PROCESSO, fmtData, badgeAndamento, gcalUrl, normText, normalizeData, todosNumeros,
+  type Processo, type NumeroVinculado,
 } from "@/lib/controle";
 import { DateField } from "@/components/ui/DateField";
 import { Input as Inp, Select as Sel, FieldLabel as Lbl, Badge } from "@/components/ui";
 import { FinanceiroPanel } from "./_financeiro-panel";
+import { NumerosProcesso, VinculadosEditor, temCumprimento, novoCumprimento } from "@/components/NumerosVinculados";
 
 const POR_PAGINA = 50;
 
@@ -31,13 +32,18 @@ function ProcessoForm({ initial, onSave, onCancel, responsaveis = [] }: {
   onCancel: () => void;
   responsaveis?: string[];
 }) {
-  const blank = { autor:"",reu:"",objeto:"",numero_processo:"",data:"",hora:"",andamento:"",responsavel:"",observacoes:"",atencao:false,finalizado:false,prazo_fatal:"",em_segunda_instancia:false,em_execucao:false,resultado_1_grau:"" };
-  const [form, setForm] = useState({ ...blank, ...(initial || {}), data: normalizeData(initial?.data || ""), prazo_fatal: normalizeData(initial?.prazo_fatal || "") });
+  const blank = { autor:"",reu:"",objeto:"",numero_processo:"",data:"",hora:"",andamento:"",responsavel:"",observacoes:"",atencao:false,finalizado:false,prazo_fatal:"",em_segunda_instancia:false,em_execucao:false,resultado_1_grau:"",numeros_vinculados:[] as NumeroVinculado[] };
+  const [form, setForm] = useState({ ...blank, ...(initial || {}), numeros_vinculados: initial?.numeros_vinculados || [], data: normalizeData(initial?.data || ""), prazo_fatal: normalizeData(initial?.prazo_fatal || "") });
   const [saving, setSaving] = useState(false);
   const [erroAutor, setErroAutor] = useState(false);
-  const set = (k: string, v: string | boolean) => {
+  const set = (k: string, v: string | boolean | NumeroVinculado[]) => {
     setForm(prev => {
       const next = { ...prev, [k]: v };
+      // Ao marcar "Em Execução", já abre a linha pro nº do cumprimento de sentença (no eproc/TJSP
+      // é um incidente com número próprio). Linha deixada em branco é descartada ao salvar.
+      if (k === "em_execucao" && v === true && !temCumprimento(prev.numeros_vinculados)) {
+        next.numeros_vinculados = [...prev.numeros_vinculados, novoCumprimento()];
+      }
       // Ao marcar "Em 2ª Instância" pela primeira vez, sugere o resultado a partir do andamento
       // atual (que costuma estar como PROCEDENTE/IMPROCEDENTE nesse momento) — o andamento vai
       // seguir mudando depois (APELAÇÃO, CONTRARRAZÕES...), então isso só ajuda a não digitar de novo.
@@ -118,6 +124,15 @@ function ProcessoForm({ initial, onSave, onCancel, responsaveis = [] }: {
           <span className="text-sm" style={{ color:"var(--text2)" }}>💰 Em Execução</span>
         </label>
       </div>
+      {(form.numeros_vinculados.length > 0 || form.em_execucao) && (
+        <VinculadosEditor value={form.numeros_vinculados} onChange={v => set("numeros_vinculados", v)} />
+      )}
+      {form.numeros_vinculados.length === 0 && !form.em_execucao && (
+        <button type="button" onClick={() => set("numeros_vinculados", [novoCumprimento()])}
+          className="text-xs" style={{ color:"var(--text3)" }}>
+          + Vincular nº de incidente (cumprimento de sentença, agravo...)
+        </button>
+      )}
       {form.em_segunda_instancia && (
         <div>
           <Lbl>Resultado em 1º grau</Lbl>
@@ -178,9 +193,7 @@ function ProcessoRow({ p, onEdit, onDelete, onOk }: {
           {p.autor}
         </div>
         {p.responsavel && <div className="text-xs" style={{ color:"var(--text3)" }}>{p.responsavel}</div>}
-        {p.numero_processo && (
-          <div className="text-xs font-mono whitespace-nowrap" style={{ color:"var(--text3)" }}>{p.numero_processo}</div>
-        )}
+        <NumerosProcesso p={p} destacarCumprimento={!!p.em_execucao} />
         {dFatal && (
           <div className="text-xs font-semibold whitespace-nowrap"
             style={{ color: diasAteFatal !== null && diasAteFatal <= 3 ? "#ef4444" : "#f97316" }}>
@@ -266,7 +279,7 @@ function ProcessoCardMobile({ p, onEdit, onDelete, onOk }: {
           </p>
           {p.reu && <p className="text-xs mt-0.5" style={{ color:"var(--text2)" }}>× {p.reu}</p>}
           {p.responsavel && <p className="text-xs mt-0.5" style={{ color:"var(--text3)" }}>👤 {p.responsavel}</p>}
-          {p.numero_processo && <p className="text-xs mt-0.5 font-mono" style={{ color:"var(--text3)" }}>{p.numero_processo}</p>}
+          <NumerosProcesso p={p} destacarCumprimento={!!p.em_execucao} as="p" />
         </div>
         {p.andamento && (
           <Badge className={`shrink-0 ${badgeAndamento(p.andamento)}`}>
@@ -370,7 +383,7 @@ export function ProcessosTab() {
       const b = normText(busca);
       r = r.filter(p =>
         normText(p.autor).includes(b) || normText(p.reu).includes(b) ||
-        normText(p.numero_processo).includes(b) || normText(p.objeto).includes(b) ||
+        todosNumeros(p).some(n => normText(n).includes(b)) || normText(p.objeto).includes(b) ||
         normText(p.observacoes).includes(b)
       );
     }
@@ -541,8 +554,9 @@ export function ProcessosTab() {
   };
 
   const exportCSV = (lista: Processo[]) => {
-    const headers = ["Autor","Réu","Objeto","Processo","Data","Hora","Prazo Fatal","Andamento","Responsável","Observações"];
-    const rows = lista.map(p => [p.autor,p.reu,p.objeto,p.numero_processo,p.data,p.hora,p.prazo_fatal||"",p.andamento,p.responsavel,p.observacoes].map(v => `"${(v||"").replace(/"/g,'""')}"`));
+    const headers = ["Autor","Réu","Objeto","Processo","Números vinculados","Data","Hora","Prazo Fatal","Andamento","Responsável","Observações"];
+    const rows = lista.map(p => [p.autor,p.reu,p.objeto,p.numero_processo,
+      (p.numeros_vinculados||[]).filter(v => v.numero).map(v => `${v.tipo}: ${v.numero}`).join("; "),p.data,p.hora,p.prazo_fatal||"",p.andamento,p.responsavel,p.observacoes].map(v => `"${(v||"").replace(/"/g,'""')}"`));
     const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob(["﻿"+csv], { type:"text/csv;charset=utf-8" }));

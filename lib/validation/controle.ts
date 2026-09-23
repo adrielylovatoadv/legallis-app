@@ -18,6 +18,12 @@ export const processoCreateSchema = z.object({
   em_segunda_instancia: z.boolean().default(false),
   em_execucao: z.boolean().default(false),
   resultado_1_grau: z.string().trim().optional(),
+  // Sem .default(): no zod 4 o .partial() ainda aplicaria o default e um PUT sem esse campo
+  // apagaria os números já cadastrados.
+  numeros_vinculados: z.array(z.object({
+    tipo: z.string().trim().max(60),
+    numero: z.string().trim().max(60),
+  })).max(30).optional(),
 });
 export const processoUpdateSchema = processoCreateSchema.partial();
 

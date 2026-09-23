@@ -49,6 +49,9 @@ export async function initSchema(sql: Sql): Promise<void> {
   // continua mudando (APELAÇÃO, CONTRARRAZÕES, AGUARDANDO DESPACHO...) depois que o processo
   // entra em 2ª instância — sem isso não dá pra saber mais quem estava defendendo vs. atacando.
   await sql`ALTER TABLE processos ADD COLUMN IF NOT EXISTS resultado_1_grau TEXT`;
+  // Números de incidentes com CNJ próprio (ex.: cumprimento de sentença no eproc/TJSP) —
+  // lista [{tipo, numero}]; ADD COLUMN com default não mexe nos dados já cadastrados.
+  await sql`ALTER TABLE processos ADD COLUMN IF NOT EXISTS numeros_vinculados JSONB NOT NULL DEFAULT '[]'`;
   await sql`CREATE INDEX IF NOT EXISTS idx_processos_tenant ON processos (tenant_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_processos_numero ON processos (tenant_id, numero_processo)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_processos_finalizado ON processos (tenant_id, finalizado)`;

@@ -5,7 +5,8 @@ import {
   getTarefas, createTarefa, updateTarefa, deleteTarefa, COLUNAS,
   type Tarefa, type StatusTarefa,
 } from "@/lib/tarefas";
-import { getProcessos, normalizeData, fmtData, normText, type Processo } from "@/lib/controle";
+import { getProcessos, normalizeData, fmtData, normText, todosNumeros, type Processo } from "@/lib/controle";
+import { NumerosProcesso } from "@/components/NumerosVinculados";
 import { Input as Inp, Select as Sel, FieldLabel as Lbl, Dialog } from "@/components/ui";
 import { DateField } from "@/components/ui/DateField";
 
@@ -125,7 +126,7 @@ function ProcessoPicker({ processos, processoId, processoTitulo, onSelect }: {
     const q = normText(query.trim());
     if (!q) return processos.slice(0, 8);
     return processos.filter(p =>
-      normText(p.autor || "").includes(q) || normText(p.numero_processo || "").includes(q)
+      normText(p.autor || "").includes(q) || todosNumeros(p).some(n => normText(n).includes(q))
     ).slice(0, 8);
   }, [query, processos]);
 
@@ -164,7 +165,7 @@ function ProcessoPicker({ processos, processoId, processoTitulo, onSelect }: {
               onMouseEnter={e => e.currentTarget.style.background = "var(--surface)"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
               <div>{p.autor}{p.reu ? ` x ${p.reu}` : ""}</div>
-              {p.numero_processo && <div className="text-xs" style={{ color: "var(--text3)" }}>{p.numero_processo}</div>}
+              <NumerosProcesso p={p} />
             </button>
           ))}
         </div>

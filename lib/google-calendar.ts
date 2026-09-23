@@ -5,7 +5,7 @@
 import { decryptField } from "@/lib/crypto";
 import { getUsersAsync, updateUserAsync, type User } from "@/lib/users";
 import { refreshAccessToken } from "@/lib/google-oauth";
-import { normalizeData, normText } from "@/lib/controle";
+import { normalizeData, normText, descricaoNumeros } from "@/lib/controle";
 import type { Processo, Atendimento } from "@/lib/controle-data";
 import * as processosRepo from "@/lib/repo/processos";
 import * as atendimentosRepo from "@/lib/repo/atendimentos";
@@ -75,7 +75,7 @@ function buildAudienciaEvent(p: Processo): CalendarEventBody | null {
   const tipo = s.includes("AIJ") ? "AIJ" : s.startsWith("AC") ? "AC" : "PERÍCIA";
   return {
     summary: `${tipo} ${p.autor} ${p.numero_processo}`.trim(),
-    description: `Processo: ${p.numero_processo} | ${p.autor} × ${p.reu} | ${p.objeto}`,
+    description: `${descricaoNumeros(p)} | ${p.autor} × ${p.reu} | ${p.objeto}`,
     start: { dateTime: `${dataIso}T${hora}:00`, timeZone: "America/Sao_Paulo" },
     end: { dateTime: `${dataIso}T${addMinutes(hora, 30)}:00`, timeZone: "America/Sao_Paulo" },
     reminders: { useDefault: false, overrides: [{ method: "popup", minutes: 24 * 60 }, { method: "popup", minutes: 60 }] },
@@ -90,7 +90,7 @@ function buildPrazoEvent(p: Processo): CalendarEventBody | null {
   fim.setUTCDate(fim.getUTCDate() + 1); // eventos de dia inteiro no Google usam fim exclusivo
   return {
     summary: `⛔ Prazo fatal — ${p.autor} ${p.numero_processo}`.trim(),
-    description: `Processo: ${p.numero_processo} | ${p.autor} × ${p.reu} | ${p.objeto}`,
+    description: `${descricaoNumeros(p)} | ${p.autor} × ${p.reu} | ${p.objeto}`,
     start: { date: dataIso },
     end: { date: fim.toISOString().slice(0, 10) },
     reminders: { useDefault: false, overrides: [{ method: "popup", minutes: 2 * 24 * 60 }, { method: "popup", minutes: 24 * 60 }] },

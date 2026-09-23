@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
   getProcessos, getIniciais, updateProcesso, marcarOk, createProcesso,
-  fmtData, badgeAndamento, gcalUrl, normalizeData,
+  fmtData, badgeAndamento, gcalUrl, normalizeData, normText, siglaVinculo, vinculadosPreenchidos,
   ANDAMENTOS_PROCESSO,
   type Processo, type Inicial,
 } from "@/lib/controle";
@@ -545,6 +545,19 @@ function ProcessoRow({ p, onOk, onEdit, showDate = false, onConcluir, onRedesign
               >⎘</button>
             </p>
           )}
+          {vinculadosPreenchidos(p).map((v, i) => (
+            <p key={i} className="text-xs mt-0.5 flex items-center gap-1.5" title={v.tipo}
+              style={{ color: p.em_execucao && normText(v.tipo).startsWith("cumprimento") ? "var(--gold)" : "var(--text2)" }}>
+              <span>↳ {siglaVinculo(v.tipo)}</span>
+              <span className="font-mono select-all">{v.numero}</span>
+              <button
+                onClick={() => navigator.clipboard.writeText(v.numero)}
+                title={`Copiar nº — ${v.tipo}`}
+                className="text-xs px-1 rounded hover:opacity-80"
+                style={{ color: "var(--text3)", background: "var(--surface)", border: "1px solid var(--border)" }}
+              >⎘</button>
+            </p>
+          ))}
         </div>
         <div className="flex gap-1 shrink-0 flex-wrap justify-end">
           <button onClick={() => onOk(p.id)} title="Marcar OK"

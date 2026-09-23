@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hasControleRestrito } from "@/lib/acl";
 import { isFinalizado } from "@/lib/controle-data";
-import { normalizeData, normText } from "@/lib/controle";
+import { normalizeData, normText, todosNumeros } from "@/lib/controle";
 import * as processosRepo from "@/lib/repo/processos";
 import { processoCreateSchema } from "@/lib/validation/controle";
 import { parseBody } from "@/lib/validation/helpers";
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     lista = lista.filter(p =>
       normText(p.autor).includes(b) ||
       normText(p.reu).includes(b) ||
-      normText(p.numero_processo).includes(b) ||
+      todosNumeros(p).some(n => normText(n).includes(b)) ||
       normText(p.objeto).includes(b)
     );
   }

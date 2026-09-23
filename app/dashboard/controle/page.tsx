@@ -8,6 +8,7 @@ import {
   type DashboardData, type Processo,
 } from "@/lib/controle";
 import { ProcessosTab } from "./_processos";
+import { NumerosProcesso } from "@/components/NumerosVinculados";
 import { IniciaisTab } from "./_iniciais";
 import { ClientesTab } from "./_clientes";
 import { FinalizadosTab } from "./_finalizados";
@@ -52,9 +53,7 @@ function ProcessoCard({ p, onOk, onEdit }: {
               👤 {p.responsavel}
             </p>
           )}
-          {p.numero_processo && (
-            <p className="text-xs mt-0.5 font-mono" style={{ color: "var(--text3)" }}>{p.numero_processo}</p>
-          )}
+          <NumerosProcesso p={p} destacarCumprimento={!!p.em_execucao} as="p" />
           {p.objeto && (
             <p className="text-xs mt-0.5 truncate" style={{ color: "var(--text3)", opacity: 0.7 }}>{p.objeto}</p>
           )}

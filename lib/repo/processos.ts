@@ -23,9 +23,30 @@ function rowToProcesso(r: Record<string, unknown>): Processo {
     em_segunda_instancia: !!r.em_segunda_instancia,
     em_execucao: !!r.em_execucao,
     resultado_1_grau: (r.resultado_1_grau as string) ?? undefined,
+    numeros_vinculados: Array.isArray(r.numeros_vinculados) ? (r.numeros_vinculados as Processo["numeros_vinculados"]) : [],
     google_event_id_audiencia: (r.google_event_id_audiencia as string) ?? undefined,
     google_event_id_prazo: (r.google_event_id_prazo as string) ?? undefined,
   };
+}
+
+// Descarta linhas vazias do editor (tipo sem número) antes de gravar.
+function limparVinculados(v: Processo["numeros_vinculados"]) {
+  return (v || [])
+    .map(x => ({ tipo: (x.tipo || "").trim(), numero: (x.numero || "").trim() }))
+    .filter(x => x.numero);
+}
+
+// Se o deploy subir antes de rodarem a migração (Diagnóstico → "Criar/atualizar tabelas"),
+// a coluna numeros_vinculados ainda não existe: cria na hora (aditivo) e repete a escrita.
+async function comColunaVinculados<T>(run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (e) {
+    if ((e as { code?: string }).code !== "42703" || !String(e).includes("numeros_vinculados")) throw e;
+    const sql = getSql()!;
+    await sql`ALTER TABLE processos ADD COLUMN IF NOT EXISTS numeros_vinculados JSONB NOT NULL DEFAULT '[]'`;
+    return await run();
+  }
 }
 
 export async function list(tenantId: string): Promise<Processo[]> {
@@ -51,13 +72,13 @@ export function buildCreateStatement(tenantId: string, row: Processo) {
     INSERT INTO processos (tenant_id, id, autor, reu, objeto, numero_processo, data, hora, andamento,
                             responsavel, observacoes, atencao, finalizado, dashboard_ok, vara, tribunal, prazo_fatal,
                             google_event_id_audiencia, google_event_id_prazo, em_segunda_instancia, em_execucao,
-                            resultado_1_grau, criado_em)
+                            resultado_1_grau, numeros_vinculados, criado_em)
     VALUES (${tenantId}, ${row.id}, ${row.autor}, ${row.reu}, ${row.objeto}, ${row.numero_processo}, ${row.data},
             ${row.hora}, ${row.andamento}, ${row.responsavel}, ${row.observacoes}, ${row.atencao}, ${row.finalizado},
             ${row.dashboard_ok ?? null}, ${row.vara ?? null}, ${row.tribunal ?? null}, ${row.prazo_fatal ?? null},
             ${row.google_event_id_audiencia ?? null}, ${row.google_event_id_prazo ?? null},
             ${row.em_segunda_instancia ?? false}, ${row.em_execucao ?? false},
-            ${row.resultado_1_grau ?? null}, ${row.criado_em})
+            ${row.resultado_1_grau ?? null}, ${JSON.stringify(limparVinculados(row.numeros_vinculados))}::jsonb, ${row.criado_em})
   `;
 }
 
@@ -69,7 +90,7 @@ export async function create(tenantId: string, input: Omit<Processo, "id" | "cri
     await saveDataAsync(data, tenantId);
     return row;
   }
-  await buildCreateStatement(tenantId, row);
+  await comColunaVinculados(() => buildCreateStatement(tenantId, row));
   return row;
 }
 
@@ -87,7 +108,8 @@ export function buildUpdateStatement(tenantId: string, merged: Processo) {
       google_event_id_audiencia = ${merged.google_event_id_audiencia ?? null},
       google_event_id_prazo = ${merged.google_event_id_prazo ?? null},
       em_segunda_instancia = ${merged.em_segunda_instancia ?? false}, em_execucao = ${merged.em_execucao ?? false},
-      resultado_1_grau = ${merged.resultado_1_grau ?? null}
+      resultado_1_grau = ${merged.resultado_1_grau ?? null},
+      numeros_vinculados = ${JSON.stringify(limparVinculados(merged.numeros_vinculados))}::jsonb
     WHERE tenant_id = ${tenantId} AND id = ${merged.id}
   `;
 }
@@ -104,7 +126,7 @@ export async function update(tenantId: string, id: string, patch: Partial<Proces
   const current = await get(tenantId, id);
   if (!current) return null;
   const merged = { ...current, ...patch };
-  await buildUpdateStatement(tenantId, merged);
+  await comColunaVinculados(() => buildUpdateStatement(tenantId, merged));
   return merged;
 }
 
@@ -130,13 +152,13 @@ export function buildUpsertManyStatements(tenantId: string, rows: Processo[]) {
     INSERT INTO processos (tenant_id, id, autor, reu, objeto, numero_processo, data, hora, andamento,
                             responsavel, observacoes, atencao, finalizado, dashboard_ok, vara, tribunal, prazo_fatal,
                             google_event_id_audiencia, google_event_id_prazo, em_segunda_instancia, em_execucao,
-                            resultado_1_grau, criado_em)
+                            resultado_1_grau, numeros_vinculados, criado_em)
     VALUES (${tenantId}, ${row.id}, ${row.autor}, ${row.reu}, ${row.objeto}, ${row.numero_processo}, ${row.data},
             ${row.hora}, ${row.andamento}, ${row.responsavel}, ${row.observacoes}, ${row.atencao}, ${row.finalizado},
             ${row.dashboard_ok ?? null}, ${row.vara ?? null}, ${row.tribunal ?? null}, ${row.prazo_fatal ?? null},
             ${row.google_event_id_audiencia ?? null}, ${row.google_event_id_prazo ?? null},
             ${row.em_segunda_instancia ?? false}, ${row.em_execucao ?? false},
-            ${row.resultado_1_grau ?? null}, ${row.criado_em})
+            ${row.resultado_1_grau ?? null}, ${JSON.stringify(limparVinculados(row.numeros_vinculados))}::jsonb, ${row.criado_em})
     ON CONFLICT (tenant_id, id) DO UPDATE SET autor = EXCLUDED.autor, reu = EXCLUDED.reu, objeto = EXCLUDED.objeto,
       numero_processo = EXCLUDED.numero_processo, data = EXCLUDED.data, hora = EXCLUDED.hora,
       andamento = EXCLUDED.andamento, responsavel = EXCLUDED.responsavel, observacoes = EXCLUDED.observacoes,
@@ -145,7 +167,10 @@ export function buildUpsertManyStatements(tenantId: string, rows: Processo[]) {
       google_event_id_audiencia = EXCLUDED.google_event_id_audiencia,
       google_event_id_prazo = EXCLUDED.google_event_id_prazo,
       em_segunda_instancia = EXCLUDED.em_segunda_instancia, em_execucao = EXCLUDED.em_execucao,
-      resultado_1_grau = EXCLUDED.resultado_1_grau
+      resultado_1_grau = EXCLUDED.resultado_1_grau,
+      -- Importar um backup antigo (sem esse campo) não apaga os números já vinculados.
+      numeros_vinculados = CASE WHEN EXCLUDED.numeros_vinculados = '[]'::jsonb
+        THEN processos.numeros_vinculados ELSE EXCLUDED.numeros_vinculados END
   `);
 }
 

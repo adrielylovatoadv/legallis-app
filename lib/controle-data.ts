@@ -15,7 +15,12 @@ export interface Processo {
   dashboard_ok?: boolean; vara?: string; tribunal?: string; prazo_fatal?: string;
   google_event_id_audiencia?: string; google_event_id_prazo?: string;
   em_segunda_instancia?: boolean; em_execucao?: boolean; resultado_1_grau?: string;
+  numeros_vinculados?: NumeroVinculado[];
 }
+
+// Números de incidentes que tramitam separados do processo principal — ex.: no eproc/TJSP o
+// cumprimento de sentença (e o agravo de instrumento) ganham número CNJ próprio.
+export interface NumeroVinculado { tipo: string; numero: string }
 
 export interface Cliente {
   id: string; nome: string; telefone: string; cpf: string;
