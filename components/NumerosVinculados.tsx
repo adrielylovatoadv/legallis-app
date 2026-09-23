@@ -57,13 +57,13 @@ export function VinculadosEditor({ value, onChange }: {
         {value.map((v, i) => {
           const tipoCustom = !TIPOS_NUMERO_VINCULADO.includes(v.tipo);
           return (
-            <div key={i} className="flex flex-wrap sm:flex-nowrap gap-2 items-center">
+            <div key={i} className="grid grid-cols-[1fr_auto] sm:grid-cols-[220px_1fr_auto] gap-2 items-center">
               <Sel value={tipoCustom ? "Outro" : v.tipo} onChange={e => setItem(i, { tipo: e.target.value })}
-                style={{ minWidth: 200 }}>
+                className="col-span-2 sm:col-span-1">
                 {TIPOS_NUMERO_VINCULADO.map(t => <option key={t} value={t}>{t}</option>)}
               </Sel>
               <Inp value={v.numero} placeholder="0000000-00.0000.0.00.0000"
-                onChange={e => setItem(i, { numero: e.target.value })} style={{ flex: 1, minWidth: 0 }} />
+                onChange={e => setItem(i, { numero: e.target.value })} className="font-mono" style={{ minWidth: 0 }} />
               <button type="button" title="Remover" onClick={() => onChange(value.filter((_, j) => j !== i))}
                 className="text-xs px-2 py-1 rounded"
                 style={{ background: "var(--surface2)", color: "var(--text3)", border: "1px solid var(--border)" }}>✕</button>
