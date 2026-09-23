@@ -41,6 +41,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       const sql = getSql()!;
       const novoClienteRow = { ...novoClienteInput, id: newId(), criado_em: new Date().toISOString() };
       atendimentoMerged.cliente_id = novoClienteRow.id;
+      await clientesRepo.ensureColumns();
       await sql.transaction([
         clientesRepo.buildCreateStatement(tid, novoClienteRow),
         atendimentosRepo.buildUpdateStatement(tid, atendimentoMerged),

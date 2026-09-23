@@ -322,6 +322,7 @@ export async function POST(req: NextRequest) {
   // grande, nada fica parcialmente importado nas tabelas relacionais.
   if (hasDb()) {
     const sql = getSql()!;
+    await clientesRepo.ensureColumns();
     const statements = [
       ...processosRepo.buildUpsertManyStatements(tid, data.processos),
       ...clientesRepo.buildUpsertManyStatements(tid, data.clientes),

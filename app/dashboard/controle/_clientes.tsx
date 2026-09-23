@@ -59,7 +59,7 @@ function ClienteForm({ initial, onSave, onCancel }: {
     etiquetas:[] as string[], telefones_adicionais:[] as string[], emails_adicionais:[] as string[],
     rg:"", profissao:"", estado_civil:"", nacionalidade:"brasileiro(a)",
     banco:"", agencia:"", conta:"", tipo_conta:"corrente" as "corrente"|"poupanca", chave_pix:"",
-    status:"ativo" as "ativo"|"inativo",
+    status:"ativo" as "ativo"|"inativo", link_drive:"",
   };
   const [form, setForm] = useState({ ...blank, ...(initial||{}) });
   const [etiquetasTexto, setEtiquetasTexto] = useState((initial?.etiquetas || []).join(", "));
@@ -133,6 +133,11 @@ function ClienteForm({ initial, onSave, onCancel }: {
             <option value="corrente">Corrente</option>
             <option value="poupanca">Poupança</option>
           </Sel>
+        </div>
+        <div className="sm:col-span-2">
+          <Lbl>Pasta no Google Drive (link)</Lbl>
+          <Inp type="url" value={form.link_drive} placeholder="https://drive.google.com/drive/folders/..."
+            onChange={e => set("link_drive",e.target.value)} />
         </div>
         <div className="sm:col-span-2"><Lbl>Chave PIX</Lbl><Inp type="password" autoComplete="new-password" value={form.chave_pix} onChange={e => set("chave_pix",e.target.value)} /></div>
         <div className="sm:col-span-2">
@@ -231,6 +236,10 @@ function ClienteCard({ c, advogados, onEdit, onDelete }: {
   const atendimentos = c._atendimentos || [];
   const iniciais = c._iniciais || [];
   const iniciaisPendentes = iniciais.filter(isInicialPendente);
+  // Aceita link colado sem "https://" (ex.: drive.google.com/...) para o botão não virar rota relativa.
+  const linkDrive = c.link_drive?.trim()
+    ? (/^https?:\/\//i.test(c.link_drive.trim()) ? c.link_drive.trim() : `https://${c.link_drive.trim()}`)
+    : "";
 
   const semProcessos = ativos.length === 0 && finalizados.length === 0 && iniciais.length === 0;
   const badge = semProcessos ? null : [
@@ -276,6 +285,12 @@ function ClienteCard({ c, advogados, onEdit, onDelete }: {
           )}
         </div>
         <div className="flex items-center gap-2">
+          {linkDrive && (
+            <a href={linkDrive} target="_blank" rel="noopener noreferrer" title="Abrir pasta no Google Drive"
+              onClick={e => e.stopPropagation()}
+              className="text-xs px-2 py-1 rounded whitespace-nowrap"
+              style={{ background:"rgba(201,168,76,0.12)", color:"var(--gold)", border:"1px solid var(--border)" }}>📂 Drive</a>
+          )}
           <button onClick={e => { e.stopPropagation(); onEdit(c); }}
             className="text-xs px-2 py-1 rounded"
             style={{ background:"var(--surface2)", color:"var(--text2)", border:"1px solid var(--border)" }}>✏️</button>

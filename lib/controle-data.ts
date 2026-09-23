@@ -26,6 +26,7 @@ export interface Cliente {
   rg?: string; profissao?: string; estado_civil?: string; nacionalidade?: string;
   banco?: string; agencia?: string; conta?: string; tipo_conta?: "corrente" | "poupanca"; chave_pix?: string;
   status?: "ativo" | "inativo";
+  link_drive?: string;
 }
 
 export interface Inicial {
