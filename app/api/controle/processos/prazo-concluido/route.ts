@@ -4,6 +4,7 @@ import { hasControleRestrito } from "@/lib/acl";
 import * as processosRepo from "@/lib/repo/processos";
 import { addSystemMessage } from "@/lib/chat";
 import { logEvent } from "@/lib/audit";
+import { syncProcessoEvent } from "@/lib/google-calendar";
 
 // POST /api/controle/processos/prazo-concluido  { id }
 export async function POST(req: NextRequest) {
@@ -17,9 +18,10 @@ export async function POST(req: NextRequest) {
   if (!anterior) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
 
   const processo = await processosRepo.update(tid, id, {
-    andamento: "AGUARDANDO DESPACHO", data: "", hora: "", responsavel: "",
+    andamento: "AGUARDANDO DESPACHO", data: "", hora: "", prazo_fatal: "", responsavel: "",
   });
   if (!processo) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
+  await syncProcessoEvent(tid, processo);
 
   const msg = `${session.user.name} concluiu prazo do processo ${processo.autor} x ${processo.reu} (${processo.numero_processo}). Status: AGUARDANDO DESPACHO.`;
   await addSystemMessage(msg, "system", tid);

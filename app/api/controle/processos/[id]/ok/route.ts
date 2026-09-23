@@ -10,8 +10,10 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
   if (hasControleRestrito(session.user.cargo)) return NextResponse.json({ error: "Sem permissão para este módulo" }, { status: 403 });
   const tid = session.user.tenantId;
   const { id } = await params;
+  // Concluir o prazo também limpa o prazo fatal — senão o processo segue com "⛔ Prazo fatal
+  // vencido" na lista mesmo já AGUARDANDO DESPACHO. syncProcessoEvent apaga o evento no Google.
   const atualizado = await processosRepo.update(tid, id, {
-    data: "", hora: "", andamento: "AGUARDANDO DESPACHO", responsavel: "", dashboard_ok: true,
+    data: "", hora: "", prazo_fatal: "", andamento: "AGUARDANDO DESPACHO", responsavel: "", dashboard_ok: true,
   });
   if (!atualizado) return NextResponse.json({ error: "Not found" }, { status: 404 });
   await syncProcessoEvent(tid, atualizado);
