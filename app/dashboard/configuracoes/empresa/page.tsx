@@ -14,7 +14,7 @@ export default function EmpresaPage() {
   const [cidade, setCidade] = useState("");
   const [modelos, setModelos] = useState<Record<string, string>>({});
   const [tipoModelo, setTipoModelo] = useState<TipoDocumento>("procuracao");
-  const [defaultPdfSignerId, setDefaultPdfSignerId] = useState("");
+  const [signerIds, setSignerIds] = useState<string[]>([]);
   const [colegas, setColegas] = useState<Colega[]>([]);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -29,7 +29,7 @@ export default function EmpresaPage() {
         setAddress(u.company?.address ?? "");
         setCidade(u.company?.cidade ?? "");
         setModelos(u.company?.modelos ?? {});
-        setDefaultPdfSignerId(u.company?.defaultPdfSignerId ?? u.id ?? "");
+        setSignerIds(u.company?.defaultPdfSignerIds?.length ? u.company.defaultPdfSignerIds : [u.company?.defaultPdfSignerId ?? u.id ?? ""].filter(Boolean));
       }
     };
     if (session?.user?.id) load();
@@ -50,7 +50,7 @@ export default function EmpresaPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         company: {
-          name: companyName, cnpj, address, defaultPdfSignerId, cidade: cidade.trim(),
+          name: companyName, cnpj, address, defaultPdfSignerId: signerIds[0] ?? "", defaultPdfSignerIds: signerIds, cidade: cidade.trim(),
           // só guarda textos preenchidos; o que estiver vazio volta ao modelo padrão
           modelos: Object.fromEntries(Object.entries(modelos).filter(([, t]) => t.trim())),
         },
@@ -176,24 +176,24 @@ export default function EmpresaPage() {
         {colegas.length > 1 && (
           <div className="pt-4 border-t" style={{ borderColor: "var(--border)" }}>
             <label className="text-xs uppercase tracking-wider mb-3 block" style={{ color: "var(--text3)" }}>
-              Advogado padrão na assinatura dos PDFs
+              Advogado(s) padrão na assinatura dos documentos
             </label>
             <p className="text-xs mb-3" style={{ color: "var(--text3)" }}>
-              Quando um cálculo ou um documento de cliente (procuração, contrato, declarações) for exportado, este será o advogado que aparece por padrão. Pode ser alterado na hora da exportação.
+              Quando um cálculo ou um documento de cliente (procuração, contrato, declarações) for exportado, aparecem por padrão o(s) advogado(s) marcado(s) abaixo — você pode marcar mais de um (nos documentos de cliente todos entram na qualificação e na assinatura; cálculos e recibos usam o primeiro). Pode ser alterado na hora da exportação.
             </p>
             <div className="flex flex-wrap gap-2">
               {colegas.map(u => (
                 <button
                   key={u.id}
                   type="button"
-                  onClick={() => setDefaultPdfSignerId(u.id)}
+                  onClick={() => setSignerIds(prev => prev.includes(u.id) ? (prev.length > 1 ? prev.filter(id => id !== u.id) : prev) : [...prev, u.id])}
                   className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center gap-2"
                   style={{
-                    background: defaultPdfSignerId === u.id ? "rgba(201,168,76,0.15)" : "var(--surface2)",
-                    color: defaultPdfSignerId === u.id ? "var(--gold)" : "var(--text2)",
-                    border: `1px solid ${defaultPdfSignerId === u.id ? "var(--gold)" : "var(--border)"}`,
+                    background: signerIds.includes(u.id) ? "rgba(201,168,76,0.15)" : "var(--surface2)",
+                    color: signerIds.includes(u.id) ? "var(--gold)" : "var(--text2)",
+                    border: `1px solid ${signerIds.includes(u.id) ? "var(--gold)" : "var(--border)"}`,
                   }}>
-                  {defaultPdfSignerId === u.id && (
+                  {signerIds.includes(u.id) && (
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                     </svg>

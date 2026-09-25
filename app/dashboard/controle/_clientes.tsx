@@ -20,7 +20,7 @@ type ClienteComProcs = Cliente & { _ativos?: Processo[]; _finalizados?: Processo
 
 interface UserProfile {
   id?: string; name?: string; sexo?: string; oab?: Array<{ state: string; number: string }>;
-  company?: { name?: string; address?: string; defaultPdfSignerId?: string; cidade?: string; modelos?: Record<string, string> };
+  company?: { name?: string; address?: string; defaultPdfSignerId?: string; defaultPdfSignerIds?: string[]; cidade?: string; modelos?: Record<string, string> };
 }
 
 const TRATAMENTOS = ["", "Feminino", "Masculino"];
@@ -471,7 +471,8 @@ export function ClientesTab({ initialBusca }: { initialBusca?: string } = {}) {
           if (d) {
             setUserProfile(d);
             // usa o advogado padrão salvo na empresa (Configurações > Empresa), ou o próprio usuário
-            setAdvogadoSelecionadoIds([d.company?.defaultPdfSignerId ?? d.id]);
+            const padroes: string[] = d.company?.defaultPdfSignerIds?.length ? d.company.defaultPdfSignerIds : [d.company?.defaultPdfSignerId ?? d.id];
+            setAdvogadoSelecionadoIds(padroes);
           }
         })
         .catch(() => {});

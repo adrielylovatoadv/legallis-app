@@ -23,6 +23,8 @@ export interface Company {
   cnpj?: string;
   address?: string;
   defaultPdfSignerId?: string;
+  /** Advogados que aparecem por padrão nos documentos de assinatura (o 1º espelha defaultPdfSignerId). */
+  defaultPdfSignerIds?: string[];
   /** Cidade/UF do escritório: local e data dos documentos e foro do contrato (ex.: "Itamogi/MG"). */
   cidade?: string;
   /** Textos próprios dos modelos de documento (procuracao, contrato, isencao_ir, hipossuficiencia). */
