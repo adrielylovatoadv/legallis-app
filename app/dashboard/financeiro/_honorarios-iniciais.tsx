@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Card, Input as Inp, Select as Sel } from "@/components/ui";
+import { Card, Input as Inp, Select as Sel, CurrencyInput } from "@/components/ui";
 import {
   getHonIniciais, createHonInicial, updateHonInicial, deleteHonInicial, statusHonInicial,
   fmtBRL, MESES, NEXT_STATUS2,
@@ -101,7 +101,7 @@ function HonInicialForm({ initial, onSave, onCancel }: {
         <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Cliente *</span><Inp value={form.cliente} onChange={e => set("cliente",e.target.value)} /></div>
         <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Processo</span><Inp value={form.processo} onChange={e => set("processo",e.target.value)} /></div>
         <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Valor (R$)</span>
-          <Inp type="number" step="0.01" min="0" value={form.valor||""} onChange={e => set("valor", parseFloat(e.target.value)||0)} /></div>
+          <CurrencyInput value={form.valor||0} onChange={v => set("valor", v)} placeholder="0,00" /></div>
         <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Data pagamento</span>
           <Inp type="date" value={form.data_pagamento} onChange={e => set("data_pagamento",e.target.value)} /></div>
         <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Observação</span><Inp value={form.observacao} onChange={e => set("observacao",e.target.value)} /></div>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { fmtBRL, COLS, statusBadge, statusLabel } from "@/lib/financeiro";
-import { MetricCard as MetricCardBase, Card, Input as Inp, Select as Sel } from "@/components/ui";
+import { MetricCard as MetricCardBase, Card, Input as Inp, Select as Sel, CurrencyInput } from "@/components/ui";
 import { exportarReciboRepasse } from "@/lib/export-recibo";
 
 export function MetricCard({ label, value, color }: { label: string; value: number; color: string }) {
@@ -180,7 +180,7 @@ export function ReciboRepasseModal({ cliente, processo, valorSugerido, natureza,
             </div>
             <div>
               <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Valor recebido (R$) *</span>
-              <Inp type="number" step="0.01" min="0" value={valor || ""} onChange={e => setValor(parseFloat(e.target.value) || 0)} />
+              <CurrencyInput value={valor || 0} onChange={setValor} placeholder="0,00" />
             </div>
             <div>
               <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color: "var(--text3)" }}>Data *</span>

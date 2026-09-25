@@ -8,10 +8,21 @@ function formatarBRL(v: number): string {
   return v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function parseBRL(texto: string): number {
-  const limpo = texto.replace(/\./g, "").replace(",", ".").replace(/[^\d.]/g, "");
+// Aceita "5.370,00" (padrão brasileiro), "5370,50", "5370.50" e "5370".
+// Com vírgula, a última vírgula é o decimal e os pontos são milhar. Sem vírgula, um único
+// ponto seguido de 1–2 dígitos é decimal ("5370.5"); qualquer outro caso é milhar ("5.370").
+export function parseBRL(texto: string): number {
+  const t = texto.replace(/[^\d.,]/g, "");
+  let limpo: string;
+  const virgula = t.lastIndexOf(",");
+  if (virgula >= 0) {
+    limpo = `${t.slice(0, virgula).replace(/[.,]/g, "")}.${t.slice(virgula + 1).replace(/[.,]/g, "")}`;
+  } else {
+    const partes = t.split(".");
+    limpo = partes.length === 2 && partes[1].length > 0 && partes[1].length <= 2 ? t : partes.join("");
+  }
   const v = parseFloat(limpo);
-  return Number.isFinite(v) ? v : 0;
+  return Number.isFinite(v) ? Math.round(v * 100) / 100 : 0;
 }
 
 // Input de valor monetário: exibe sempre "1.234,56" (separador de milhar por
@@ -38,12 +49,12 @@ export function CurrencyInput({ value, onChange, className = "", style, ...props
       value={exibido}
       onFocus={e => {
         setTextoEditando(formatarBRL(value));
-        e.target.style.borderColor = "var(--gold)";
+        if (!style?.border) e.target.style.borderColor = "var(--gold)";
         props.onFocus?.(e);
       }}
       onBlur={e => {
         setTextoEditando(null);
-        e.target.style.borderColor = "var(--border)";
+        if (!style?.border) e.target.style.borderColor = "var(--border)";
         props.onBlur?.(e);
       }}
       onChange={e => {

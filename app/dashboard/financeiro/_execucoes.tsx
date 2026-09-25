@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Card, Input as Inp, Select as Sel } from "@/components/ui";
+import { Card, Input as Inp, Select as Sel, CurrencyInput } from "@/components/ui";
 import {
   getExecucoes, createExecucao, updateExecucao, deleteExecucao, statusExecucao,
   fmtBRL, MESES, NEXT_STATUS,
@@ -228,14 +228,14 @@ function ExecucaoForm({ initial, onSave, onCancel }: {
         {isSomente ? (
           <div>
             <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Honorários recebidos (R$)</span>
-            <Inp type="number" step="0.01" min="0" value={form.valor_percebido||""} onChange={e => set("valor_percebido", parseFloat(e.target.value)||0)} />
+            <CurrencyInput value={form.valor_percebido||0} onChange={v => set("valor_percebido", v)} placeholder="0,00" />
             <p className="text-xs mt-1" style={{ color:"var(--text3)" }}>Valor que entrou diretamente para o escritório</p>
           </div>
         ) : (
           <>
             <div>
               <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Valor total do processo (R$)</span>
-              <Inp type="number" step="0.01" min="0" value={form.valor_percebido||""} onChange={e => set("valor_percebido", parseFloat(e.target.value)||0)} />
+              <CurrencyInput value={form.valor_percebido||0} onChange={v => set("valor_percebido", v)} placeholder="0,00" />
             </div>
             <div>
               <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>% de honorário</span>
@@ -261,7 +261,7 @@ function ExecucaoForm({ initial, onSave, onCancel }: {
         {sucPorValor ? (
           <div>
             <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Sucumbência (R$)</span>
-            <Inp type="number" step="0.01" min="0" value={form.sucumbencia||""} onChange={e => set("sucumbencia", parseFloat(e.target.value)||0)} />
+            <CurrencyInput value={form.sucumbencia||0} onChange={v => set("sucumbencia", v)} placeholder="0,00" />
             {!isSomente && (
               <p className="text-xs mt-1" style={{ color:"var(--text3)" }}>Valor fixado na sentença (equidade), somado ao honorário contratual</p>
             )}

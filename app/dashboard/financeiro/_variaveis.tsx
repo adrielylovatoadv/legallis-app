@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Card, Input as Inp, Select as Sel } from "@/components/ui";
+import { Card, Input as Inp, Select as Sel, CurrencyInput } from "@/components/ui";
 import {
   getVariaveis, createVariavel, updateVariavel, deleteVariavel, statusVariavel,
   fmtBRL, COLS, COL_TO_MES, NEXT_STATUS2,
@@ -300,7 +300,7 @@ function VariavelForm({ initial, onSave, onCancel }: {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Descrição *</span><Inp value={form.descricao} onChange={e => set("descricao",e.target.value)} /></div>
         <div><span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Valor Total (R$)</span>
-          <Inp type="number" step="0.01" min="0" value={form.valor||""} onChange={e => set("valor",parseFloat(e.target.value)||0)} /></div>
+          <CurrencyInput value={form.valor||0} onChange={v => set("valor", v)} placeholder="0,00" /></div>
         <div>
           <span className="text-xs uppercase tracking-wider mb-1 block" style={{ color:"var(--text3)" }}>Parcelas</span>
           <Inp value={form.parcelas} onChange={e => set("parcelas",e.target.value)} placeholder="ex: 3x" />

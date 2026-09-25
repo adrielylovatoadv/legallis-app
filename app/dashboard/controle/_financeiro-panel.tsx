@@ -10,7 +10,7 @@ import {
   createAcordo, createExecucao, createHonInicial, createTimesheet,
   fmtBRL, statusBadge, statusLabel, MESES, type ProcessoFinanceiro,
 } from "@/lib/financeiro";
-import { Select as Sel } from "@/components/ui";
+import { Select as Sel, CurrencyInput, parseBRL } from "@/components/ui";
 
 export interface AlvoFinanceiro {
   processoId?: string;
@@ -66,13 +66,13 @@ function LancamentoForm({ alvo, onSaved, onCancel }: {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {tipo === "execucao" ? (
           <>
-            <input placeholder="Valor percebido" type="number" value={form.valor_percebido} onChange={e => set("valor_percebido", e.target.value)} className={inpS} style={inpStyle} />
+            <CurrencyInput placeholder="Valor percebido" value={parseBRL(form.valor_percebido)} onChange={v => set("valor_percebido", v ? String(v) : "")} className={inpS} style={inpStyle} />
             <Sel value={form.suc_modo} onChange={e => set("suc_modo", e.target.value)} style={{ fontSize: 12, padding: "4px 8px" }}>
               <option value="pct">Sucumbência em %</option>
               <option value="valor">Sucumbência em R$ (equidade)</option>
             </Sel>
             {form.suc_modo === "valor" ? (
-              <input placeholder="Sucumbência (R$)" type="number" step="0.01" min="0" value={form.suc_valor} onChange={e => set("suc_valor", e.target.value)} className={inpS} style={inpStyle} />
+              <CurrencyInput placeholder="Sucumbência (R$)" value={parseBRL(form.suc_valor)} onChange={v => set("suc_valor", v ? String(v) : "")} className={inpS} style={inpStyle} />
             ) : (
               <input placeholder="% Sucumbência" type="number" step="0.5" min="0" max="100" value={form.pct_sucumbencia} onChange={e => set("pct_sucumbencia", e.target.value)} className={inpS} style={inpStyle} />
             )}
@@ -84,7 +84,7 @@ function LancamentoForm({ alvo, onSaved, onCancel }: {
             <input placeholder="Responsável" value={form.responsavel} onChange={e => set("responsavel", e.target.value)} className={inpS} style={inpStyle} />
           </>
         ) : (
-          <input placeholder="Valor (R$)" type="number" value={form.valor} onChange={e => set("valor", e.target.value)} className={inpS} style={inpStyle} />
+          <CurrencyInput placeholder="Valor (R$)" value={parseBRL(form.valor)} onChange={v => set("valor", v ? String(v) : "")} className={inpS} style={inpStyle} />
         )}
         {tipo === "timesheet" ? (
           <input placeholder="Data" type="date" value={form.data} onChange={e => set("data", e.target.value)} className={inpS} style={inpStyle} />

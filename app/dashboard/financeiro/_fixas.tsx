@@ -6,6 +6,7 @@ import {
   fmtBRL, MESES, COLS, COL_TO_MES,
   type Acordo, type Execucao, type Fixa,
 } from "@/lib/financeiro";
+import { CurrencyInput, parseBRL } from "@/components/ui";
 import { getCurrentMes, getNextMes, getCurrentCol } from "./_shared";
 
 // ── alertas de pendências ─────────────────────────────────────────────────────
@@ -96,15 +97,15 @@ function FixaFormInline({ form, setForm, onSave, onCancel }: {
       </div>
       <div className="w-36">
         <p className="text-xs mb-1 flex items-center gap-1" style={{ color:"var(--gold)" }}>🔒 Valor fixo mensal</p>
-        <input type="number" className="w-full px-3 py-1.5 rounded-lg text-sm" style={{ background:"var(--surface2)", color:"var(--text)", border:"1px solid var(--gold)" }}
-          value={form.valor_fixo} onChange={e => setForm(f => ({ ...f, valor_fixo: e.target.value }))} placeholder="ex: 1600" />
+        <CurrencyInput className="!py-1.5" style={{ border:"1px solid var(--gold)" }}
+          value={parseBRL(form.valor_fixo)} onChange={v => setForm(f => ({ ...f, valor_fixo: v ? String(v) : "" }))} placeholder="ex: 1.600,00" />
         <p className="text-xs mt-0.5" style={{ color:"var(--text3)" }}>repete todo mês</p>
       </div>
       {!temValorFixo && (
         <div className="w-28">
           <p className="text-xs mb-1" style={{ color:"var(--text3)" }}>Valor este mês</p>
-          <input type="number" className="w-full px-3 py-1.5 rounded-lg text-sm" style={{ background:"var(--surface2)", color:"var(--text)", border:"1px solid var(--border)" }}
-            value={form.valor} onChange={e => setForm(f => ({ ...f, valor: e.target.value }))} placeholder="0,00" />
+          <CurrencyInput className="!py-1.5"
+            value={parseBRL(form.valor)} onChange={v => setForm(f => ({ ...f, valor: v ? String(v) : "" }))} placeholder="0,00" />
         </div>
       )}
       <div className="flex gap-2">
