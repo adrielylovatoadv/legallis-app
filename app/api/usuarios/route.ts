@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { name, email, password, role, cargo } = body;
+  const { name, email, password, role, cargo, sexo } = body;
   if (!name || !email || !password) {
     return NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 });
   }
@@ -61,6 +61,7 @@ export async function POST(req: NextRequest) {
     role: role ?? "user",
     plan: effectivePlan,
     cargo: cargo ?? undefined,
+    sexo: sexo === "feminino" || sexo === "masculino" ? sexo : undefined,
     avatar: "",
     subscriptionStatus: "active",
     isActive: true,

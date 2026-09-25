@@ -7,7 +7,7 @@ import type { Plan, Role } from "@/lib/plans";
 import { PLAN_FEATURES } from "@/lib/plans";
 
 type Cargo = "administrador" | "socio" | "advogado" | "estagiario" | "assistente";
-type SafeUser = { id: string; name: string; email: string; role: Role; plan: Plan; cargo?: Cargo; isActive: boolean; createdAt: string };
+type SafeUser = { id: string; name: string; email: string; role: Role; plan: Plan; cargo?: Cargo; sexo?: "feminino" | "masculino"; isActive: boolean; createdAt: string };
 
 const ROLES: { value: Role; label: string }[] = [
   { value: "admin", label: "Administrador do sistema" },
@@ -22,7 +22,7 @@ const CARGOS: { value: Cargo; label: string }[] = [
   { value: "assistente", label: "Assistente" },
 ];
 
-const blankNewUser = { name: "", email: "", password: "", role: "user" as Role, cargo: "advogado" as Cargo };
+const blankNewUser = { name: "", email: "", password: "", role: "user" as Role, cargo: "advogado" as Cargo, sexo: "" as "" | "feminino" | "masculino" };
 
 export default function UsuariosPage() {
   const { data: session, status } = useSession();
@@ -66,7 +66,7 @@ export default function UsuariosPage() {
     const res = await fetch("/api/usuarios", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newUser),
+      body: JSON.stringify({ ...newUser, sexo: newUser.sexo || undefined }),
     });
     if (res.ok) { setMsg({ type: "ok", text: "Usuário criado." }); setCreating(false); setNewUser(blankNewUser); load(); }
     else { const d = await res.json(); setMsg({ type: "err", text: d.error ?? "Erro ao criar." }); }
@@ -163,6 +163,12 @@ export default function UsuariosPage() {
               className={inp} style={inpStyle}>
               {CARGOS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
+            <select value={newUser.sexo} onChange={e => setNewUser({ ...newUser, sexo: e.target.value as "" | "feminino" | "masculino" })}
+              className={inp} style={inpStyle} title="Gênero usado nos documentos (advogada/advogado)">
+              <option value="">Gênero (para os documentos)</option>
+              <option value="feminino">Feminino — advogada</option>
+              <option value="masculino">Masculino — advogado</option>
+            </select>
             {isTenantManager && (
               <select value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value as Role })}
                 className={inp} style={inpStyle}>
@@ -209,6 +215,12 @@ export default function UsuariosPage() {
                         <option value="">—</option>
                         {CARGOS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                       </select>
+                      <select value={editData.sexo ?? u.sexo ?? ""} onChange={e => setEditData({ ...editData, sexo: (e.target.value || undefined) as SafeUser["sexo"] })}
+                        className="px-2 py-1 rounded text-sm" style={inpStyle} title="Gênero usado nos documentos">
+                        <option value="">Gênero —</option>
+                        <option value="feminino">Feminino</option>
+                        <option value="masculino">Masculino</option>
+                      </select>
                       {isTenantManager && u.id !== session?.user?.id && (
                         <select value={editData.role ?? u.role} onChange={e => setEditData({ ...editData, role: e.target.value as Role })}
                           className="px-2 py-1 rounded text-sm" style={inpStyle}>
@@ -222,6 +234,12 @@ export default function UsuariosPage() {
                         style={{ background: "var(--surface2)", color: "var(--text2)" }}>
                         {cargoLabel(u.cargo)}
                       </span>
+                      {u.sexo && (
+                        <span className="px-2 py-0.5 rounded-full text-xs"
+                          style={{ background: "var(--surface2)", color: "var(--text2)" }}>
+                          {u.sexo === "feminino" ? "Feminino" : "Masculino"}
+                        </span>
+                      )}
                       {u.role === "admin" && (
                         <span className="px-2 py-0.5 rounded-full text-xs"
                           style={{ background: "rgba(201,168,76,0.12)", color: "var(--gold)" }}>

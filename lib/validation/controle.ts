@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { generoParaCadastro } from "@/lib/genero";
 
 export const processoCreateSchema = z.object({
   autor: z.string().trim().min(1, "Autor é obrigatório"),
@@ -39,7 +40,7 @@ export const clienteCreateSchema = z.object({
   senha_serasa: z.string().default(""),
   tipo_pessoa: z.enum(["fisica", "juridica"]).default("fisica"),
   cnpj: z.string().trim().default(""),
-  tratamento: z.string().trim().default(""),
+  tratamento: z.string().trim().default("").transform(generoParaCadastro),
   etiquetas: z.array(z.string()).default([]),
   telefones_adicionais: z.array(z.string()).default([]),
   emails_adicionais: z.array(z.string()).default([]),

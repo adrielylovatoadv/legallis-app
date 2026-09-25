@@ -220,15 +220,20 @@ export default function PerfilPage() {
                 onBlur={e => (e.target.style.borderColor = "var(--border)")} />
             </div>
             <div>
-              <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Sexo</label>
+              <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Gênero (usado nas procurações, contratos e declarações)</label>
               <select value={sexo} onChange={e => setSexo(e.target.value as "feminino" | "masculino" | "")}
                 className={inp} style={inpStyle}
                 onFocus={e => (e.target.style.borderColor = "var(--gold)")}
                 onBlur={e => (e.target.style.borderColor = "var(--border)")}>
                 <option value="">Não informado</option>
-                <option value="feminino">Feminino</option>
-                <option value="masculino">Masculino</option>
+                <option value="feminino">Feminino — advogada</option>
+                <option value="masculino">Masculino — advogado</option>
               </select>
+              {!sexo && (
+                <p className="text-xs mt-1" style={{ color: "#f87171" }}>
+                  Sem o gênero, os documentos saem com &quot;advogado(a)&quot;, &quot;inscrito(a)&quot;.
+                </p>
+              )}
             </div>
             <div>
               <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>Telefone</label>

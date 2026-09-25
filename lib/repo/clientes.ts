@@ -1,5 +1,6 @@
 import { hasDb, getSql } from "@/lib/db";
 import { getDataAsync, saveDataAsync, newId, type Cliente } from "@/lib/controle-data";
+import { generoParaCadastro } from "@/lib/genero";
 
 // senha_gov/senha_serasa/conta/chave_pix são gravados em texto puro, sem criptografia — a
 // pedido explícito do dono do produto: são dados operacionais do cliente que precisam estar
@@ -20,7 +21,7 @@ function rowToCliente(r: Record<string, unknown>): Cliente {
     criado_em: r.criado_em instanceof Date ? r.criado_em.toISOString() : (r.criado_em as string),
     tipo_pessoa: (r.tipo_pessoa as Cliente["tipo_pessoa"]) ?? undefined,
     cnpj: (r.cnpj as string) ?? undefined,
-    tratamento: (r.tratamento as string) ?? undefined,
+    tratamento: generoParaCadastro(r.tratamento as string | null) || undefined,
     etiquetas: (r.etiquetas as string[]) ?? undefined,
     telefones_adicionais: (r.telefones_adicionais as string[]) ?? undefined,
     emails_adicionais: (r.emails_adicionais as string[]) ?? undefined,

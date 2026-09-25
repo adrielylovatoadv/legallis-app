@@ -65,6 +65,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     targetPlan = (managed.targetUser.plan as Plan) ?? "basic";
   }
 
+  if ("sexo" in body && body.sexo !== "feminino" && body.sexo !== "masculino") {
+    return NextResponse.json({ error: "Gênero inválido" }, { status: 400 });
+  }
+
   if (Array.isArray(body.oab)) {
     const maxOabs = PLAN_FEATURES[targetPlan]?.maxOabs ?? 1;
     if (body.oab.length > maxOabs) {

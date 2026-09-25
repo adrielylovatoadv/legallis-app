@@ -8,6 +8,7 @@ import {
   type Cliente, type Processo, type Inicial, type Atendimento,
 } from "@/lib/controle";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { generoParaCadastro } from "@/lib/genero";
 import {
   generateProcuracaoDocx, generateContratoHonorariosDocx,
   generateDeclaracaoIsencaoIRDocx, generateDeclaracaoHipossuficienciaDocx,
@@ -18,11 +19,11 @@ import { Input as Inp, Select as Sel, FieldLabel as Lbl, Badge } from "@/compone
 type ClienteComProcs = Cliente & { _ativos?: Processo[]; _finalizados?: Processo[]; _iniciais?: Inicial[]; _atendimentos?: Atendimento[] };
 
 interface UserProfile {
-  id?: string; name?: string; oab?: Array<{ state: string; number: string }>;
+  id?: string; name?: string; sexo?: string; oab?: Array<{ state: string; number: string }>;
   company?: { name?: string; address?: string; defaultPdfSignerId?: string };
 }
 
-const TRATAMENTOS = ["", "Senhor", "Senhora", "Doutor", "Doutora", "Excelentíssimo"];
+const TRATAMENTOS = ["", "Feminino", "Masculino"];
 
 function ListaRepetivel({ label, valores, onChange, placeholder }: {
   label: string; valores: string[]; onChange: (v: string[]) => void; placeholder: string;
@@ -61,7 +62,8 @@ function ClienteForm({ initial, onSave, onCancel }: {
     banco:"", agencia:"", conta:"", tipo_conta:"corrente" as "corrente"|"poupanca", chave_pix:"",
     status:"ativo" as "ativo"|"inativo", link_drive:"",
   };
-  const [form, setForm] = useState({ ...blank, ...(initial||{}) });
+  // Cadastros antigos tinham tratamento livre (Senhora, Doutor...) — converte p/ Feminino/Masculino
+  const [form, setForm] = useState({ ...blank, ...(initial||{}), tratamento: generoParaCadastro(initial?.tratamento) });
   const [etiquetasTexto, setEtiquetasTexto] = useState((initial?.etiquetas || []).join(", "));
   const [saving, setSaving] = useState(false);
   const set = (k: string, v: string | string[]) => setForm(p => ({ ...p, [k]: v }));
@@ -311,7 +313,7 @@ function ClienteCard({ c, advogados, onEdit, onDelete }: {
               <span style={{ color:"var(--text3)" }}>Processos: </span>
               {badge || "sem processos"}
             </div>
-            {c.tratamento && <div><span style={{ color:"var(--text3)" }}>Tratamento: </span>{c.tratamento}</div>}
+            {generoParaCadastro(c.tratamento) && <div><span style={{ color:"var(--text3)" }}>Tratamento: </span>{generoParaCadastro(c.tratamento)}</div>}
             {c.email && <div><span style={{ color:"var(--text3)" }}>E-mail: </span>{c.email}</div>}
             {c.endereco && <div className="col-span-2"><span style={{ color:"var(--text3)" }}>Endereço: </span>{c.endereco}</div>}
             {(c.telefones_adicionais || []).filter(Boolean).length > 0 && (
@@ -484,6 +486,7 @@ export function ClientesTab({ initialBusca }: { initialBusca?: string } = {}) {
   const advogadosInfo: AdvogadoDoc[] = (advogadosPerfis.length > 0 ? advogadosPerfis : userProfile ? [userProfile] : [])
     .map(perfil => ({
       nome: perfil.name,
+      sexo: perfil.sexo,
       escritorio: perfil.company?.name,
       enderecoEscritorio: perfil.company?.address,
       oabs: perfil.oab?.map(o => ({ estado: o.state, numero: o.number })),
