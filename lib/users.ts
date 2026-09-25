@@ -23,6 +23,10 @@ export interface Company {
   cnpj?: string;
   address?: string;
   defaultPdfSignerId?: string;
+  /** Cidade/UF do escritório: local e data dos documentos e foro do contrato (ex.: "Itamogi/MG"). */
+  cidade?: string;
+  /** Textos próprios dos modelos de documento (procuracao, contrato, isencao_ir, hipossuficiencia). */
+  modelos?: Record<string, string>;
 }
 
 export interface User {

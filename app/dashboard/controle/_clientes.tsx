@@ -20,7 +20,7 @@ type ClienteComProcs = Cliente & { _ativos?: Processo[]; _finalizados?: Processo
 
 interface UserProfile {
   id?: string; name?: string; sexo?: string; oab?: Array<{ state: string; number: string }>;
-  company?: { name?: string; address?: string; defaultPdfSignerId?: string };
+  company?: { name?: string; address?: string; defaultPdfSignerId?: string; cidade?: string; modelos?: Record<string, string> };
 }
 
 const TRATAMENTOS = ["", "Feminino", "Masculino"];
@@ -166,17 +166,18 @@ function ClienteForm({ initial, onSave, onCancel }: {
 
 type TipoDocumento = "procuracao" | "contrato" | "isencao_ir" | "hipossuficiencia";
 
-function GerarDocumentoMenu({ cliente, advogados }: { cliente: Cliente; advogados: AdvogadoDoc[] }) {
+function GerarDocumentoMenu({ cliente, advogados, modelos }: { cliente: Cliente; advogados: AdvogadoDoc[]; modelos: Record<string, string> }) {
   const [gerando, setGerando] = useState<TipoDocumento | null>(null);
   const [erro, setErro] = useState("");
 
   const gerar = async (tipo: TipoDocumento) => {
     setGerando(tipo); setErro("");
     try {
-      if (tipo === "procuracao") await generateProcuracaoDocx(cliente, advogados);
-      else if (tipo === "contrato") await generateContratoHonorariosDocx(cliente, advogados);
-      else if (tipo === "isencao_ir") await generateDeclaracaoIsencaoIRDocx(cliente, advogados);
-      else await generateDeclaracaoHipossuficienciaDocx(cliente, advogados);
+      const opts = { modelo: modelos[tipo] };
+      if (tipo === "procuracao") await generateProcuracaoDocx(cliente, advogados, opts);
+      else if (tipo === "contrato") await generateContratoHonorariosDocx(cliente, advogados, opts);
+      else if (tipo === "isencao_ir") await generateDeclaracaoIsencaoIRDocx(cliente, advogados, opts);
+      else await generateDeclaracaoHipossuficienciaDocx(cliente, advogados, opts);
     } catch { setErro("Erro ao gerar documento."); }
     finally { setGerando(null); }
   };
@@ -199,9 +200,10 @@ function GerarDocumentoMenu({ cliente, advogados }: { cliente: Cliente; advogado
   );
 }
 
-function ClienteCard({ c, advogados, onEdit, onDelete }: {
+function ClienteCard({ c, advogados, modelos, onEdit, onDelete }: {
   c: ClienteComProcs;
   advogados: AdvogadoDoc[];
+  modelos: Record<string, string>;
   onEdit: (c: Cliente) => void;
   onDelete: (id: string) => void;
 }) {
@@ -355,7 +357,7 @@ function ClienteCard({ c, advogados, onEdit, onDelete }: {
           )}
 
           {/* Gerar documento */}
-          <GerarDocumentoMenu cliente={c} advogados={advogados} />
+          <GerarDocumentoMenu cliente={c} advogados={advogados} modelos={modelos} />
 
           {/* Informações */}
           {c.informacoes && (
@@ -483,8 +485,19 @@ export function ClientesTab({ initialBusca }: { initialBusca?: string } = {}) {
   const advogadosPerfis = advogadoSelecionadoIds
     .map(id => colegas.find(u => u.id === id))
     .filter((u): u is UserProfile => !!u);
+  // Cidade/UF e textos próprios dos modelos vêm de Configurações > Empresa: vale o do usuário
+  // logado e, se ele não preencheu, o de um colega do escritório que tenha preenchido.
+  const empresas = [userProfile, ...colegas].map(u => u?.company).filter((e): e is NonNullable<typeof e> => !!e);
+  const cidadeEscritorio = empresas.find(e => e.cidade?.trim())?.cidade?.trim();
+  const modelosDocumento: Record<string, string> = {};
+  for (const e of empresas) {
+    for (const [tipo, texto] of Object.entries(e.modelos ?? {})) {
+      if (texto?.trim() && !(tipo in modelosDocumento)) modelosDocumento[tipo] = texto;
+    }
+  }
   const advogadosInfo: AdvogadoDoc[] = (advogadosPerfis.length > 0 ? advogadosPerfis : userProfile ? [userProfile] : [])
     .map(perfil => ({
+      cidadeEscritorio,
       nome: perfil.name,
       sexo: perfil.sexo,
       escritorio: perfil.company?.name,
@@ -608,7 +621,7 @@ export function ClientesTab({ initialBusca }: { initialBusca?: string } = {}) {
         : (
           <div className="space-y-2">
             {clientes.map(c => (
-              <ClienteCard key={c.id} c={c} advogados={advogadosInfo}
+              <ClienteCard key={c.id} c={c} advogados={advogadosInfo} modelos={modelosDocumento}
                 onEdit={handleEdit}
                 onDelete={handleDelete} />
             ))}

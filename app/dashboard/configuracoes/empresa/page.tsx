@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { MARCADORES_MODELO, MODELOS_PADRAO, TIPOS_DOCUMENTO, type TipoDocumento } from "@/lib/document-templates";
 
 interface Colega { id: string; name: string }
 
@@ -10,6 +11,9 @@ export default function EmpresaPage() {
   const [companyName, setCompanyName] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [address, setAddress] = useState("");
+  const [cidade, setCidade] = useState("");
+  const [modelos, setModelos] = useState<Record<string, string>>({});
+  const [tipoModelo, setTipoModelo] = useState<TipoDocumento>("procuracao");
   const [defaultPdfSignerId, setDefaultPdfSignerId] = useState("");
   const [colegas, setColegas] = useState<Colega[]>([]);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
@@ -23,6 +27,8 @@ export default function EmpresaPage() {
         setCompanyName(u.company?.name ?? "");
         setCnpj(u.company?.cnpj ?? "");
         setAddress(u.company?.address ?? "");
+        setCidade(u.company?.cidade ?? "");
+        setModelos(u.company?.modelos ?? {});
         setDefaultPdfSignerId(u.company?.defaultPdfSignerId ?? u.id ?? "");
       }
     };
@@ -42,7 +48,13 @@ export default function EmpresaPage() {
     const res = await fetch(`/api/usuarios/${session?.user?.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ company: { name: companyName, cnpj, address, defaultPdfSignerId } }),
+      body: JSON.stringify({
+        company: {
+          name: companyName, cnpj, address, defaultPdfSignerId, cidade: cidade.trim(),
+          // só guarda textos preenchidos; o que estiver vazio volta ao modelo padrão
+          modelos: Object.fromEntries(Object.entries(modelos).filter(([, t]) => t.trim())),
+        },
+      }),
     });
     setLoading(false);
     if (res.ok) setMsg({ type: "ok", text: "Dados da empresa salvos." });
@@ -82,6 +94,82 @@ export default function EmpresaPage() {
               onFocus={e => (e.target.style.borderColor = "var(--gold)")}
               onBlur={e => (e.target.style.borderColor = "var(--border)")} />
           </div>
+        </div>
+
+        <div>
+          <label className="text-xs uppercase tracking-wider mb-1.5 block" style={{ color: "var(--text3)" }}>
+            Cidade/UF do escritório (local dos documentos e foro do contrato)
+          </label>
+          <input value={cidade} onChange={e => setCidade(e.target.value)}
+            placeholder="Itamogi/MG" className={inp} style={inpStyle}
+            onFocus={e => (e.target.style.borderColor = "var(--gold)")}
+            onBlur={e => (e.target.style.borderColor = "var(--border)")} />
+          <p className="text-xs mt-1" style={{ color: "var(--text3)" }}>
+            Aparece na data das procurações, contratos e declarações (&quot;Itamogi/MG, 25 de setembro de 2026&quot;) e na cláusula do foro da comarca. Em branco, os documentos saem com uma linha para preencher.
+          </p>
+        </div>
+
+        {/* Modelos de documentos */}
+        <div className="pt-4 border-t space-y-3" style={{ borderColor: "var(--border)" }}>
+          <div>
+            <label className="text-xs uppercase tracking-wider block" style={{ color: "var(--text3)" }}>
+              Modelos de documentos
+            </label>
+            <p className="text-xs mt-1" style={{ color: "var(--text3)" }}>
+              Por padrão o sistema usa um modelo genérico. Se preferir, personalize o texto de cada documento abaixo.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {TIPOS_DOCUMENTO.map(t => (
+              <button key={t.tipo} type="button" onClick={() => setTipoModelo(t.tipo)}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium"
+                style={{
+                  background: tipoModelo === t.tipo ? "rgba(201,168,76,0.15)" : "var(--surface2)",
+                  color: tipoModelo === t.tipo ? "var(--gold)" : "var(--text2)",
+                  border: `1px solid ${tipoModelo === t.tipo ? "var(--gold)" : "var(--border)"}`,
+                }}>
+                {t.label}{modelos[t.tipo]?.trim() ? " ✎" : ""}
+              </button>
+            ))}
+          </div>
+          {modelos[tipoModelo] !== undefined ? (
+            <>
+              <textarea value={modelos[tipoModelo]} rows={16}
+                onChange={e => setModelos({ ...modelos, [tipoModelo]: e.target.value })}
+                className={inp + " font-mono"} style={{ ...inpStyle, fontSize: "12px", lineHeight: 1.5 }} />
+              <div className="flex flex-wrap gap-2 items-center">
+                <span className="text-xs" style={{ color: "var(--gold)" }}>Usando o seu modelo personalizado.</span>
+                <button type="button" onClick={() => { if (confirm("Voltar ao modelo padrão? O seu texto será descartado.")) { setModelos(Object.fromEntries(Object.entries(modelos).filter(([k]) => k !== tipoModelo))); } }}
+                  className="text-xs px-3 py-1.5 rounded-lg" style={{ background: "var(--surface2)", color: "var(--text2)", border: "1px solid var(--border)" }}>
+                  Restaurar modelo padrão
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="rounded-xl p-4 flex flex-wrap gap-3 items-center" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+              <span className="text-sm" style={{ color: "var(--text2)" }}>Usando o modelo padrão do sistema.</span>
+              <button type="button" onClick={() => setModelos({ ...modelos, [tipoModelo]: MODELOS_PADRAO[tipoModelo] })}
+                className="text-xs px-3 py-1.5 rounded-lg font-medium" style={{ background: "var(--gold)", color: "#000" }}>
+                Personalizar a partir do padrão
+              </button>
+            </div>
+          )}
+          <details className="text-xs" style={{ color: "var(--text3)" }}>
+            <summary className="cursor-pointer" style={{ color: "var(--text2)" }}>Como escrever o modelo (marcadores e formatação)</summary>
+            <div className="mt-2 space-y-2">
+              <p>
+                Separe os parágrafos com uma linha em branco. Comece a linha com <code># </code> para título centralizado,
+                {" "}<code>&gt; </code> para texto centralizado, <code>| </code> para parágrafo sem recuo. Use <code>**texto**</code> para negrito.
+                Linhas sozinhas: <code>[assinatura]</code>, <code>[assinatura-dupla]</code> (cliente e advogados) e <code>[testemunhas]</code>.
+                Escrever <code>(a)</code> (ex.: &quot;isento(a)&quot;) faz o sistema usar o gênero do cliente.
+              </p>
+              <ul className="space-y-0.5">
+                {MARCADORES_MODELO.map(m => (
+                  <li key={m.chave}><code style={{ color: "var(--text2)" }}>{m.chave}</code> — {m.descricao}</li>
+                ))}
+              </ul>
+            </div>
+          </details>
         </div>
 
         {/* Assinatura padrão nos PDFs */}
