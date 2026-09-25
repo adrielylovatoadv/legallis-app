@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { MARCADORES_MODELO, MODELOS_PADRAO, TIPOS_DOCUMENTO, type TipoDocumento } from "@/lib/document-templates";
+import { BOTOES_MODELO, MODELOS_PADRAO, TIPOS_DOCUMENTO, type BotaoModelo, type TipoDocumento } from "@/lib/document-templates";
 
 interface Colega { id: string; name: string }
 
@@ -14,6 +14,7 @@ export default function EmpresaPage() {
   const [cidade, setCidade] = useState("");
   const [modelos, setModelos] = useState<Record<string, string>>({});
   const [tipoModelo, setTipoModelo] = useState<TipoDocumento>("procuracao");
+  const areaRef = useRef<HTMLTextAreaElement>(null);
   const [signerIds, setSignerIds] = useState<string[]>([]);
   const [colegas, setColegas] = useState<Colega[]>([]);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
@@ -59,6 +60,39 @@ export default function EmpresaPage() {
     setLoading(false);
     if (res.ok) setMsg({ type: "ok", text: "Dados da empresa salvos." });
     else setMsg({ type: "err", text: "Erro ao salvar." });
+  };
+
+  // Insere o botão clicado no texto do modelo, no ponto onde está o cursor.
+  const inserir = (b: BotaoModelo) => {
+    const area = areaRef.current;
+    const atual = modelos[tipoModelo] ?? "";
+    const ini = area?.selectionStart ?? atual.length;
+    const fim = area?.selectionEnd ?? atual.length;
+    let novo: string;
+    let cursor: number;
+    if (b.tipo === "linha") {
+      const inicioLinha = atual.lastIndexOf("\n", ini - 1) + 1;
+      // troca um prefixo de formatação que já exista na linha (# , > ou | )
+      const semPrefixo = atual.slice(inicioLinha).replace(/^(# |> |\| )/, "");
+      const removido = atual.slice(inicioLinha).length - semPrefixo.length;
+      novo = atual.slice(0, inicioLinha) + b.texto + semPrefixo;
+      cursor = ini - removido + b.texto.length;
+    } else if (b.tipo === "bloco") {
+      const antes = atual.slice(0, ini).replace(/\s+$/, "");
+      const depois = atual.slice(fim).replace(/^\s+/, "");
+      const ins = `${antes ? "\n\n" : ""}${b.texto}${depois ? "\n\n" : ""}`;
+      novo = antes + ins + depois;
+      cursor = antes.length + ins.length;
+    } else if (b.tipo === "negrito") {
+      const sel = atual.slice(ini, fim) || "texto";
+      novo = `${atual.slice(0, ini)}**${sel}**${atual.slice(fim)}`;
+      cursor = ini + 2 + sel.length + 2;
+    } else {
+      novo = atual.slice(0, ini) + b.texto + atual.slice(fim);
+      cursor = ini + b.texto.length;
+    }
+    setModelos({ ...modelos, [tipoModelo]: novo });
+    requestAnimationFrame(() => { area?.focus(); area?.setSelectionRange(cursor, cursor); });
   };
 
   const inp = "w-full px-4 py-3 rounded-xl text-sm outline-none transition-colors";
@@ -134,7 +168,30 @@ export default function EmpresaPage() {
           </div>
           {modelos[tipoModelo] !== undefined ? (
             <>
-              <textarea value={modelos[tipoModelo]} rows={16}
+              <div className="rounded-xl p-3 space-y-2" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+                <p className="text-xs" style={{ color: "var(--text3)" }}>
+                  Clique no texto onde quer inserir e depois no botão. Os trechos entre {"{{ }}"} são preenchidos sozinhos com os dados de cada cliente ao gerar o documento.
+                </p>
+                {BOTOES_MODELO.map((g, i) => {
+                  const avancado = i === BOTOES_MODELO.length - 1;
+                  const grupo = (
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      <span className="text-xs w-full sm:w-auto sm:mr-1 uppercase tracking-wider" style={{ color: "var(--text3)", minWidth: "8.5rem" }}>{g.grupo}</span>
+                      {g.botoes.map(b => (
+                        <button key={b.label} type="button" onMouseDown={e => e.preventDefault()} onClick={() => inserir(b)}
+                          className="text-xs px-2.5 py-1 rounded-lg"
+                          style={{ background: "var(--surface)", color: "var(--text2)", border: "1px solid var(--border)" }}>
+                          {b.label}
+                        </button>
+                      ))}
+                    </div>
+                  );
+                  return avancado
+                    ? <details key={g.grupo}><summary className="cursor-pointer text-xs" style={{ color: "var(--text2)" }}>Mais opções ({g.grupo.toLowerCase()})</summary><div className="mt-2">{grupo}</div></details>
+                    : <div key={g.grupo}>{grupo}</div>;
+                })}
+              </div>
+              <textarea ref={areaRef} value={modelos[tipoModelo]} rows={16}
                 onChange={e => setModelos({ ...modelos, [tipoModelo]: e.target.value })}
                 className={inp + " font-mono"} style={{ ...inpStyle, fontSize: "12px", lineHeight: 1.5 }} />
               <div className="flex flex-wrap gap-2 items-center">
@@ -154,22 +211,6 @@ export default function EmpresaPage() {
               </button>
             </div>
           )}
-          <details className="text-xs" style={{ color: "var(--text3)" }}>
-            <summary className="cursor-pointer" style={{ color: "var(--text2)" }}>Como escrever o modelo (marcadores e formatação)</summary>
-            <div className="mt-2 space-y-2">
-              <p>
-                Separe os parágrafos com uma linha em branco. Comece a linha com <code># </code> para título centralizado,
-                {" "}<code>&gt; </code> para texto centralizado, <code>| </code> para parágrafo sem recuo. Use <code>**texto**</code> para negrito.
-                Linhas sozinhas: <code>[assinatura]</code>, <code>[assinatura-dupla]</code> (cliente e advogados) e <code>[testemunhas]</code>.
-                Escrever <code>(a)</code> (ex.: &quot;isento(a)&quot;) faz o sistema usar o gênero do cliente.
-              </p>
-              <ul className="space-y-0.5">
-                {MARCADORES_MODELO.map(m => (
-                  <li key={m.chave}><code style={{ color: "var(--text2)" }}>{m.chave}</code> — {m.descricao}</li>
-                ))}
-              </ul>
-            </div>
-          </details>
         </div>
 
         {/* Assinatura padrão nos PDFs */}

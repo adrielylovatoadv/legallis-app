@@ -243,21 +243,52 @@ export const TIPOS_DOCUMENTO: Array<{ tipo: TipoDocumento; label: string }> = [
   { tipo: "hipossuficiencia", label: "Declaração de Hipossuficiência" },
 ];
 
-export const MARCADORES_MODELO: Array<{ chave: string; descricao: string }> = [
-  { chave: "{{cliente}}", descricao: "Nome do cliente" },
-  { chave: "{{qualificacao_cliente}}", descricao: "Nome, nacionalidade, estado civil, CPF/CNPJ e endereço do cliente" },
-  { chave: "{{qualificacao_advogados}}", descricao: "Nome, OAB e endereço do(s) advogado(s)" },
-  { chave: "{{advogados}}", descricao: "Nome(s) do(s) advogado(s)" },
-  { chave: "{{oabs}}", descricao: "OAB do(s) advogado(s)" },
-  { chave: "{{cidade}}", descricao: "Cidade/UF do escritório (local e foro)" },
-  { chave: "{{data}}", descricao: "Data de hoje por extenso" },
-  { chave: "{{local_data}}", descricao: "Cidade/UF e data" },
-  { chave: "{{cpf}} {{cnpj}} {{rg}}", descricao: "Documentos do cliente" },
-  { chave: "{{contratado}}", descricao: "CONTRATADA ou CONTRATADO (gênero do advogado)" },
-  { chave: "{{advogado}}", descricao: "advogada ou advogado" },
-  { chave: "{{o_cliente}} {{do_cliente}} {{pelo_cliente}}", descricao: "Artigos conforme o gênero do cliente" },
-  { chave: "{{o_advogado}} {{do_advogado}} {{ao_advogado}} {{pelo_advogado}}", descricao: "Artigos conforme o gênero do advogado" },
-  { chave: "{{pct_exito}} {{pct_exito_extenso}} {{pct_acordo}} {{pct_acordo_extenso}}", descricao: "Percentuais de honorários (35% e 10%)" },
+// Botões do editor de modelo (Configurações > Empresa). "texto" entra no ponto do cursor;
+// "linha" vira prefixo da linha atual; "bloco" entra sozinho, entre linhas em branco.
+export interface BotaoModelo { label: string; texto: string; tipo: "texto" | "linha" | "bloco" | "negrito" }
+
+export const BOTOES_MODELO: Array<{ grupo: string; botoes: BotaoModelo[] }> = [
+  { grupo: "Dados do cliente", botoes: [
+    { label: "Nome do cliente", texto: "{{cliente}}", tipo: "texto" },
+    { label: "Qualificação completa", texto: "{{qualificacao_cliente}}", tipo: "texto" },
+    { label: "CPF", texto: "{{cpf}}", tipo: "texto" },
+    { label: "CNPJ", texto: "{{cnpj}}", tipo: "texto" },
+    { label: "RG", texto: "{{rg}}", tipo: "texto" },
+  ] },
+  { grupo: "Dados do advogado", botoes: [
+    { label: "Qualificação (nome, OAB, endereço)", texto: "{{qualificacao_advogados}}", tipo: "texto" },
+    { label: "Nome", texto: "{{advogados}}", tipo: "texto" },
+    { label: "OAB", texto: "{{oabs}}", tipo: "texto" },
+  ] },
+  { grupo: "Local e data", botoes: [
+    { label: "Cidade", texto: "{{cidade}}", tipo: "texto" },
+    { label: "Data de hoje", texto: "{{data}}", tipo: "texto" },
+    { label: "Cidade e data", texto: "{{local_data}}", tipo: "texto" },
+  ] },
+  { grupo: "Formatação", botoes: [
+    { label: "Título", texto: "# ", tipo: "linha" },
+    { label: "Centralizar", texto: "> ", tipo: "linha" },
+    { label: "Sem recuo", texto: "| ", tipo: "linha" },
+    { label: "Negrito", texto: "**", tipo: "negrito" },
+  ] },
+  { grupo: "Assinaturas", botoes: [
+    { label: "Assinatura do cliente", texto: "[assinatura]", tipo: "bloco" },
+    { label: "Assinatura cliente + advogado", texto: "[assinatura-dupla]", tipo: "bloco" },
+    { label: "Testemunhas", texto: "[testemunhas]", tipo: "bloco" },
+  ] },
+  { grupo: "Concordância de gênero (avançado)", botoes: [
+    { label: "CONTRATADA/CONTRATADO", texto: "{{contratado}}", tipo: "texto" },
+    { label: "advogada/advogado", texto: "{{advogado}}", tipo: "texto" },
+    { label: "o/a (cliente)", texto: "{{o_cliente}}", tipo: "texto" },
+    { label: "do/da (cliente)", texto: "{{do_cliente}}", tipo: "texto" },
+    { label: "pelo/pela (cliente)", texto: "{{pelo_cliente}}", tipo: "texto" },
+    { label: "o/a (advogado)", texto: "{{o_advogado}}", tipo: "texto" },
+    { label: "do/da (advogado)", texto: "{{do_advogado}}", tipo: "texto" },
+    { label: "ao/à (advogado)", texto: "{{ao_advogado}}", tipo: "texto" },
+    { label: "pelo/pela (advogado)", texto: "{{pelo_advogado}}", tipo: "texto" },
+    { label: "Honorários de êxito (%)", texto: "{{pct_exito}}", tipo: "texto" },
+    { label: "Honorários de acordo (%)", texto: "{{pct_acordo}}", tipo: "texto" },
+  ] },
 ];
 
 const PROCURACAO_PADRAO = `# PROCURAÇÃO "AD JUDICIA"
